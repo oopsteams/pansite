@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>List</title>
+    <link href="/static/js/jquery-ui/jquery-ui.css" rel="stylesheet">
+    <script src="/static/js/jquery-ui/external/jquery/jquery.js"></script>
+    <script src="/static/js/jquery-ui/jquery-ui.js"></script>
+</head>
+<body>
+    <div id="accordion">
+    {% if list %}
+        {% for item in list %}
+            <h3>{{item.filename}}</h3>
+            <div>{{item.path}}</div>
+        {% end %}
+    {% end %}
+    </div>
+
+</body>
+<script>
+
+$( "#accordion" ).accordion({
+    beforeActivate: function (event, ui) {
+        console.log("event,ui:", event, ui)
+    }
+});
+
+</script>
+</html>

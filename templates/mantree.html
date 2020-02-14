@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+	html { margin:0; padding:0; font-size:62.5%; }
+	body { margin:0 auto; padding:20px 10px; font-size:14px; font-size:1.4em; }
+	h1 { font-size:1.8em; }
+	.pan-tree { overflow:auto; border:1px solid silver; min-height:200px;}
+
+    #dialog-form .validateTips { border: 1px solid transparent; padding: 0.3em; }
+    #dialog-form .form_table label,#dialog-form input { display:block; }
+    #dialog-form .form_table input.text { margin-bottom:12px; width:95%; padding: .4em; }
+	</style>
+    <link href="/static/js/jstree/themes/default/style.min.css" rel="stylesheet">
+    <link href="/static/js/jquery-ui/jquery-ui.css" rel="stylesheet">
+    <script src="/static/js/jquery-ui/external/jquery/jquery.js"></script>
+    <script src="/static/js/jstree/jstree.min.js"></script>
+    <script src="/static/js/jquery-ui/jquery-ui.js"></script>
+    <script src="/static/js/base.js"></script>
+
+    <title>Manage File Tree</title>
+</head>
+<body>
+    <div class="toolbar">
+        <button id="home">Home</button>
+        <button id="panmanage">网盘维护</button>
+        <button id="self_sync_root">同步根目录</button>
+
+    </div>
+	<h1>我的网盘资源</h1>
+	<div id="lazy" class="pan-tree"></div>
+    <div id="dialog-message" title="正在处理等待同步">
+        <div class="progress-label">处理中...</div>
+        <div id="progressbar"></div>
+    </div>
+    <div id="dialog-form" title="Create new user">
+      <p class="validateTips">All form fields are required.</p>
+      <form>
+        <fieldset class="form_table">
+          <label for="p_name">商品名称</label>
+          <input type="text" name="p_name" id="p_name" value="" class="text ui-widget-content ui-corner-all">
+          <label for="p_price">商品价格</label>
+          <input type="text" name="p_price" id="p_price" value="" class="text ui-widget-content ui-corner-all">
+
+          <!-- Allow form submission with keyboard without duplicating the dialog button -->
+          <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+        </fieldset>
+          <fieldset>
+            <legend>配置方式: </legend>
+              <label for="radio-1">当前目标</label>
+            <input type="radio" name="radio-1" id="radio-1">
+            <label for="radio-2">迭代所有</label>
+            <input type="radio" name="radio-1" id="radio-2">
+          </fieldset>
+      </form>
+    </div>
+	<script>
+	// html demo
+    let pan_id = '{{pan_id}}';
+    let dialog = null,form_dialog = null;
+    function refresh_jstree(node_id){
+        let inst = $.jstree.reference(node_id);
+        let node = inst.get_node(node_id);
+        let parent_node_id = inst.get_parent(node);
+        let parent_node = null;
+        if(parent_node_id){
+            parent_node = inst.get_node(parent_node_id);
+        }
+        setTimeout(function () {
+            if(parent_node){
+                inst.refresh(parent_node);
+            } else {
+                alert('refresh all!!!');
+                inst.refresh();
+            }
+        }, 800);
+    }
+	// lazy demo
+	$('#lazy').jstree({
+		'core' : {
+			'data' : {
+				"url" : "fload?lazy&tk="+GetQueryString('tk')+'&panid='+pan_id,
+				"data" : function (node) {
+				    console.log("lazy node:", node);
+				    let p = "/";
+				    let _params = { "id" : node.id, "path": p }
+				    if(node.data){
+                        $.extend(_params, node.data)
+                    }
+					return _params;
+				}
+			},
+            'themes' : {
+                'responsive' : false,
+                'variant' : 'small',
+                'stripes' : true
+            }
+		},
+        "contextmenu":{
+		    'items': function (node) {
+                let ctxmenu = $.jstree.defaults.contextmenu.items();
+                delete ctxmenu.ccp;
+                delete ctxmenu.remove;
+                delete ctxmenu.rename;
+                delete ctxmenu.create;
+
+                ctxmenu.clear={
+                    'separator_after': false,
+                    'separator_before': false,
+                    'label': '清除',
+                    'action': function(data){
+                        dialog.dialog( "open" );
+                        let inst = $.jstree.reference(data.reference),
+                            node = inst.get_node(data.reference);
+
+                        let params = {tk: GetQueryString('tk'), 'panid': pan_id, 'id': node.data._id};
+                        console.log('clear dir:', params);
+                        call_service_by_get('/man/clear', params, function (res) {
+                            let st = res['state'];
+                            if(st == 0){
+                                inst = $.jstree.reference(data.reference);
+                                node = inst.get_node(data.reference);
+                                inst.delete_node(node);
+                                refresh_jstree(data.reference);
+                                dialog.dialog( "close" );
+                            }
+                        });
+                    }
+                };
+                if(node.data.isdir === 1){
+                    if(node.data.source == 'local') {
+                        ctxmenu.sync = {
+                            'separator_after': false,
+                            'separator_before': false,
+                            'label': '同步目录',
+                            'action': function (data) {
+                                dialog.dialog("open");
+                                let inst = $.jstree.reference(data.reference),
+                                    node = inst.get_node(data.reference);
+                                let params = {tk: GetQueryString('tk'), recursion: 0, 'panid': pan_id, 'id': node.data._id};
+                                call_service_by_get('/source/syncallnodes', params, function (res) {
+                                    let result = res['result'];
+                                    console.log('res result:', result);
+                                    check_state(function (ok) {
+                                        inst.refresh(node);
+                                        dialog.dialog("close");
+                                    });
+                                });
+
+                            }
+                        };
+                    }
+                    if(node.data.path != '/') {
+                        if(node.data.source == 'local'){
+                            ctxmenu.syncall = {
+                                'separator_after': false,
+                                'separator_before': false,
+                                'label': '同步所有',
+                                'action': function (data) {
+                                    dialog.dialog("open");
+                                    let inst = $.jstree.reference(data.reference),
+                                        node = inst.get_node(data.reference);
+                                    let params = {tk: GetQueryString('tk'), recursion: 1, 'panid': pan_id, 'id': node.data._id};
+                                    call_service_by_get('/source/syncallnodes', params, function (res) {
+                                        let result = res['result'];
+                                        console.log('res result:', result);
+                                        check_state(function (ok) {
+                                            inst.refresh(node);
+                                            dialog.dialog("close");
+                                        });
+                                    });
+
+                                }
+                            };
+                        }
+                        ctxmenu.sub_dir_show = {
+                            'separator_after': false,
+                            'separator_before': true,
+                            'label': '标记子目录搜索可见',
+                            'action': function (data) {
+                                dialog.dialog("open");
+                                // console.log('isvisible data:', data);
+                                let inst = $.jstree.reference(data.reference),
+                                    node = inst.get_node(data.reference);
+                                let params = {
+                                    tk: GetQueryString('tk'),
+                                    recursion: 1,
+                                    'panid': pan_id,
+                                    'id': node.id,
+                                    'parent': node.data.p_id,
+                                    'source': node.data.source
+                                };
+                                let url = '/man/show';
+                                call_service_by_get(url, params, function (res) {
+                                    setTimeout(()=>{
+                                        inst.refresh(node);
+                                        dialog.dialog("close");
+                                    }, 5000)
+
+                                });
+                            }
+                        };
+                        ctxmenu.sub_dir_hide = {
+                            'separator_after': false,
+                            'separator_before': false,
+                            'label': '标记子目录搜索隐藏',
+                            'action': function (data) {
+                                dialog.dialog("open");
+                                let inst = $.jstree.reference(data.reference),
+                                    node = inst.get_node(data.reference);
+                                // console.log('sub_dir_hide node:', node);
+                                let params = {
+                                    tk: GetQueryString('tk'),
+                                    recursion: 1,
+                                    'panid': pan_id,
+                                    'id': node.id,
+                                    'parent': node.data.p_id,
+                                    'source': node.data.source
+                                };
+                                let url = '/man/hide';
+                                call_service_by_get(url, params, function (res) {
+                                    setTimeout(()=>{
+                                        inst.refresh(node);
+                                        dialog.dialog("close");
+                                    }, 5000)
+                                });
+                            }
+                        };
+                    }
+                }
+                if(node.data.path != '/') {
+                    ctxmenu.product = {
+                        'separator_after': false,
+                        'separator_before': true,
+                        'label': '标记为商品',
+                        'action': function (data) {
+                            form_dialog.dialog("open");
+                            let inst = $.jstree.reference(data.reference),
+                                node = inst.get_node(data.reference);
+                            $('#p_name').val(node.text);
+                            /*
+                            dialog.dialog( "open" );
+                            let inst = $.jstree.reference(data.reference),
+                                node = inst.get_node(data.reference);
+                            let params = {tk: GetQueryString('tk'), recursion: 1, 'panid': pan_id, 'id': node.id};
+                            call_service_by_get('/product/tag', params, function (res) {
+                                let result = res['result'];
+                                console.log('res result:', result);
+                                inst.refresh(node);
+                                dialog.dialog( "close" );
+                            });
+                            */
+                        }
+                    };
+                }
+                let label = '标记搜索可见';
+                let url = '/man/show';
+                let pin_v = 1;
+                if(node.data.pin == 1){
+                    label = '标记搜索隐藏';
+                    url = '/man/hide';
+                    pin_v = 0;
+                }
+                // console.log('menu node:', node);
+                ctxmenu.isvisible={
+                        'separator_after': false,
+                        'separator_before': true,
+                        'label': label,
+                        'action': function(data){
+                            dialog.dialog( "open" );
+                            // console.log('isvisible data:', data);
+                            let inst = $.jstree.reference(data.reference),
+                                node = inst.get_node(data.reference);
+                            let params = {tk: GetQueryString('tk'), recursion: 1, 'panid': pan_id, 'id': node.data._id, 'source': node.data.source};
+                            call_service_by_get(url, params, function (res) {
+                                // inst.refresh(node);
+                                node.data.pin = pin_v;
+                                let el = $('#'+node.a_attr.id);
+                                if(el){
+                                    if(pin_v == 1){
+                                        el.css('color', 'red');
+                                    } else {
+                                        el.css('color', 'black');
+                                    }
+                                }
+
+                                dialog.dialog( "close" );
+                            });
+
+                        }
+                    };
+
+                if(node.hasOwnProperty('menus')){
+                    for(var m in node.menus){
+                        ctxmenu[m] = node.menus[m];
+                    }
+                }
+                return ctxmenu;
+            }
+        },
+        "types":{
+            '#': {"valid_children": ["root"]},
+            "root": {"valid_children":["default"]},
+            'default': {'icon': 'folder', "valid_children": ["default","file"]},
+            'file': {'valid_children': [], 'icon': 'glyphicon glyphicon-file'}
+        },
+        "plugins" : [
+            "contextmenu", "dnd", "search",
+            "state", "types", "wholerow"
+            // , "checkbox"
+          ]
+	}).on('show_contextmenu.jstree', function(e, data){
+
+
+    }).on('changed.jstree', function(e, data){
+
+
+    });
+	/*
+	*
+	headers = {"SURI-TOKEN": tk, "Content-Type": "application/x-www-form-urlencoded"};
+		var options = {
+			method: 'GET',
+			url: point+'source/syncallnodes?id='+item_id+'&recursion='+(recursion?1:0),
+			followRedirect: false,
+			followOriginalHttpMethod: true,
+			timeout: 120000,
+			strictSSL: false,
+			headers: headers
+		};
+	*
+	* */
+	function check_state(cb) {
+        let params = {tk: GetQueryString('tk'), 'panid': pan_id};
+        call_service_by_get('/source/syncstate', params, function (res) {
+                let st = res['state'];
+                if(1 == st){
+                    cb(true)
+                } else {
+                    setTimeout(function(){check_state(cb)}, 5000)
+                }
+            });
+    }
+    $(function(){
+        $( "#dialog-form input[type=radio]" ).checkboxradio();
+        dialog = $( "#dialog-message" ).dialog({
+            autoOpen: false,
+            closeOnEscape: false,
+            resizable: false,
+            modal:true,
+            buttons: [],
+            open: function() {},
+            beforeClose: function() {}
+
+          });
+        let $panmanage = $( "#panmanage" ), $self_sync_root = $("#self_sync_root");
+        $panmanage.button({
+          "icon": "ui-icon-wrench",
+          "showLabel": true
+        });
+        $( "#home" ).button({
+          "icon": "ui-icon-home",
+          "showLabel": false
+        }).on('click', function (event, ui) {
+            document.location.href='/man/init?tk=' + GetQueryString('tk');
+        }).end();
+
+        $self_sync_root.button({icon: "ui-icon-transferthick-e-w", showLabel: true}).on("click", function (event, ui) {
+                $self_sync_root.button('disable');
+                // let params = {tk: GetQueryString('tk'), id: 0, recursion: 0};
+                let params = {tk: GetQueryString('tk'), recursion: 0, 'panid': pan_id};
+                call_service_by_get('/source/syncallnodes', params, function (res) {
+                    let result = res['result'];
+                    console.log('res result:', result);
+                    check_state(function (ok) {
+                        $("#self_sync_root").button('enable');
+                        $.jstree.reference('#lazy').refresh();
+                    });
+                });
+            // setTimeout(()=>{$("#self_sync_root").button('enable');}, 5000);
+        }).end();
+
+        let progressbar = $( "#progressbar" );
+        progressbar.progressbar({
+          value: false,
+          change: function() {
+            progressLabel.text( "Current Progress: " + progressbar.progressbar( "value" ) + "%" );
+          },
+          complete: function() {
+            progressLabel.text( "Complete!" );
+            dialog.dialog( "option", "buttons", [{
+              text: "Close",
+              click: closeDownload
+            }]);
+            $(".ui-dialog button").last().trigger( "focus" );
+          }
+        });
+
+        /* 创建商品 */
+        let set_product = function(){
+            let all_r_list = $( "#dialog-form input[type=radio]" );
+            for(let i=0; i<all_r_list.length; i++){
+                let ri = all_r_list[i];
+                console.log('ri:', ri);
+            }
+        };
+        let p_name = $('#p_name');
+        let p_price = $('#p_price');
+        let allFields = $( [] ).add( p_name ).add( p_price ), tips = $( ".validateTips" );
+        form_dialog = $( "#dialog-form" ).dialog({
+              autoOpen: false,
+              height: 400,
+              width: 350,
+              modal: true,
+              buttons: {
+                "设置为商品": set_product,
+                Cancel: function() {
+                  form_dialog.dialog( "close" );
+                }
+              },
+              close: function() {
+                form[ 0 ].reset();
+                allFields.removeClass( "ui-state-error" );
+              }
+            });
+
+    });
+
+	</script>
+</body>
+</html>

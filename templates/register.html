@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>注册界面</title>
+    <link href="/static/js/jquery-ui/jquery-ui.css" rel="stylesheet">
+    <script src="/static/js/jquery-ui/external/jquery/jquery.js"></script>
+    <script src="/static/js/jquery-ui/jquery-ui.js"></script>
+
+    <style>
+        body,div,dl,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,textarea,p,blockquote,th,td{
+            margin: 0px;
+            padding: 0px;
+        }
+        .header,.content,.footer{
+            margin:0 auto;
+        }
+        .header{
+            width: 960px;
+            height: 81px;
+            /*background-color: red;*/
+        }
+        .header .logo{
+            float: left;
+            display: inline-block;
+            /*background-color: aquamarine;*/
+            width: 644px;
+            height: 26px;
+            margin-top:31px;
+            box-sizing: border-box;
+            /*background: url("images/wy.png")  no-repeat 0px 0px;*/
+        }
+        .header .logo a{
+            display: inline-block;
+            width: 130px;
+            height: 26px;
+            /*background-color: fuchsia;*/
+        }
+        .header .links{
+            float: right;
+            margin-top: 31px;
+            width: 200px;
+            height: 26px;
+            /*background-color: yellowgreen;*/
+            text-align: right;
+        }
+        .header .links a{
+            font: 13px "黑体";
+            text-decoration: none;
+            color: #003398;
+        }
+        .content{
+            width: 960px;
+            height: 747px;
+            /*background-color: blue;*/
+        }
+        .content .contentTop{
+            width: 960px;
+            height: 38px;
+            border-radius: 3px 3px 0 0;
+            /*background:url("images/line-content.png") repeat-x;*/
+        }
+        .contentTop .left{
+            width: 960px;
+            height: 38px;
+            /*background: url("images/left.png") no-repeat left;*/
+        }
+        .contentTop .left .right{
+            width: 960px;
+            height: 38px;
+            /*background: url("images/right.png") no-repeat right;*/
+        }
+        .content .contentTop span{
+            display: block;
+            width: 600px;
+            line-height: 38px;
+            padding-left:21px;
+            box-sizing: border-box;
+            color: white;
+            font-size:14px;
+            /*background-color: firebrick;*/
+
+        }
+        .content .contentBottom .article{
+            float: left;
+            width: 644px;
+            height: 709px;
+            background-color: #fdfdfe;
+            padding-left:77px;
+            box-sizing: border-box;
+            background-color: #f8f8f8;
+            border: 1px solid #cccccc;
+            border-top:none;
+        }
+        .content .contentBottom .article .text{
+            text-align: right;
+        }
+        .content .contentBottom .article .articleTop{
+            width: 527px;
+            height: 66px;
+            padding-top: 50px;
+            padding-left: 73px;
+        }
+        .content .contentBottom .article .articleTop ul{
+            list-style: none;
+            width: 335px;
+            height: 34px;
+            /*background: url("images/111.png") no-repeat;*/
+        }
+        .content .contentBottom .article .articleTop li{
+            width: 167.5px;
+            height: 34px;
+            float: left;
+            line-height: 34px;
+            text-align: center;
+        }
+        .content .contentBottom .article .articleTop .Topfont{
+            color: white;
+        }
+        .content .contentBottom .article .articleBottom{
+            width: 565px;
+            height: 546px;
+            padding-left:27px;
+            box-sizing: border-box;
+            /*background-color: aquamarine;*/
+        }
+        .content .contentBottom .article .articleBottom .email{
+            width: 422px;
+            height: 69px;
+            /*background-color: yellow;*/
+        }
+        .content .contentBottom .article .articleBottom .email .text{
+            width: 67px;
+            height: 27px;
+            line-height: 27px;
+            /*background-color: red;*/
+            float: left;
+            font-size:14px;
+        }
+        .content .contentBottom .article .articleBottom .email .put{
+            width: 334px;
+            height: 27px;
+            /*background-color: red;*/
+            float: right;
+        }
+        .content .contentBottom .article .articleBottom .email .put input,select,p{
+            height: 24px;
+            color: grey;
+        }
+        .content .contentBottom .article .articleBottom .email .put p{
+            font-size:8px;
+            margin-top: 10px;
+        }
+        .content .contentBottom .article .articleBottom .pw{
+            width: 422px;
+            height: 69px;
+            /*background-color: yellow;*/
+        }
+        .content .contentBottom .article .articleBottom .pw .text{
+            width: 67px;
+            height: 27px;
+            line-height: 27px;
+            /*background-color: red;*/
+            float: left;
+            font-size:14px;
+        }
+        .content .contentBottom .article .articleBottom .pw .put{
+            width: 334px;
+            height: 27px;
+            /*background-color: bisque;*/
+            float: right;
+        }
+        .content .contentBottom .article .articleBottom .pw .put input,p{
+            height: 24px;
+            width: 270px;
+            color: grey;
+        }
+        .content .contentBottom .article .articleBottom .pw .put p{
+            font-size:8px;
+            margin-top: 10px;
+        }
+        .content .contentBottom .article .articleBottom .Spw{
+            width: 422px;
+            height: 69px;
+            /*background-color: yellow;*/
+        }
+        .content .contentBottom .article .articleBottom .Spw .text{
+            width: 67px;
+            height: 27px;
+            line-height: 27px;
+            /*background-color: red;*/
+            float: left;
+            font-size:14px;
+        }
+        .content .contentBottom .article .articleBottom .Spw .put{
+            width: 334px;
+            height: 27px;
+            /*background-color: bisque;*/
+            float: right;
+        }
+        .content .contentBottom .article .articleBottom .Spw .put input,p{
+            height: 24px;
+            width: 270px;
+            color: grey;
+        }
+        .content .contentBottom .article .articleBottom .Spw .put p{
+            font-size:8px;
+            margin-top: 10px;
+        }
+        .content .contentBottom .article .articleBottom .PhoneNumber{
+            width: 422px;
+            height: 69px;
+            /*background-color: yellow;*/
+        }
+        .content .contentBottom .article .articleBottom .PhoneNumber .text{
+            width: 67px;
+            height: 27px;
+            line-height: 27px;
+            /*background-color: red;*/
+            float: left;
+            font-size:14px;
+        }
+        .content .contentBottom .article .articleBottom .PhoneNumber .put{
+            width: 334px;
+            height: 27px;
+            /*background-color: bisque;*/
+            float: right;
+        }
+        .content .contentBottom .article .articleBottom .PhoneNumber .put input,p{
+            height: 24px;
+            width: 270px;
+            color: grey;
+        }
+        .content .contentBottom .article .articleBottom .PhoneNumber .put p{
+            font-size:8px;
+            margin-top: 10px;
+        }
+        .content .contentBottom .article .articleBottom .GetCode{
+            width: 422px;
+            height: 100px;
+            /*background-color: yellow;*/
+        }
+        .content .contentBottom .article .articleBottom .GetCode .text{
+            width: 67px;
+            height: 27px;
+            line-height: 27px;
+            /*background-color: red;*/
+            float: left;
+            font-size:14px;
+        }
+        .content .contentBottom .article .articleBottom .GetCode .put{
+            width: 334px;
+            height: 27px;
+            /*background-color: red;*/
+            float: right;
+        }
+        .content .contentBottom .article .articleBottom .GetCode .put input,p{
+            height: 24px;
+            color: grey;
+        }
+        .content .contentBottom .article .articleBottom .GetCode .put img{
+            display: inline-block;
+            width: 121px;
+            height: 51px;
+            float: right;
+        }
+        [type=submit]{
+            width: 120px;
+            height: 50px;
+        }
+        .content .contentBottom .article .articleBottom .GetCode .put p{
+            font-size:8px;
+            margin-top: 10px;
+        }
+        .content .contentBottom .article .articleBottom .code{
+            width: 422px;
+            height: 69px;
+            /*background-color: yellow;*/
+        }
+        .content .contentBottom .article .articleBottom .code .text{
+            width: 67px;
+            height: 27px;
+            line-height: 27px;
+            /*background-color: red;*/
+            float: left;
+            font-size:14px;
+        }
+        .content .contentBottom .article .articleBottom .code .put{
+            width: 334px;
+            height: 27px;
+            /*background-color: bisque;*/
+            float: right;
+        }
+        .content .contentBottom .article .articleBottom .code .put input,p{
+            height: 24px;
+            width: 270px;
+            color: grey;
+        }
+        .content .contentBottom .article .articleBottom .code .put p{
+            font-size:8px;
+            margin-top: 10px;
+        }
+        .content .contentBottom .article .articleBottom .check{
+            padding-top: 10px;
+            margin-left:88px;
+            box-sizing: border-box;
+        }
+        .content .contentBottom .article .articleBottom .check a{
+            text-decoration: none;
+            color: #003398;
+        }
+        .content .contentBottom .article .articleBottom .ZhuCe{
+            padding-top: 30px;
+            padding-left: 83px;
+            box-sizing: border-box;
+        }
+        .content .contentBottom .article .articleBottom .ZhuCe input[type=submit]{
+            width: 119px;
+            height: 37px;
+            color: white;
+            font-size: 15px;
+            border: none;
+        }
+        .content .contentBottom .aside{
+            float: right;
+            width: 316px;
+            height: 709px;
+            background-color: #f4f4f4;
+            padding-top: 106px;
+            padding-left: 45px;
+            box-sizing: border-box;
+
+        }
+        .content .contentBottom .aside .asideImg{
+            width: 241px;
+            height: 326px;
+        }
+        .star{
+            color: red;
+        }
+        .footer{
+            width: 960px;
+            height: 40px;
+            /*background-color: green;*/
+        }
+        .footer .FooterText{
+            margin-left:180px;
+            padding-top: 5px;
+            box-sizing: border-box;
+        }
+        .footer .FooterText,a{
+            text-decoration: none;
+            color: #989898;
+            font-size:10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+
+        </div>
+        <div class="links">
+            <a href="#">了解更多</a>
+            |
+            <a href="#">反馈意见</a>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentTop">
+            <div class="left">
+                <div class="right">
+                    <span>欢迎注册。</span>
+                </div>
+            </div>
+        </div>
+        <div class="contentBottom">
+            <div class="article">
+                <div class="articleTop">
+                    <ul>
+                        <li>注册手机号码</li>
+                    </ul>
+                </div>
+                <div class="articleBottom">
+                    <div class="PhoneNumber">
+                        <span class="text"><span class="star">*</span>手机号码</span>
+                        <div class="put">
+                            <input type="number" class="number" value="">
+                            <p>忘记密码时，可通过该手机号码快速找回密码</p>
+                        </div>
+                    </div>
+                    <div class="pw">
+                        <span class="text"><span class="star">*</span>密码</span>
+                        <div class="put">
+                            <input type="password" class="password" value="">
+                            <p>6~16个字符，区分大小写</p>
+                        </div>
+                    </div>
+                    <div class="Spw">
+                        <span class="text"><span class="star">*</span>确认密码</span>
+                        <div class="put">
+                            <input type="password" class="password" value="">
+                            <p>请再次输入密码</p>
+                        </div>
+                    </div>
+
+                    <!--<div class="GetCode">-->
+                        <!--<span class="text"><span class="star">*</span>验证码</span>-->
+                        <!--<div class="put">-->
+                            <!--<input type="text" value=""><img src="images/code.png" alt="">-->
+                            <!--<p>请填写图中的字符，不区分大小写</p>-->
+                            <!--<input type="submit" value="免费获取验证码">-->
+                        <!--</div>-->
+                    <!--</div>-->
+                    <!--<div class="code">-->
+                        <!--<span class="text"><span class="star">*</span>短信验证</span>-->
+                        <!--<div class="put">-->
+                            <!--<input type="password" value="">-->
+                            <!--<p>请查收手机短信，并填写短信中的验证码</p>-->
+                        <!--</div>-->
+                    <!--</div>-->
+                    <div class="check"><p >
+                        <input type="checkbox" checked="checked">同意<a href="#">"服务条款"</a>和<a href="#">"隐私权相关政策"</a></p>
+                    </div>
+                    <div class="ZhuCe">
+                        <input type="submit" class="submit" value="立即注册">
+                    </div>
+                </div>
+            </div>
+            <div class="aside">
+                <div class="asideImg"></div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+            <div class="FooterText">
+            <a href="#">关于速睿科技</a>
+            <a href="#">邮箱官方博客</a>
+            <a href="#">客户服务</a>
+            <a href="#">隐私政策</a>
+            |  速睿科技公司版权所有 © 2019-2029
+            </div>
+    </div>
+</body>
+<script>
+    $(function () {
+        $("input.submit").eq(0).button({icon: "i-icon-check", showLabel: true}).end().on("click", function (event, ui) {
+            console.log("下载:", event);
+            var no = $('.number').val();
+            var all_passwords = $('.password');
+            var password1 = $(all_passwords[0]).val();
+            var password2 = $(all_passwords[1]).val();
+            if(no.lenght<10 || password1.length==0 || password1 != password2){
+                alert("参数不对!");
+            }
+            var url = "/save/"
+            var params = {'mobile_no': no, "password": password1};
+            $.post(url, params, function (res) {
+                console.log("res:", res);
+            }, "json");
+            console.log("password2:", password2, params);
+
+        }).end();
+    });
+
+</script>
+</html>

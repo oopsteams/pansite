@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>File Partition</title>
+    <link href="/static/js/jquery-ui/jquery-ui.css" rel="stylesheet">
+    <script src="/static/js/jquery-ui/external/jquery/jquery.js"></script>
+    <script src="/static/js/jquery-ui/jquery-ui.js"></script>
+    <script src="/static/js/base.js"></script>
+</head>
+<body>
+    <fieldset>
+        <legend>清除文件传输临时节点</legend>
+        <div id="accordion">
+        {% if list %}
+            {% for item in list %}
+                <h3 id="h_{{item.id}}">{{item.fs_id}}({{item.filename}}) &nbsp; <button class="clear" data-id="{{item.id}}">清理</button></h3>
+                <dl id="dl_{{item.id}}">
+                    <dt>created_at</dt>
+                    <dd>{{item.created_at}}</dd>
+                    <dt>updated_at</dt>
+                    <dd>{{item.updated_at}}</dd>
+                    <dt>share_id</dt>
+                    <dd>{{item.share_id}}</dd>
+                    <dt>fs_id</dt>
+                    <dd>{{item.fs_id}}</dd>
+                    <dt>password</dt>
+                    <dd>{{item.password}}</dd>
+                    <dt>link</dt>
+                    <dd>{{item.link}}</dd>
+                    <dt>是否被Block</dt>
+                    <dd>{{item.is_black}}</dd>
+                </dl>
+            {% end %}
+        {% end %}
+        </div>
+    </fieldset>
+
+
+</body>
+<script>
+
+$(function () {
+    $( "#accordion" ).accordion({
+        beforeActivate: function (event, ui) {
+            console.log("event,ui:", event, ui)
+        }
+    });
+    $( ".clear" ).button({
+          "icon": "ui-icon-trash",
+          "showLabel": true
+        });
+    $( ".clear" ).on("click", (e)=>{
+        let share_item_id = e.currentTarget.dataset.id;
+        let params = {tk: GetQueryString('tk'), id: share_item_id};
+        console.log('clear share:', params);
+        $(e.currentTarget).button('disable');
+        call_service_by_get('/man/clearshare', params, function (res) {
+            let st = res['state'];
+            if(st == 0){
+                $('#dl_'+share_item_id).remove();
+                $('#h_'+share_item_id).remove();
+                $("#accordion").accordion("refresh");
+            }
+        });
+        e.stopPropagation();
+    });
+});
+
+</script>
+</html>

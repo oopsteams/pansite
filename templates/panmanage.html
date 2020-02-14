@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pan Manage</title>
+    <link href="/static/js/jquery-ui/jquery-ui.css" rel="stylesheet">
+    <script src="/static/js/jquery-ui/external/jquery/jquery.js"></script>
+    <script src="/static/js/jquery-ui/jquery-ui.js"></script>
+    <script src="/static/js/base.js"></script>
+</head>
+<body>
+    <fieldset>
+	    <legend>功能区</legend>
+        <div class="toolbar">
+            <button id="partial">文件临时节点</button>
+
+        </div>
+    </fieldset>
+    <div id="accordion">
+        {% if items %}
+        {% for item in items %}
+            <h3>{{item['name']}} &nbsp; <button class="ftree" data-id="{{item['id']}}">目录同步管理</button></h3>
+            <dl>
+                <dt>created_at</dt>
+                <dd>{{item['created_at']}}</dd>
+                <dt>refresh_token</dt>
+                <dd>{{item['refresh_token']}}</dd>
+                <dt>expires_at</dt>
+                <dd>{{item['expires_at']}}
+                    {% if item['expired']==1 %}
+                    <span style="color:red;">已过期</span>
+                    {% end %}
+                    <button class="refresh" data-id="{{item['id']}}">Refresh</button>
+                </dd>
+
+            </dl>
+        {% end %}
+    {% end %}
+    </div>
+
+</body>
+<script>
+
+$(function () {
+    $( "#accordion" ).accordion({
+        beforeActivate: function (event, ui) {
+            console.log("event,ui:", event, ui)
+        },
+        heightStyle: "content",
+        collapsible: true
+    });
+    $( ".ftree" ).button({
+          "icon": "ui-icon-wrench",
+          "showLabel": false
+        });
+    $( ".refresh" ).button({
+          "icon": "ui-icon-arrowreturnthick-1-e",
+          "showLabel": false
+        });
+    $( ".refresh" ).on("click", (e)=>{
+            let params = {panid: e.currentTarget.dataset.id};
+            call_service('/fresh_token/?tk=' + GetQueryString('tk'), params, function (res) {
+                let result = res['result'];
+                console.log('res result:', result);
+            })
+        });
+
+    $( ".ftree" ).on("click", (e)=>{
+        let panid = e.currentTarget.dataset.id;
+            // console.log(e)
+            // console.log(e.currentTarget.dataset.id)
+            document.location.href='/man/ftree?tk=' + GetQueryString('tk') + '&panid='+panid;
+        });
+    $('#partial').button({"icon": "ui-icon-gear","showLabel": true}).on('click',(event, ui)=>{
+            document.location.href='/man/fparts?tk=' + GetQueryString('tk');
+        });
+
+});
+
+
+</script>
+</html>

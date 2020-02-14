@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+	html { margin:0; padding:0; font-size:62.5%; }
+	body { margin:0 auto; padding:20px 10px; font-size:14px; font-size:1.4em; }
+	h1 { font-size:1.8em; }
+	.pan-tree { overflow:auto; border:1px solid silver; min-height:200px; }
+	</style>
+    <link href="/static/js/jstree/themes/default/style.min.css" rel="stylesheet">
+    <link href="/static/js/jquery-ui/jquery-ui.css" rel="stylesheet">
+    <script src="/static/js/jquery-ui/external/jquery/jquery.js"></script>
+    <script src="/static/js/jstree/jstree.min.js"></script>
+    <script src="/static/js/jquery-ui/jquery-ui.js"></script>
+    <script src="/static/js/base.js"></script>
+
+    <title>Title</title>
+</head>
+<body>
+<div class="toolbar">
+    <button id="panmanage">网盘维护</button>
+    <button id="undo">Undo</button>
+    <button id="redo">Redo</button>
+</div>
+	<h1>我的网盘资源</h1>
+	<div id="lazy" class="pan-tree"></div>
+
+	<script>
+	// html demo
+    let pan_id = '{{pan_id}}';
+    console.log('pan_id:', pan_id);
+	// lazy demo
+	$('#lazy').jstree({
+		'core' : {
+			'data' : {
+				"url" : "fload?lazy&tk="+GetQueryString('tk')+'&panid='+pan_id,
+				"data" : function (node) {
+				    console.log("lazy node:", node);
+				    let p = "/";
+				    let _params = { "id" : node.id, "path": p }
+				    if(node.data){
+                        $.extend(_params, node.data)
+                    }
+					return _params;
+				}
+			},
+            'themes' : {
+                'responsive' : false,
+                'variant' : 'small',
+                'stripes' : true
+            }
+		},
+        "types":{
+            '#': {"valid_children": ["root"]},
+            "root": {"valid_children":["default"]},
+            'default': {'icon': 'folder', "valid_children": ["default","file"]},
+            'file': {'valid_children': [], 'icon': 'glyphicon glyphicon-file'}
+      //   	'default' : { 'icon' : 'folder' },
+            // 'file' : { 'valid_children' : [], 'icon' : 'file' }
+        },
+        "plugins" : [
+            "contextmenu", "dnd", "search",
+            "state", "types", "wholerow"
+            // , "checkbox"
+          ]
+	});
+    $(function(){
+        $( "#panmanage" ).button({
+          "icon": "ui-icon-wrench",
+          "showLabel": true
+        });
+        $( "#redo" ).button({
+          "icon": "ui-icon-arrowreturnthick-1-e",
+          "showLabel": false
+        });
+        $( "#undo" ).button({
+          "icon": "ui-icon-arrowreturnthick-1-w",
+          "showLabel": false
+        });
+
+        $( ".toolbar" ).controlgroup();
+        $("#panmanage").on("click", (e)=>{
+            document.location.href='/man/init?tk=' + GetQueryString('tk');
+        });
+    });
+	</script>
+</body>
+</html>

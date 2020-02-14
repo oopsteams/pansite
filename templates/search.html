@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search</title>
+    <link href="/static/js/jquery-ui/jquery-ui.css" rel="stylesheet">
+    <script src="/static/js/jquery-ui/external/jquery/jquery.js"></script>
+    <script src="/static/js/jquery-ui/jquery.cookie.min.js"></script>
+    <script src="/static/js/jquery-ui/jquery-ui.js"></script>
+</head>
+<body>
+    <div>
+	    输入关键词:<input id="keyword_input" title="keyword &quot;a&quot;"><button class="search">Search</button><button class="shared_search">Shared Search</button>
+    </div>
+    <div id="list_container">
+
+    </div>
+    <div><button class="pre">Pre</button><button class="next">Next</button></div>
+</body>
+<script>
+    let page = 0;
+    let has_next = false;
+    let last_v = "";
+    function update_tags(source){
+        let v = $('#keyword_input').val();
+        if(v === last_v || v.length===0){
+            return;
+        }
+        last_v = v;
+        if(availableTags.indexOf(v)<0){
+            availableTags.splice(0, 0, v);
+            let _availableTags = availableTags.slice(0,50);
+            let tags_str = _availableTags.join("`");
+            console.log("tags_str:", tags_str);
+            $.cookie('tags', tags_str, {expires: 365})
+        }
+        $("#list_container").html('');
+        page = 0;
+        has_next = false;
+        load_datas(source);
+    }
+    let availableTags=[];
+    let tags = $.cookie('tags')
+    if(tags && tags.length>0){
+        availableTags = tags.split("`");
+    }
+    $( "#keyword_input" ).autocomplete({
+        source: availableTags
+    }).keydown(function (e) {
+        if(e.key === "Enter"){
+            update_tags();
+        }
+    });
+    $(".search").eq(0).button({icon: "ui-icon-search", showLabel: false}).end().on("click", function (event, ui) {
+        console.log("event:", event);
+        console.log("ui:", ui);
+        console.log("keyword_input:", $('#keyword_input').val());
+        update_tags();
+    }).end();
+    $(".shared_search").eq(0).button({icon: "ui-icon-search", showLabel: true}).end().on("click", function (event, ui) {
+        console.log("event:", event);
+        console.log("ui:", ui);
+        console.log("keyword_input:", $('#keyword_input').val());
+        update_tags('shared');
+    }).end();
+
+    let accordion_instance = null;
+    function load_datas(source) {
+        let v = $('#keyword_input').val();
+        if(v.length>0){
+            $.ajax({
+                url:"/source/load",
+                data:{kw: v, page: page, 'source': source},
+                dataType:"json",
+                method:"POST",
+                contentType:"application/x-www-form-urlencoded; charset=UTF-8",
+            }).done(function(res){
+                console.log("load rs:", res);
+                let file_list = res['data'];
+                console.log("load file_list:", file_list);
+                has_next = res['has_next'];
+                let container = $("#list_container")
+                $.each(file_list, function (index, item) {
+                    $('<h3/>', {html: item.filename}).appendTo(container);
+                    let sub_con = $('<div/>', {html: item.path}).appendTo(container);
+                    if(item['isdir'] === 0){
+                        $('<a/>', {html: "进入下载页", href: "/source/dlink?id="+item['id'], target: "_blank"}).appendTo(sub_con);
+                    }
+                    console.log("item:", item);
+                });
+                build_page_nav();
+                if(!accordion_instance){
+                    console.log("build new accordion_instance:", accordion_instance);
+                    accordion_instance = $( "#list_container" );
+                    accordion_instance.accordion({
+                        beforeActivate: function (event, ui) {
+                            console.log("event,ui:", event, ui)
+                        }
+                    });
+                }else{
+                    console.log("build refresh accordion_instance:", accordion_instance);
+                    accordion_instance.accordion("refresh");
+                }
+            });
+        }
+    }
+    function build_page_nav() {
+        if(has_next){
+            $(".next").show();
+        } else {
+            $(".next").hide();
+        }
+        if(page===0){
+            $(".pre").hide();
+        }else{
+            $(".pre").show();
+        }
+    }
+    $(".next").click(function () {
+       page = page + 1;
+       load_datas();
+    });
+    $(".pre").click(function () {
+       page = page - 1;
+       if(page<0){
+           page = 0;
+       }
+       load_datas();
+    });
+    build_page_nav();
+</script>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link href="/static/js/jstree/themes/default/style.min.css" rel="stylesheet">
+    <link href="/static/js/jquery-ui/jquery-ui.css" rel="stylesheet">
+    <script src="/static/js/jquery-ui/external/jquery/jquery.js"></script>
+    <script src="/static/js/jquery-ui/jquery.cookie.min.js"></script>
+    <script src="/static/js/jquery-ui/jquery-ui.js"></script>
+    <style type="text/css">
+            * {
+                    margin: 0px;
+            }
+
+            #content {
+                    margin: auto;
+                    width: 99%;
+                    height: 380px;
+                    border: 1px transparent solid;
+                    background-color: #21D4FD;
+                    background-image: linear-gradient(243deg, #21D4FD 0%, #B721FF 100%);
+                    background-image: -webkit-linear-gradient(243deg, #21D4FD 0%, #B721FF 100%);
+                    background-image: -moz-linear-gradient(243deg, #21D4FD 0%, #B721FF 100%);
+                    background-image: -o-linear-gradient(243deg, #21D4FD 0%, #B721FF 100%);
+            }
+
+            #box {
+                    margin: 50px auto;
+                    width: 60%;
+                    height: 300px;
+                    background-color: #fff;
+                    text-align: center;
+                    border-radius: 15px;
+                    border: 2px #fff solid;
+                    box-shadow: 10px 10px 5px #000000;
+            }
+
+            .title {
+                    line-height: 58px;
+                    margin-top: 20px;
+                    font-size: 36px;
+                    color: #000;
+                    height: 58px;
+            }
+
+            #box:hover {
+                    border: 2px #fff solid;
+            }
+
+            .input {
+                    margin-top: 20px;
+            }
+
+            input {
+                    margin-top: 5px;
+                    outline-style: none;
+                    border: 1px solid #ccc;
+                    border-radius: 3px;
+                    padding: 13px 14px;
+                    width: 80%;
+                    font-size: 14px;
+                    font-weight: 700;
+                    font-family: "Microsoft soft";
+            }
+
+            button {
+                    margin-top: 20px;
+                    border: none;
+                    color: #000;
+                    padding: 15px 32px;
+                    text-align: center;
+                    text-decoration: none;
+                    display: inline-block;
+                    font-size: 16px;
+                    border-radius: 15px;
+                    background-color: #CCCCCC;
+            }
+            button:hover{
+                    background-color: #B721FF;
+                    color: #fff;
+            }
+    </style>
+</head>
+<body>
+<div id="content">
+        <div id="box">
+                <div class="title">Login</div>
+                <div class="input">
+                        <input type="text" id="username" value="" placeholder="手机号码" />
+                        <br>
+                        <input type="password" id="password" placeholder="密码" />
+                        <br>
+                        <button type="button" onclick="login(true)">登录</button>
+                </div>
+        </div>
+</div>
+</body>
+<script>
+    let availableTags=[];
+    let tags = $.cookie('tags')
+    let auto_elem_id = 'username'
+    let last_v = "";
+    if(tags && tags.length>0){
+        availableTags = tags.split("`");
+    }
+    function update_tags(){
+        let v = $('#'+auto_elem_id).val();
+        if(v === last_v || v.length===0){
+            return;
+        }
+        last_v = v;
+        if(availableTags.indexOf(v)<0){
+            availableTags.splice(0, 0, v);
+            let _availableTags = availableTags.slice(0,50);
+            let tags_str = _availableTags.join("`");
+            console.log("tags_str:", tags_str);
+            $.cookie('tags', tags_str, {expires: 365})
+        }
+        // $("#list_container").html('');
+        // page = 0;
+        // has_next = false;
+        // load_datas(source);
+    }
+    $( "#"+auto_elem_id ).autocomplete({
+        source: availableTags
+    }).keydown(function (e) {
+        // if(e.key === "Enter"){
+        //     update_tags();
+        // }
+    });
+
+    function call_pansite_by_post(path, params, callback){
+        $.ajax({
+                url:"/"+path,
+                data:params,
+                dataType:"json",
+                method:"POST",
+                contentType:"application/x-www-form-urlencoded; charset=UTF-8",
+            }).done(function(res){
+                console.log("load rs:", res);
+                callback(true, res)
+            });
+    }
+    let _ref = '/source/manage';
+    function login(){
+        let mobile_no = document.getElementById("username").value;
+        let password = document.getElementById("password").value;
+        call_pansite_by_post("login/", {"mobile_no": mobile_no, "password": password, "single":1}, function(isok, res){
+        if(isok){
+            update_tags();
+            console.log('res token:', res['token']);
+            $.cookie('tk', res['token'], {expires: 7})
+            document.location.href=_ref+'?tk=' + res['token'];
+        }
+    });
+    }
+    $(function () {
+        let _tk = $.cookie('tk');
+        let _force = '{{force}}';
+        _ref = '{{ref}}';
+        if(_ref.length==0 || _ref.indexOf('/index')>=0 || _ref.indexOf('/ready_login/')>=0){
+            _ref = '/man/init';
+            _force = '1';
+        }
+        console.log('_tk:', _tk);
+        console.log('_ref:', _ref);
+        if(_tk && _force != '1'){
+            document.location.href=_ref+'?tk=' + _tk;
+        }
+    });
+
+</script>
+</html>

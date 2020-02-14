@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Download</title>
+    <link href="/static/js/jquery-ui/jquery-ui.css" rel="stylesheet">
+    <script src="/static/js/jquery-ui/external/jquery/jquery.js"></script>
+    <script src="/static/js/jquery-ui/jquery.cookie.min.js"></script>
+    <script src="/static/js/jquery-ui/jquery-ui.js"></script>
+</head>
+<body>
+    <div>
+        {% if item %}
+        <dl>
+            <dt>file name:</dt>
+            <dd>{{item.filename}}</dd>
+            <dt>file size:</dt>
+            <dd>{{item.size}}KB</dd>
+            <dt>file path:</dt>
+            <dd>{{item.path}}</dd>
+            <dt>file download link:</dt>
+            <!--<dd>{% if item.dlink %}<a href="javascript:toDownload('{{item.dlink}}', '{{item.filename}}')">Download</a>{% end %}</dd>-->
+            <dd>curl -L -o {{item.filename}} "{{item.dlink}}" -H "User-Agent: pan.baidu.com"</dd>
+        </dl>
+        {% end %}
+    </div>
+</body>
+<script>
+    function toDownload(url, name) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);//get请求，请求地址，是否异步
+        xhr.setRequestHeader("User-Agent", "pan.baidu.com");
+        xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
+        xhr.responseType = "blob";    // 返回类型blob
+        xhr.onload = function () {// 请求完成处理函数
+            if (this.status === 200) {
+                var blob = this.response;// 获取返回值
+                var a = document.createElement('a');
+                a.download = name;
+                a.href=window.URL.createObjectURL(blob);
+                a.click();
+            }
+        };
+        // 发送ajax请求
+        xhr.send();
+    }
+</script>
+</html>
