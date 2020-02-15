@@ -124,7 +124,23 @@ class OpenService(BaseService):
         if not source:
             source = 'shared'
         # kw = keyword.replace(' ', '%')
-        kw = keyword.replace(' ', ' AND ')
+        l_kw = keyword.lower()
+        pos = 0
+        idx = l_kw.find("or", start=pos)
+        _kw_secs = []
+        while idx >= pos:
+            s = keyword[pos:idx]
+            _s = s.strip()
+            _s = _s.replace(' ', ' AND ')
+            _kw_secs.append(_s)
+            pos = idx + 2
+            idx = l_kw.find("or", start=pos)
+        if _kw_secs:
+            new_keyword = " OR ".join(_kw_secs)
+        else:
+            new_keyword = keyword
+        kw = new_keyword
+
         size = 15
         offset = int(page) * size
         if offset > MAX_RESULT_WINDOW - size:
