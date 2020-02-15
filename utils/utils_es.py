@@ -221,11 +221,14 @@ def tags_filter(search_params: SearchParams, and_arr):
         and_arr.append({"terms": {"tags": tags}})
 
 
-def build_query_item_es_body(search_params: SearchParams, fields=None):
+def build_query_item_es_body(search_params: SearchParams, sort_fields=None, fields=None):
     offset = search_params.offset
     limit = search_params.size
     logger.debug("search_params.limit: %s", limit)
-    es_body = {"sort": ["_score"],
+    _default_sort = ["_score"]
+    if sort_fields:
+        _default_sort = sort_fields
+    es_body = {"sort": _default_sort,
                "query": {'bool': {}},
                "from": offset, "size": limit}
     # "query":{'function_score': {}}

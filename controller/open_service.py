@@ -126,21 +126,31 @@ class OpenService(BaseService):
         # kw = keyword.replace(' ', '%')
         l_kw = keyword.lower()
         pos = 0
-        idx = l_kw.find("or", start=pos)
+        idx = l_kw.find("or", pos)
         _kw_secs = []
         while idx >= pos:
             s = keyword[pos:idx]
             _s = s.strip()
-            _s = _s.replace(' ', ' AND ')
+            _s_arr = _s.split(' ')
+            _arr = [a for a in _s_arr if len(a) > 0]
+            _s = " AND ".join(_arr)
             _kw_secs.append(_s)
             pos = idx + 2
-            idx = l_kw.find("or", start=pos)
+            idx = l_kw.find("or", pos)
+        if pos < len(l_kw):
+            s = keyword[pos:]
+            _s = s.strip()
+            _s_arr = _s.split(' ')
+            _arr = [a for a in _s_arr if len(a) > 0]
+            _s = " AND ".join(_arr)
+            _kw_secs.append(_s)
+        # print("_kw_secs:", _kw_secs)
         if _kw_secs:
             new_keyword = " OR ".join(_kw_secs)
         else:
             new_keyword = keyword
         kw = new_keyword
-
+        # print("kw:", kw)
         size = 15
         offset = int(page) * size
         if offset > MAX_RESULT_WINDOW - size:
@@ -151,10 +161,12 @@ class OpenService(BaseService):
             # sp.add_must(value=kw)
             # sp.add_must(False, field='query_string', value="\"%s\"" % kw)
             sp.add_must(False, field='query_string', value="%s" % kw)
+        _sort_fields = None
         if source:
             if "local" == source:
                 es_dao_fun = es_dao_local
                 sp.add_must(is_match=False, field='isdir', value=0)
+                _sort_fields = [{"pin": {"order": "desc"}}]
             else:
                 sp.add_must(field='source', value=source)
                 sp.add_must(field='pin', value=1)
@@ -167,7 +179,7 @@ class OpenService(BaseService):
         if path_tag:
             sp.add_must(field='path', value="%s" % path_tag)
 
-        es_body = build_query_item_es_body(sp)
+        es_body = build_query_item_es_body(sp, sort_fields=_sort_fields)
         print("es_body:", json.dumps(es_body))
         es_result = es_dao_fun().es_search_exec(es_body)
         hits_rs = es_result["hits"]
