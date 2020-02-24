@@ -357,9 +357,11 @@ class MainHandler(BaseHandler):
             print('ref:', ref)
             # uri = url_encode('https://www.oopsteam.site/authlogin/')
             uri = 'https://www.oopsteam.site/authlogin/'
+            # uri = 'http://localhost:8080/authlogin'
             if '1' == v:
                 # self.render('index.html', **{'ref': ref, 'force': _force})
-                self.redirect(get_bd_auth_uri(uri, 'page'))
+                self.set_header("Referer", "https://www.oopsteam.site/index.html")
+                self.redirect(get_bd_auth_uri(uri, display='page'))
             else:
                 self.to_write_json({"result": "fail", "state": -1, 'force': _force,
                                     "lg": self.redirect(get_bd_auth_uri(uri))})
