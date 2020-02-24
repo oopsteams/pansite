@@ -105,12 +105,12 @@
                 delete ctxmenu.rename;
                 delete ctxmenu.create;
 
-                ctxmenu.clear={
+                ctxmenu.clear = {
                     'separator_after': false,
                     'separator_before': false,
                     'label': '清除',
-                    'action': function(data){
-                        dialog.dialog( "open" );
+                    'action': function (data) {
+                        dialog.dialog("open");
                         let inst = $.jstree.reference(data.reference),
                             node = inst.get_node(data.reference);
 
@@ -118,18 +118,21 @@
                         console.log('clear dir:', params);
                         call_service_by_get('/man/clear', params, function (res) {
                             let st = res['state'];
-                            if(st == 0){
+                            if (st == 0) {
                                 inst = $.jstree.reference(data.reference);
                                 node = inst.get_node(data.reference);
                                 inst.delete_node(node);
                                 refresh_jstree(data.reference);
-                                dialog.dialog( "close" );
+                                dialog.dialog("close");
                             }
                         });
                     }
                 };
-                if(node.data.isdir === 1){
-                    if(node.data.source == 'local') {
+                if (node.data.isdir === 0) {
+
+                }
+                if (node.data.isdir === 1) {
+                    if (node.data.source == 'local') {
                         ctxmenu.sync = {
                             'separator_after': false,
                             'separator_before': false,
@@ -138,7 +141,12 @@
                                 dialog.dialog("open");
                                 let inst = $.jstree.reference(data.reference),
                                     node = inst.get_node(data.reference);
-                                let params = {tk: GetQueryString('tk'), recursion: 0, 'panid': pan_id, 'id': node.data._id};
+                                let params = {
+                                    tk: GetQueryString('tk'),
+                                    recursion: 0,
+                                    'panid': pan_id,
+                                    'id': node.data._id
+                                };
                                 call_service_by_get('/source/syncallnodes', params, function (res) {
                                     let result = res['result'];
                                     console.log('res result:', result);
@@ -151,8 +159,8 @@
                             }
                         };
                     }
-                    if(node.data.path != '/') {
-                        if(node.data.source == 'local'){
+                    if (node.data.path != '/') {
+                        if (node.data.source == 'local') {
                             ctxmenu.syncall = {
                                 'separator_after': false,
                                 'separator_before': false,
@@ -161,7 +169,12 @@
                                     dialog.dialog("open");
                                     let inst = $.jstree.reference(data.reference),
                                         node = inst.get_node(data.reference);
-                                    let params = {tk: GetQueryString('tk'), recursion: 1, 'panid': pan_id, 'id': node.data._id};
+                                    let params = {
+                                        tk: GetQueryString('tk'),
+                                        recursion: 1,
+                                        'panid': pan_id,
+                                        'id': node.data._id
+                                    };
                                     call_service_by_get('/source/syncallnodes', params, function (res) {
                                         let result = res['result'];
                                         console.log('res result:', result);
@@ -193,7 +206,7 @@
                                 };
                                 let url = '/man/show';
                                 call_service_by_get(url, params, function (res) {
-                                    setTimeout(()=>{
+                                    setTimeout(() => {
                                         inst.refresh(node);
                                         dialog.dialog("close");
                                     }, 5000)
@@ -220,7 +233,7 @@
                                 };
                                 let url = '/man/hide';
                                 call_service_by_get(url, params, function (res) {
-                                    setTimeout(()=>{
+                                    setTimeout(() => {
                                         inst.refresh(node);
                                         dialog.dialog("close");
                                     }, 5000)
@@ -229,7 +242,7 @@
                         };
                     }
                 }
-                if(node.data.path != '/') {
+                if (node.data.path != '/') {
                     ctxmenu.product = {
                         'separator_after': false,
                         'separator_before': true,
@@ -257,40 +270,47 @@
                 let label = '标记搜索可见';
                 let url = '/man/show';
                 let pin_v = 1;
-                if(node.data.pin == 1){
+                if (node.data.pin == 1) {
                     label = '标记搜索隐藏';
                     url = '/man/hide';
                     pin_v = 0;
                 }
                 // console.log('menu node:', node);
-                ctxmenu.isvisible={
+                if (node.data.isdir == 1 && node.data.source == 'shared' || node.data.isdir == 0 && node.data.source == 'local'){
+                    ctxmenu.isvisible = {
                         'separator_after': false,
                         'separator_before': true,
                         'label': label,
-                        'action': function(data){
-                            dialog.dialog( "open" );
+                        'action': function (data) {
+                            dialog.dialog("open");
                             // console.log('isvisible data:', data);
                             let inst = $.jstree.reference(data.reference),
                                 node = inst.get_node(data.reference);
-                            let params = {tk: GetQueryString('tk'), recursion: 1, 'panid': pan_id, 'id': node.data._id, 'source': node.data.source};
+                            let params = {
+                                tk: GetQueryString('tk'),
+                                recursion: 1,
+                                'panid': pan_id,
+                                'id': node.data._id,
+                                'source': node.data.source
+                            };
                             call_service_by_get(url, params, function (res) {
                                 // inst.refresh(node);
                                 node.data.pin = pin_v;
-                                let el = $('#'+node.a_attr.id);
-                                if(el){
-                                    if(pin_v == 1){
+                                let el = $('#' + node.a_attr.id);
+                                if (el) {
+                                    if (pin_v == 1) {
                                         el.css('color', 'red');
                                     } else {
                                         el.css('color', 'black');
                                     }
                                 }
 
-                                dialog.dialog( "close" );
+                                dialog.dialog("close");
                             });
 
                         }
                     };
-
+                }
                 if(node.hasOwnProperty('menus')){
                     for(var m in node.menus){
                         ctxmenu[m] = node.menus[m];

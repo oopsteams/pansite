@@ -35,6 +35,7 @@ if __name__ == "__main__":
         (r"/register/", MainHandler, dict(middleware=middle_list)),
         (r"/access_code/", MainHandler, dict(middleware=middle_list)),
         (r"/ready_login/", MainHandler, dict(middleware=middle_list)),
+        (r"/authlogin/", MainHandler, dict(middleware=middle_list)),
         (r"/fresh_token/", MainHandler, dict(middleware=middle_list)),
         (r"/save/", MainHandler, dict(middleware=middle_list)),
         (r"/.*\.html", MainHandler, dict(middleware=middle_list)),

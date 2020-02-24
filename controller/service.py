@@ -11,7 +11,7 @@ from utils.utils_es import SearchParams, build_query_item_es_body
 from utils import get_payload_from_token
 from dao.es_dao import es_dao_share, es_dao_local
 import arrow
-from cfg import PAN_SERVICE
+from cfg import PAN_SERVICE, get_bd_auth_uri
 from controller.base_service import BaseService
 from controller.auth_service import auth_service
 import time
@@ -30,8 +30,7 @@ class PanService(BaseService):
     auth_point = "{}://{}".format(PAN_SERVICE['protocol'], PAN_SERVICE['auth_domain'])
     client_id = PAN_SERVICE['client_id']
     client_secret = PAN_SERVICE['client_secret']
-    FORCE_LOGIN = 1
-    pan_auth = "{}authorize?response_type=code&client_id={}&redirect_uri=oob&scope=basic,netdisk&display=tv&qrcode=0&force_login={}".format(auth_point, client_id, FORCE_LOGIN)
+    pan_auth = get_bd_auth_uri()
 
     def pan_accounts_dict(self) -> list:
         pan_acc_list = DataDao.pan_account_list()
@@ -61,6 +60,15 @@ class PanService(BaseService):
                 need_renew_access_token = True
                 need_renew_pan_acc.append({"id": pan_acc.id, "name": pan_acc.name, "use_cnt": pan_acc.use_count,
                                            "refresh": True, 'auth': self.pan_auth})
+        return need_renew_pan_acc
+
+    def all_pan_acc_list_by_user(self, user_id):
+        # acc: Accounts = DataDao.account_by_id(user_id)
+        pan_acc_list = DataDao.pan_account_list(user_id)
+        need_renew_pan_acc = []
+        for pan_acc in pan_acc_list:
+            need_renew_pan_acc.append({"id": pan_acc.id, "name": pan_acc.name, "use_cnt": pan_acc.use_count,
+                                       "refresh": True, 'auth': self.pan_auth})
         return need_renew_pan_acc
 
     def check_user(self, user_name, user_passwd):

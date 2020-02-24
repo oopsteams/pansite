@@ -41,7 +41,7 @@ USER_TYPE = dict(SINGLE=1, GROUP=2, ALL=4)
 FUN_BASE = dict(QUERY=1, NEW=2, UPDATE=4, DEL=8, MENU=16)
 
 TOP_DIR_FILE_NAME = 'root'
-SHARE_ES_TOP_POS = 1
+SHARE_ES_TOP_POS = 0
 
 
 def shared_format(link, code):

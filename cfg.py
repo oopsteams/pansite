@@ -71,3 +71,12 @@ ES = {
         "doctype": "dataitem"
     }
 }
+
+
+def get_bd_auth_uri(redirect_uri='oob'):
+    auth_point = "{}://{}".format(PAN_SERVICE['protocol'], PAN_SERVICE['auth_domain'])
+    client_id = PAN_SERVICE['client_id']
+    force_login = 1
+    pan_auth = "{}authorize?response_type=code&client_id={}&redirect_uri={}&scope=basic,netdisk&display=tv&" \
+               "qrcode=0&force_login={}".format(auth_point, client_id, redirect_uri, force_login)
+    return pan_auth

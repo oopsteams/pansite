@@ -147,12 +147,21 @@ class CommunityDao(object):
                                           parent=params.get('parent', ''), server_ctime=params.get('server_ctime', 0),
                                           sourceid=sourceid, sourceuid=sourceuid, md5_val="",
                                           sized=params.get("sized", 1), pin=params.get("pin", 0))
-
             with db:
                 data_item.save(force_insert=True)
                 if data_item.pin == 1:
                     CommunityVisible(id=data_item.id, show=1)
             cls.sync_community_item_to_es(data_item, source)
+        else:
+            print("new_community_item will update item:", params)
+            data_item: CommunityDataItem = CommunityDataItem.select().where(CommunityDataItem.fs_id == params['id']).first()
+            print("data_item parent:", data_item.parent, ",size:", data_item.size)
+            if data_item.parent != params.get('parent', '') or data_item.size != params.get('size', 0):
+                with db:
+                    CommunityDataItem.update(parent=params.get('parent', ''), size=params.get('size', 0)).where(
+                        CommunityDataItem.id == data_item.id).execute()
+                cls.update_es_by_community_item(data_item.id, {'parent': params.get('parent', ''),
+                                                               'size': params.get('size', 0)})
 
     @classmethod
     def sync_community_item_to_es(cls, data_item: CommunityDataItem, source):
@@ -161,8 +170,9 @@ class CommunityDao(object):
         if es_item_path.endswith(data_item.filename):
             # print("new path:", data_item.id)
             es_item_path = es_item_path[:-len(data_item.filename)]
-            _p = es_item_path.strip('/')
-            pos = len(_p.split('/'))
+            _p = data_item.path.strip('/')
+            if _p:
+                pos = len(_p.split('/'))
         body = utils_es.build_es_item_json_body(data_item.id, data_item.category, data_item.isdir, data_item.pin,
                                               data_item.fs_id, data_item.size, data_item.account_id, data_item.filename,
                                               es_item_path, data_item.server_ctime, data_item.updated_at,
@@ -172,6 +182,11 @@ class CommunityDao(object):
         es = es_dao_share()
         # print("body:", body)
         es.index(data_item.id, body)
+
+    @classmethod
+    def update_es_by_community_item(cls, doc_id, params):
+        es = es_dao_share()
+        es.update_fields(doc_id, **params)
 
     @classmethod
     def new_community_visible(cls, _id, show):
@@ -253,7 +268,7 @@ class CommunityDao(object):
         dog = 1000000
         while ln == size and dog > 0:
             dog = dog - 1
-            ms = DataItem.select().where(DataItem.parent == parent_id).offset(offset).limit(size)
+            ms = DataItem.select().where(DataItem.parent == parent_id, DataItem.isdir == 0).offset(offset).limit(size)
             ln = len(ms)
             item_list = []
             for cdi in ms:

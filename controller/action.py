@@ -6,10 +6,7 @@ import os
 import sys
 import json
 import traceback
-import datetime
-import arrow
-from utils import object_to_dict, restapi, CJsonEncoder, guess_file_type, get_payload_from_token, decrypt_user_id, \
-    get_now_ts
+from utils import CJsonEncoder, get_payload_from_token, decrypt_user_id, get_now_ts, url_encode
 from typing import Optional, Awaitable, Any
 from dao.dao import DataDao
 from dao.models import DataItem, try_release_conn
@@ -20,7 +17,7 @@ from utils.constant import LOGIN_TOKEN_TIMEOUT, USER_TYPE
 from controller.service import pan_service
 from controller.open_service import open_service
 from controller.sync_service import sync_pan_service
-from controller.auth_service import auth_service
+from cfg import get_bd_auth_uri
 
 LOGIN_TOKEN_KEY = "Suri-Token"
 FIELDS = ['id', 'category', 'isdir', 'filename', 'dlink', 'fs_id', 'path', 'size', 'parent', 'dlink_updated_at', 'account_id']
@@ -89,7 +86,7 @@ class BaseHandler(RequestHandler):
         if kw:
             error_trace_list = traceback.format_exception(*kw.get("exc_info"))
         if stat == 500:
-            print("server err:",error_trace_list)
+            print("server err:", error_trace_list)
         elif stat == 403:
             print("request forbidden!")
         else:
@@ -312,6 +309,11 @@ class MainHandler(BaseHandler):
             if is_single and 'token' in result:
                 result = {'token': result['token']}
             self.write(json.dumps(result))
+        elif path.endswith("/authlogin/"):
+            result = {'tag': 'authlogin'}
+            for f in self.request.query_arguments:
+                print("{}:{}".format(f, self.get_argument(f)))
+            self.write(json.dumps(result))
         elif path.endswith("/register/"):
             self.render('register.html')
         elif path.endswith("/access_code/"):
@@ -353,10 +355,14 @@ class MainHandler(BaseHandler):
             self.set_cookie('pan_site_force', '')
             print('v:', v)
             print('ref:', ref)
+            # uri = url_encode('https://www.oopsteam.site/authlogin/')
+            uri = 'https://www.oopsteam.site/authlogin/'
             if '1' == v:
-                self.render('index.html', **{'ref': ref, 'force': _force})
+                # self.render('index.html', **{'ref': ref, 'force': _force})
+                self.redirect(get_bd_auth_uri(uri))
             else:
-                self.to_write_json({"result": "fail", "state": -1, 'force': _force})
+                self.to_write_json({"result": "fail", "state": -1, 'force': _force,
+                                    "lg": self.redirect(get_bd_auth_uri(uri))})
         elif path.endswith("/fresh_token/"):
             pan_id = self.get_argument('panid')
             pan_service.fresh_token(pan_id)

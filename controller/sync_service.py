@@ -16,6 +16,7 @@ import time
 from dao.es_dao import es_dao_local
 from threading import Thread
 from utils.caches import cache_service
+from apscheduler.schedulers.background import BackgroundScheduler
 LOGIN_TOKEN_TIMEOUT = constant.LOGIN_TOKEN_TIMEOUT
 PAN_ACCESS_TOKEN_TIMEOUT = constant.PAN_ACCESS_TOKEN_TIMEOUT
 
@@ -157,6 +158,12 @@ class SyncPanService(BaseService):
                 CommunityDao.del_transfer_log_by_id(tl.id)
         CommunityDao.del_share_log_by_id(share_log_id)
 
+    def clear_all_expired_share_log(self):
+        item_list = CommunityDao.query_share_logs_by_hours(-24, 0, 50)
+        sl: ShareLogs = None
+        for sl in item_list:
+            self.clear_share_log(sl.id)
+
     def clear(self, item_id, pan_id):
         out_pan_acc: PanAccounts = DataDao.pan_account_by_id(pan_id)
 
@@ -209,3 +216,16 @@ class SyncPanService(BaseService):
 
 
 sync_pan_service = SyncPanService()
+scheduler = BackgroundScheduler()
+scheduler.start()
+
+
+@scheduler.scheduled_job('interval', minutes=30)
+# @scheduler.scheduled_job('cron',hour=16,minute=9,second=20)
+def scheduler_clear_all_expired_share_log():
+    try:
+        print("will exec clear_all_expired_share_log!!!")
+        sync_pan_service.clear_all_expired_share_log()
+        try_release_conn()
+    except Exception:
+        pass

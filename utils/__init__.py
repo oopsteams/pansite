@@ -12,7 +12,7 @@ from datetime import datetime, date
 from hashids import Hashids
 import jwt
 import random
-import math
+from urllib.parse import quote
 from cfg import HASH_ID_MIN_LENGTH, HASH_ID_SALT, JWT_SECRET_KEY
 
 default_tz = pytz.timezone('Asia/Chongqing')
@@ -54,6 +54,10 @@ def scale_size(get_size):
         rs = "{:.2f}T".format(_size)
 
     return rs
+
+
+def url_encode(s):
+    return quote(s)
 
 
 def object_to_dict(instance, fields=[], excludes=[]):

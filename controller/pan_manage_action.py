@@ -8,13 +8,11 @@ from tornado.web import authenticated
 from utils import compare_dt_by_now
 from controller.mpan_service import mpan_service
 from controller.sync_service import sync_pan_service
+from controller.service import pan_service
 from utils.constant import USER_TYPE
 
 
 class ManageHandler(BaseHandler):
-
-    def post(self):
-        self.get()
 
     @authenticated
     def get(self):
@@ -130,5 +128,14 @@ class ManageHandler(BaseHandler):
             share_item_id = int(self.get_argument("id", "0"))
             sync_pan_service.clear_share_log(share_item_id)
             self.to_write_json({'state': 0})
+        elif path.endswith("/pan_acc_list"):
+            need_renew_pan_acc = pan_service.all_pan_acc_list_by_user(self.user_id)
+            result = {"result": "ok", "pan_acc_list": need_renew_pan_acc}
+            print("result:", result)
+            self.to_write_json(result)
         else:
             self.to_write_json({})
+
+    def post(self):
+        self.get()
+
