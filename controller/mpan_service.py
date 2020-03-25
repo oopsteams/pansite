@@ -3,13 +3,13 @@
 Created by susy at 2020/1/6
 """
 from controller.base_service import BaseService
-from utils import singleton, log, guess_file_type
+from utils import singleton, log, guess_file_type, obfuscate_id
 from dao.community_dao import CommunityDao
 from dao.dao import DataDao
 from utils.utils_es import SearchParams, build_query_item_es_body
 from dao.es_dao import es_dao_share, es_dao_local
 from dao.models import DataItem
-from utils.constant import TOP_DIR_FILE_NAME, SHARE_ES_TOP_POS
+from utils.constant import TOP_DIR_FILE_NAME, SHARE_ES_TOP_POS, PRODUCT_TAG
 from utils import scale_size
 import sys
 sys.setrecursionlimit(1000000)
@@ -23,11 +23,34 @@ class MPanService(BaseService):
         for item in root_item_ms:
             _item_path = item.path
             pan = item.pan
-            params.append({"id": item.id, "text": pan.name, "data": {"path": _item_path, "_id": item.id,
+            params.append({"id": obfuscate_id(item.id), "text": pan.name, "data": {"path": _item_path, "_id": obfuscate_id(item.id),
                                                                      "server_ctime": item.server_ctime, "isdir": 1,
                                                                      "source": 'local'}, "children": True,
-                           "icon": "jstree-folder"})
+                           "icon": "folder"})
         return params
+
+    def parse_price(self, format_size, times):
+        min = 0.02
+        v = min
+        if not times:
+            times = 1
+        if format_size:
+            bit_list = ['B', 'K', 'M', 'G', 'T']
+            bit = format_size[-1]
+            v = 0
+            if bit_list.index(bit) > 1:
+                v = float(format_size[:-1])
+                # print("v:", v, ", format_size:", format_size)
+                if bit == 'M':
+                    v = v / 1000
+                elif bit == 'G':
+                    v = v
+                elif bit == 'T':
+                    v = v * 1000
+            if v < min:
+                v = min
+            v = v / times
+        return "{:.2f}".format(v)
 
     def query_file_list(self, parent_item_id):
         # item_list = CommunityDao.query_data_item_by_parent(parent_item_id, True, pan_id, limit=1000)
@@ -57,26 +80,44 @@ class MPanService(BaseService):
         for _s in hits_rs["hits"]:
             icon_val = "jstree-file"
             fn_name = _s["_source"]["filename"]
+            txt = fn_name
+            if "aliasname" in _s["_source"] and _s["_source"]["aliasname"]:
+                __idx = fn_name.rfind(".")
+                if __idx > 0:
+                    fn_name = fn_name[0:__idx]
+                txt = "[{}]{}".format(fn_name, _s["_source"]["aliasname"])
+            tags = _s["_source"]["tags"]
+            if not tags:
+                tags = []
+            isp = False
             has_children = False
             a_attr = {}
             if _s["_source"]["pin"] == 1:
                 a_attr = {'style': 'color:red'}
+            if PRODUCT_TAG in tags:
+                a_attr = {'style': 'color:green'}
+                isp = True
             if _s["_source"]["isdir"] == 1:
-                icon_val = "jstree-folder"
+                # icon_val = "jstree-folder"
+                icon_val = "folder"
                 has_children = True
             else:
-                f_type = guess_file_type(fn_name)
+                f_type = guess_file_type(txt)
                 if f_type:
-                    icon_val = "jstree-file jstree-file-%s" % f_type
-            node_text = _s["_source"]["filename"]
+                    icon_val = "jstree-file file-%s" % f_type
+            node_text = txt
             format_size = scale_size(_s["_source"]["size"])
+            price = self.parse_price(format_size, 2)
             if format_size:
                 node_text = "{}({})".format(node_text, format_size)
-
-            node_param = {"id": _s["_source"]["id"], "text": node_text,
+            item_id = _s["_source"]["id"]
+            item_fuzzy_id = obfuscate_id(item_id)
+            node_param = {"id": item_fuzzy_id, "text": node_text,
                           "data": {"path": _s["_source"]["path"], "server_ctime": _s["_source"].get("server_ctime", 0),
                                    "isdir": _s["_source"]["isdir"], "source": _s["_source"]["source"],
-                                   "pin": _s["_source"]["pin"], "_id": _s["_source"]["id"], "p_id": _s["_source"]["id"]}, "children": has_children, "icon": icon_val}
+                                   "pin": _s["_source"]["pin"], "_id": item_fuzzy_id, "isp": isp,
+                                   "sourceid": _s["_source"]["sourceid"], "p_id": _s["_source"]["id"], "price": price},
+                          "children": has_children, "icon": icon_val}
             if a_attr:
                 node_param['a_attr'] = a_attr
             params.append(node_param)
@@ -90,6 +131,7 @@ class MPanService(BaseService):
             sp.add_must(is_match=False, field="parent", value=parent_item_id)
         else:
             sp.add_must(is_match=False, field="pos", value=SHARE_ES_TOP_POS)
+            sp.add_must(is_match=False, field="parent", value=0)
         # sp.add_must(is_match=False, field="isdir", value=0)
         es_body = build_query_item_es_body(sp)
         print("query_share_list es_body:", es_body)
@@ -100,18 +142,25 @@ class MPanService(BaseService):
         for _s in hits_rs["hits"]:
             icon_val = "jstree-file"
             fn_name = _s["_source"]["filename"]
+            txt = fn_name
+            if "aliasname" in _s["_source"] and _s["_source"]["aliasname"]:
+                __idx = fn_name.rfind(".")
+                if __idx > 0:
+                    fn_name = fn_name[0:__idx]
+                txt = "[{}]{}".format(fn_name, _s["_source"]["aliasname"])
             has_children = False
             a_attr = {}
             if _s["_source"]["isdir"] == 1:
-                icon_val = "jstree-folder"
+                # icon_val = "jstree-folder"
+                icon_val = "folder"
                 has_children = True
                 if _s["_source"]["pin"] == 1:
                     a_attr = {'style': 'color:red'}
             else:
-                f_type = guess_file_type(fn_name)
+                f_type = guess_file_type(txt)
                 if f_type:
                     icon_val = "jstree-file file-%s" % f_type
-            node_text = _s["_source"]["filename"]
+            node_text = txt
             format_size = scale_size(_s["_source"]["size"])
             if format_size:
                 if _s["_source"]["isdir"] == 1:
@@ -122,7 +171,9 @@ class MPanService(BaseService):
                           "data": {"path": _s["_source"]["path"], "fs_id": _s["_source"]["fs_id"],
                                    "server_ctime": _s["_source"].get("server_ctime", 0),
                                    "isdir": _s["_source"]["isdir"], "source": _s["_source"]["source"],
-                                   "pin": _s["_source"]["pin"], "_id": _s["_source"]["id"], "p_id": _s["_source"]["fs_id"]},
+                                   "pin": _s["_source"]["pin"], "_id": _s["_source"]["id"],
+                                   "sourceid": _s["_source"]["sourceid"],
+                                   "p_id": _s["_source"]["fs_id"]},
                           "children": has_children, "icon": icon_val}
             if a_attr:
                 node_param['a_attr'] = a_attr

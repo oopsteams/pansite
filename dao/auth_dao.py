@@ -14,6 +14,11 @@ class AuthDao(object):
     # query
     @classmethod
     @query_wrap_db
+    def query_account_auth(cls, user_id) -> AuthUser:
+        return AuthUser.select().where(AuthUser.acc_id == user_id).first()
+
+    @classmethod
+    @query_wrap_db
     def account_list(cls, pin=None, _type=None, offset=0, page_size=30):
         if pin and _type:
             account_list = Accounts.select(Accounts, AuthUser
@@ -418,6 +423,11 @@ class AuthDao(object):
     def check_user(cls, username, mobile_no):
         return Accounts.select().where((Accounts.name == username) | (Accounts.mobile_no == mobile_no)).exists()
 
+    @classmethod
+    @query_wrap_db
+    def check_user_only_by_name(cls, username):
+        return Accounts.select().where(Accounts.name == username).exists()
+
     # update
     @classmethod
     def update_role(cls, role_id, params):
@@ -479,7 +489,7 @@ class AuthDao(object):
 
     @classmethod
     def new_account(cls, name, nickname, mobile_no, password, org_id, role_id, _type, extorgs, extroles, now,
-                    envelop_user_lambda: Callable[..., Tuple[str, dict]]=None):
+                    envelop_user_lambda: Callable[..., Tuple[str, dict]]=None, ctx=None):
         with db:
             user_token = None
             user_ext_dict = {}
@@ -497,7 +507,10 @@ class AuthDao(object):
                 for rid in extroles:
                     UserRoleExtend(acc_id=acc_id, role_id=rid).save(force_insert=True)
             if envelop_user_lambda:
-                user_token, user_ext_dict = envelop_user_lambda(acc)
+                if ctx:
+                    user_token, user_ext_dict = envelop_user_lambda(acc, ctx)
+                else:
+                    user_token, user_ext_dict = envelop_user_lambda(acc)
 
                 cls.update_account_by_pk(pk_id=acc_id, params={"fuzzy_id": user_ext_dict['id'], "login_updated_at": now,
                                                                "login_token": user_token})

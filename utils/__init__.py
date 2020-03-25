@@ -139,14 +139,18 @@ def obfuscate_id(raw_id):
     return hashider.encrypt(raw_id)
 
 
-def decrypt_user_id(fuzzy_user_id, is_raise_error=True):
-    val = hashider.decrypt(fuzzy_user_id)
+def decrypt_id(fuzzy_id, is_raise_error=True):
+    val = hashider.decrypt(fuzzy_id)
     if val and len(val) > 0:
         return val[0]
     else:
         if is_raise_error:
             raise TypeError("fuzzy id is incorrect!")
         return ''
+
+
+def decrypt_user_id(fuzzy_user_id, is_raise_error=True):
+    return decrypt_id(fuzzy_user_id, is_raise_error)
 
 
 def random_password(bit_count=4):
@@ -162,10 +166,28 @@ def random_password(bit_count=4):
     return "".join(password_list)
 
 
+__IMAGE_EXT_NAMES = ['.jpg', '.jpeg', '.png', '.gif', '.bmp']
+__VIDEO_EXT_NAMES = ['.mp4', '.flv', '.ts', '.avi', '.mkv', '.mov']
 __EXT_NAMES = ['.pdf', '.as', '.c', '.iso', '.htm', '.html', '.xml', '.xsl', '.cf', '.cpp', '.cs', '.sql', '.xls',
                'xlsx', '.h', '.crt', '.pem', '.cer', '.php', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.ppt', '.pptx',
                '.rb', '.text', '.txt', '.md', '.log', '.htaccess', '.doc', '.docx', '.zip', '.gz', '.tar', '.rar',
-               '.js', '.css', '.fla']
+               '.js', '.css', '.fla', '.mp3', '.srt', '.dmg', '.apk', '.swf'] + __VIDEO_EXT_NAMES
+
+
+def is_video_media(file_name):
+    _file_name = file_name.lower()
+    for suffix in __VIDEO_EXT_NAMES:
+        if _file_name.endswith(suffix):
+            return True
+    return False
+
+
+def is_image_media(file_name):
+    _file_name = file_name.lower()
+    for suffix in __IMAGE_EXT_NAMES:
+        if _file_name.endswith(suffix):
+            return True
+    return False
 
 
 def guess_file_type(file_name):

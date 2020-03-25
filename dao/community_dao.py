@@ -35,6 +35,16 @@ class CommunityDao(object):
 
     @classmethod
     @query_wrap_db
+    def get_data_item_by_id(cls, pk_id):
+        return CommunityDataItem.get_by_id(pk=pk_id)
+
+    @classmethod
+    @query_wrap_db
+    def query_community_item_by_parent_all(cls, parent_id, offset=0, limit=100):
+        return CommunityDataItem.select().where(CommunityDataItem.parent == parent_id).limit(limit).offset(offset)
+
+    @classmethod
+    @query_wrap_db
     def query_share_logs_by_hours(cls, hours, offset=0, limit=100):
         return ShareLogs.select().where(ShareLogs.updated_at < get_now_datetime(hours*60*60)).limit(limit).offset(offset)
 
@@ -114,7 +124,7 @@ class CommunityDao(object):
         with db:
             ShareFr.update(**_params).where(ShareFr.id == pk_id).execute()
 
-
+    # Del
     @classmethod
     def del_transfer_log_by_id(cls, pk_id):
         with db:
@@ -124,6 +134,33 @@ class CommunityDao(object):
     def del_share_log_by_id(cls, pk_id):
         with db:
             ShareLogs.delete().where(ShareLogs.id == pk_id).execute()
+
+    @classmethod
+    def del_community_item_by_id(cls, pk_id):
+        with db:
+            CommunityDataItem.delete().where(CommunityDataItem.id == pk_id).execute()
+
+    @classmethod
+    def del_save_community_list(cls, item_list, show):
+        if show == 1:
+            with db:
+                if show == 1:
+                    for cdi in item_list:
+                        CommunityVisible(id=cdi.id, show=1).save(force_insert=True)
+                else:
+                    for cdi in item_list:
+                        CommunityVisible.delete().where(CommunityVisible.id == cdi.id)
+
+    @classmethod
+    def del_save_local_list(cls, item_list, show):
+        if show == 1:
+            with db:
+                if show == 1:
+                    for cdi in item_list:
+                        LocalVisible(id=cdi.id, show=1).save(force_insert=True)
+                else:
+                    for cdi in item_list:
+                        LocalVisible.delete().where(LocalVisible.id == cdi.id)
 
     # new data
     @classmethod
@@ -200,17 +237,6 @@ class CommunityDao(object):
                 CommunityVisible.delete().where(CommunityVisible.id == _id)
 
     @classmethod
-    def del_save_community_list(cls, item_list, show):
-        if show == 1:
-            with db:
-                if show == 1:
-                    for cdi in item_list:
-                        CommunityVisible(id=cdi.id, show=1).save(force_insert=True)
-                else:
-                    for cdi in item_list:
-                        CommunityVisible.delete().where(CommunityVisible.id == cdi.id)
-
-    @classmethod
     def new_community_visible_by_parent(cls, parent_id, show):
         offset = 0
         size = 500
@@ -247,17 +273,6 @@ class CommunityDao(object):
         else:
             if show == 0:
                 LocalVisible.delete().where(LocalVisible.id == _id)
-
-    @classmethod
-    def del_save_local_list(cls, item_list, show):
-        if show == 1:
-            with db:
-                if show == 1:
-                    for cdi in item_list:
-                        LocalVisible(id=cdi.id, show=1).save(force_insert=True)
-                else:
-                    for cdi in item_list:
-                        LocalVisible.delete().where(LocalVisible.id == cdi.id)
 
     @classmethod
     def new_local_visible_by_parent(cls, parent_id, show):

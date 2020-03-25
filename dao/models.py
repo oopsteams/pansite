@@ -60,11 +60,22 @@ def init_db():
     db.create_tables([Accounts, DataItem, WorkerLoadMap, ShareLogs, Tags, UserTags, PanAccounts, TransferLogs,
                       AccountExt, CommunityDataItem, UserRootCfg, ShareFr, LoopAdTask, AdSource, AuthUser, UReference,
                       Fun, Role, RoleExtend, Org, OrgOrg, UserRefExtend, UserRoleExtend, UserOrgExtend, Product, Order,
-                      OrderItem, Assets, LocalVisible, CommunityVisible, ShareApp], safe=True)
+                      OrderItem, Assets, LocalVisible, CommunityVisible, ShareApp, DataItemExt, ClientDataItem,
+                      AppCfg], safe=True)
 
     with db:
         if not Org.select().where(Org.id == 1).exists():
             Org.insert_many({"id": 1, "name": "root"}).execute()
+            Org.insert_many({"id": 2, "name": "内部顶级", "parent": 1}).execute()
+            Org.insert_many({"id": 3, "name": "外部顶级", "parent": 1}).execute()
+            Org.insert_many({"id": 4, "name": "内部人员", "parent": 2}).execute()
+            Org.insert_many({"id": 5, "name": "普通客户组", "parent": 3}).execute()
+            OrgOrg.insert_many({"org_id": 2, "parent": 1}).execute()
+            OrgOrg.insert_many({"org_id": 3, "parent": 1}).execute()
+            OrgOrg.insert_many({"org_id": 4, "parent": 1}).execute()
+            OrgOrg.insert_many({"org_id": 4, "parent": 2}).execute()
+            OrgOrg.insert_many({"org_id": 5, "parent": 1}).execute()
+            OrgOrg.insert_many({"org_id": 5, "parent": 3}).execute()
         if not Fun.select().where(Fun.id == 1).exists():
             base_fun_list = [{"id": 1, "code": 1, "desc": "query"},
                              {"id": 2, "code": 2, "desc": "new"},
@@ -144,7 +155,7 @@ class BaseModel(Model):
 
 class AccountExt(BaseModel):
     id = AutoField()
-    user_id = IntegerField(null=False, default=0)
+    user_id = BigIntegerField(null=False, default=0)
     username = CharField(null=True, max_length=64)
     realname = CharField(null=True, max_length=64)
     portrait = CharField(null=True, max_length=1024)  # 用户的头像
@@ -174,7 +185,7 @@ class AccountExt(BaseModel):
 
 class PanAccounts(BaseModel):
     id = AutoField()
-    user_id = IntegerField(null=False, default=0)
+    user_id = IntegerField(null=False, default=0, index=True)
     name = CharField(null=True, max_length=64)
     password = CharField(null=True, max_length=64)
     client_id = CharField(null=True, max_length=64)
@@ -198,7 +209,7 @@ class PanAccounts(BaseModel):
 
 class Accounts(BaseModel):
     id = AutoField()
-    name = CharField(null=False, max_length=64)
+    name = CharField(null=False, max_length=64, unique=True)
     nickname = CharField(max_length=128)
     password = CharField(null=False, max_length=64)
     # client_id = CharField(null=True, max_length=64)
@@ -208,7 +219,7 @@ class Accounts(BaseModel):
     # token_updated_at = DateTimeField(null=True)
     login_updated_at = DateTimeField(null=True)
     mobile_no = CharField(null=False, max_length=16)
-    fuzzy_id = CharField(null=True, max_length=16)
+    fuzzy_id = CharField(null=True, max_length=16, index=True)
     pin = IntegerField(null=False, default=0)
     last_login_at = DateTimeField(null=True)
 
@@ -222,12 +233,33 @@ class Accounts(BaseModel):
         return object_to_dict(instance, cls.field_names(), excludes)
 
 
+class DataItemExt(Model):
+    id = IntegerField(null=False, default=0)
+    fs_id = CharField(null=False, max_length=64)
+    mlink = CharField(null=True, max_length=1024)
+    start_at_time = IntegerField(null=False, default=0)
+
+    class Meta:
+        database = db
+        primary_key = CompositeKey('id')
+
+    @classmethod
+    def field_names(cls):
+        return ["id", "fs_id", "mlink", "start_at_time"]
+
+    @classmethod
+    def to_dict(cls, instance):
+        return object_to_dict(instance, cls.field_names())
+
+
 class DataItem(BaseModel):
     id = AutoField()
     category = IntegerField(null=False, default=0)
     isdir = IntegerField(null=False, default=0)
     filename = CharField(null=True, max_length=256)
+    aliasname = CharField(null=True, max_length=256)
     dlink = CharField(null=True, max_length=1024)
+    thumb = CharField(null=True, max_length=1024)
     fs_id = CharField(null=False, max_length=64)
     path = CharField(null=True, max_length=1024)
     size = BigIntegerField(null=False, default=0)
@@ -248,13 +280,51 @@ class DataItem(BaseModel):
 
     @classmethod
     def field_names(cls):
-        return BASE_FIELDS + ["id", "category", "isdir", "filename", "dlink", "fs_id", "path", "size",
+        return BASE_FIELDS + ["id", "category", "isdir", "filename", "aliasname", "dlink", "fs_id", "path", "size",
                                              "md5_val", "parent", "dlink_updated_at", "pin", "server_ctime",
-                                             "account_id", "panacc", "sized", "synced"]
+                                             "account_id", "panacc", "sized", "synced", "thumb"]
 
     @classmethod
-    def to_dict(cls, instance):
-        return object_to_dict(instance, cls.field_names())
+    def to_dict(cls, instance, excludes=[]):
+        return object_to_dict(instance, cls.field_names(), excludes)
+
+
+class ClientDataItem(BaseModel):
+    id = AutoField()
+    category = IntegerField(null=False, default=0)
+    isdir = IntegerField(null=False, default=0)
+    filename = CharField(null=True, max_length=256)
+    aliasname = CharField(null=True, max_length=256)
+    dlink = CharField(null=True, max_length=1024)
+    thumb = CharField(null=True, max_length=1024)
+    fs_id = CharField(null=False, max_length=64)
+    path = CharField(null=True, max_length=1024)
+    size = BigIntegerField(null=False, default=0)
+    md5_val = CharField(null=False, max_length=64)
+    parent = IntegerField(null=False, default=0, index=True)
+    dlink_updated_at = DateTimeField(null=True)
+    pin = IntegerField(null=False, default=0)
+    sized = IntegerField(null=False, default=0)
+    synced = IntegerField(null=False, default=0)
+    server_ctime = IntegerField(null=False, default=0)
+    ref_id = IntegerField(null=False, default=0, index=True)
+    source_fs_id = CharField(null=False, max_length=64, index=True)
+    panacc = IntegerField(null=False, default=0)
+
+    def equals(self, dataitem):
+        if dataitem:
+            return self.md5_val == dataitem.md5_val
+        return False
+
+    @classmethod
+    def field_names(cls):
+        return BASE_FIELDS + ["id", "category", "isdir", "filename", "aliasname", "dlink", "fs_id", "path", "size",
+                                             "md5_val", "parent", "dlink_updated_at", "pin", "server_ctime",
+                                             "ref_id", "panacc", "sized", "synced", "thumb", "source_fs_id"]
+
+    @classmethod
+    def to_dict(cls, instance, excludes=[]):
+        return object_to_dict(instance, cls.field_names(), excludes)
 
 
 class LocalVisible(Model):
@@ -279,6 +349,7 @@ class CommunityDataItem(BaseModel):
     category = IntegerField(null=False, default=0)
     isdir = IntegerField(null=False, default=0)
     filename = CharField(null=True, max_length=256)
+    aliasname = CharField(null=True, max_length=256)
     fs_id = CharField(null=False, max_length=64, index=True)
     path = CharField(null=True, max_length=1024)
     size = BigIntegerField(null=False, default=0)
@@ -299,7 +370,7 @@ class CommunityDataItem(BaseModel):
 
     @classmethod
     def field_names(cls):
-        return BASE_FIELDS + ["id", "category", "isdir", "filename", "fs_id", "path", "size",
+        return BASE_FIELDS + ["id", "category", "isdir", "filename", "aliasname", "fs_id", "path", "size",
                                              "md5_val", "parent", "pin", "server_ctime",
                                              "account_id", "sourceid", "sourceuid"]
 
@@ -476,7 +547,7 @@ class UserRootCfg(BaseModel):
     account_id = IntegerField(null=False, default=0)
     panacc = IntegerField(null=True, default=0)
     pin = IntegerField(null=False, default=0)
-    source = CharField(null=True, max_length=16)
+    source = CharField(null=True, max_length=16, index=True)
     desc = CharField(null=True, max_length=256)
 
     @classmethod
@@ -698,11 +769,12 @@ class Product(BaseModel):
     ref_id = IntegerField(null=False, default=0)
     data_id = IntegerField(null=False, default=0)
     price = IntegerField(null=False, default=0)  # 分
-    size = IntegerField(null=False, default=0)
+    size = BigIntegerField(null=False, default=0)
+    pin = IntegerField(null=False, default=0)
 
     @classmethod
     def field_names(cls):
-        return BASE_FIELDS + ["id", "pro_no", "isdir", "name", "fs_id", "ref_id", "data_id", "price", "size"]
+        return BASE_FIELDS + ["id", "pro_no", "isdir", "name", "fs_id", "ref_id", "data_id", "price", "size", "pin"]
 
     @classmethod
     def to_dict(cls, instance, excludes=[]):
@@ -747,10 +819,14 @@ class Assets(BaseModel):
     fs_id = CharField(null=False, max_length=64)
     isdir = IntegerField(null=False, default=0)
     ref_id = IntegerField(null=False, default=0)
+    price = IntegerField(null=False, default=0)  # 分
+    desc = CharField(null=True, max_length=256)
+    format_size = CharField(null=False, max_length=64)
+    pin = IntegerField(null=False, default=0)
 
     @classmethod
     def field_names(cls):
-        return BASE_FIELDS + ["id", "ord_no", "pro_no", "fs_id", "isdir", "ref_id"]
+        return BASE_FIELDS + ["id", "ord_no", "pro_no", "fs_id", "isdir", "ref_id", "desc", "format_size", "price", "pin"]
 
     @classmethod
     def to_dict(cls, instance, excludes=[]):
@@ -772,6 +848,23 @@ class ShareApp(Model):
     class Meta:
         database = db
         primary_key = CompositeKey('app_id')
+
+
+class AppCfg(BaseModel):
+    id = AutoField()
+    key = CharField(null=False, max_length=20, unique=True)
+    name = CharField(null=True, max_length=64)
+    val = CharField(null=True, max_length=2014)
+    type = CharField(null=True, max_length=10)
+    pin = IntegerField(null=False, default=0)
+
+    @classmethod
+    def field_names(cls):
+        return ["key", "name", "val", "type"]
+
+    @classmethod
+    def to_dict(cls, instance, excludes=[]):
+        return object_to_dict(instance, cls.field_names(), excludes)
 
 
 if '__main__' == __name__:

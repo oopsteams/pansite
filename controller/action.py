@@ -2,21 +2,22 @@
 """
 Created by susy at 2019/10/17
 """
-import os
 import sys
 import json
 import traceback
-from utils import CJsonEncoder, get_payload_from_token, decrypt_user_id, get_now_ts, url_encode
+from utils import CJsonEncoder, get_payload_from_token, decrypt_user_id, get_now_ts, decrypt_id
 from typing import Optional, Awaitable, Any
 from dao.dao import DataDao
+from dao.product_dao import ProductDao
 from dao.models import DataItem, try_release_conn
 from dao.es_dao import es_dao_share, es_dao_local
 from tornado.web import RequestHandler, authenticated
 from utils.utils_es import SearchParams, build_query_item_es_body
-from utils.constant import LOGIN_TOKEN_TIMEOUT, USER_TYPE
+from utils.constant import LOGIN_TOKEN_TIMEOUT, USER_TYPE, PAN_TREE_TXT
 from controller.service import pan_service
 from controller.open_service import open_service
 from controller.sync_service import sync_pan_service
+from controller.auth_service import auth_service
 from cfg import get_bd_auth_uri
 
 LOGIN_TOKEN_KEY = "Suri-Token"
@@ -34,6 +35,8 @@ class BaseHandler(RequestHandler):
         self.user_payload = None
         self.user_type = USER_TYPE['SINGLE']
         self.user_id = 0
+        self.ref_id = 0
+        self.default_pan_id = 0
         self.is_web = False
         self.query_path = ''
         self.token = None
@@ -50,7 +53,7 @@ class BaseHandler(RequestHandler):
         # headers = self.request.headers
         # print("get_current_user headers:", headers)
         # print("get_current_user in...")
-        # print("user_payload:", self.user_payload)
+        # print("get_current_user user_payload:", self.user_payload)
 
         if self.user_payload:
             if 'id' in self.user_payload:
@@ -137,19 +140,48 @@ class PanHandler(BaseHandler):
         elif path.endswith("/fload"):
             source = self.get_argument("source", "")
             node_id = self.get_argument("id")
-            parent_path = self.get_argument("path")
-            if not parent_path.endswith("/"):
-                parent_path = "%s/" % parent_path
-            print("node_id:", node_id)
-            parent_id = 55
+            # parent_path = self.get_argument("path")
+            # if not parent_path.endswith("/"):
+            #     parent_path = "%s/" % parent_path
+            print("fload node_id:", node_id, ",source:", source)
+            # parent_id = 55
+            params = []
             if not '#' == node_id:
-                parent_id = int(node_id)
-                if "shared" == source:
-                    params = pan_service.query_shared_file_list(parent_id, self.request.user_id)
+                # if "shared" == source:
+                #     params = pan_service.query_shared_file_list(parent_id, self.request.user_id)
+                if "assets" == source:
+                    if 'assets_0' == node_id:
+                        params = ProductDao.query_assets_by_ref_id_for_tree(self.ref_id)
+                elif "free" == source:
+                    if 'free_0' == node_id:
+                        params = pan_service.query_root_list(self.request.user_id)
+                elif "self" == source:
+                    if 'self_0' == node_id:
+                        if not self.default_pan_id:
+                            pan_acc = auth_service.default_pan_account(self.user_id)
+                            self.default_pan_id = pan_acc.id
+                        if self.default_pan_id:
+                            params = pan_service.query_client_root_list(self.default_pan_id)
+                    else:
+                        node_id_val = decrypt_id(node_id)
+                        parent_id = int(node_id_val)
+                        params = pan_service.query_client_sub_list(parent_id, self.ref_id)
+                elif "empty" == source:
+                    pass
                 else:
+                    node_id_val = decrypt_id(node_id)
+                    parent_id = int(node_id_val)
                     params = pan_service.query_file_list(parent_id)
             else:
-                params = pan_service.query_root_list(self.request.user_id)
+                # params = pan_service.query_root_list(self.request.user_id)
+                params.append({"id": "assets_0", "text": PAN_TREE_TXT['buy_root'], "data": {"source": "assets"},
+                               "children": True, "icon": "folder"})
+                params.append({"id": "free_0", "text": PAN_TREE_TXT['free_root'], "data": {"source": "free"},
+                               "children": True, "icon": "folder"})
+                params.append({"id": "self_0", "text": PAN_TREE_TXT['self_root'], "data": {"source": "self"},
+                               "children": True, "icon": "folder"})
+                params.append({"id": "empty_0", "text": PAN_TREE_TXT['empty_root'], "data": {"source": "empty"},
+                               "children": False, "icon": "file"})
 
             self.to_write_json(params)
         elif path.endswith("/search"):
@@ -187,7 +219,9 @@ class PanHandler(BaseHandler):
             # print("rs:", rs)
             self.to_write_json(rs)
         elif path.endswith("/finfo"):
-            item_id = self.get_argument("id")
+            # item_id = self.get_argument("id")
+            item_fuzzy_id = self.get_argument("id")
+            item_id = int(decrypt_id(item_fuzzy_id))
             params = pan_service.query_file(item_id)
             self.to_write_json(params)
         elif path.endswith("/readydownload"):
@@ -252,8 +286,10 @@ class PanHandler(BaseHandler):
             res = pan_service.pan_accounts_dict()
             self.to_write_json(res)
         elif path.endswith("/syncallnodes"):
-            item_id = self.get_argument("id", None)
+            item_fuzzy_id = self.get_argument("id", None)
+            item_id = int(decrypt_id(item_fuzzy_id))
             pan_id = self.get_argument('panid', "0")
+            print("syncallnodes pan_id:", pan_id)
             pan_id = int(pan_id)
             recursion = self.get_argument("recursion")
             if recursion == "1":
@@ -294,88 +330,87 @@ class PanHandler(BaseHandler):
         self.get()
 
 
-class MainHandler(BaseHandler):
-
-    def get(self):
-        path = self.request.path
-        if path.endswith("/login/"):
-            print("login body:", self.request.body)
-            # self.get_argument("mobile_no")
-            user_name = self.get_body_argument("mobile_no")
-            user_passwd = self.get_body_argument("password")
-            is_single = self.get_body_argument('single', '0', True) == '1'
-            result = pan_service.check_user(user_name, user_passwd)
-            print("result:", result)
-            if is_single and 'token' in result:
-                result = {'token': result['token']}
-            self.write(json.dumps(result))
-        elif path.endswith("/authlogin/"):
-            result = {'tag': 'authlogin'}
-            for f in self.request.query_arguments:
-                print("{}:{}".format(f, self.get_argument(f)))
-            self.write(json.dumps(result))
-        elif path.endswith("/register/"):
-            self.render('register.html')
-        elif path.endswith("/access_code/"):
-            print("login body:", self.request.body)
-            token = self.get_body_argument("token")
-            code = self.get_body_argument("code")
-            pan_name = self.get_body_argument("pan_name")
-            refresh_str = self.get_body_argument("refresh")
-            print('refresh_str:', refresh_str)
-            can_refresh = True
-            if refresh_str == '0':
-                can_refresh = False
-            payload = get_payload_from_token(token)
-            user_id = decrypt_user_id(payload['id'], )
-            print("payload:", payload)
-            print("can_refresh:", can_refresh)
-            access_token, pan_acc_id, err = pan_service.get_pan_user_access_token(user_id, code, pan_name, can_refresh)
-            need_renew_pan_acc = pan_service.load_pan_acc_list_by_user(user_id)
-            result = {"result": "ok", "access_token": access_token, "pan_acc_id": pan_acc_id, "token": self.token}
-            if need_renew_pan_acc:
-                result['pan_acc_list'] = need_renew_pan_acc
-            if err:
-                result = {"result": "fail", "error": err}
-            print("result:", result)
-            self.to_write_json(result)
-        elif path.endswith("/save/"):
-            mobile_no = self.get_body_argument("mobile_no")
-            passwd = self.get_body_argument("password")
-            token, fuzzy_id, err = pan_service.save_user(mobile_no, passwd)
-            result = {"result": "ok", "token": token, "fuzzy_id": fuzzy_id}
-            if err:
-                result = {"result": "fail", "error": err}
-            print("result:", result)
-            self.write(json.dumps(result))
-        elif path.endswith("/ready_login/"):
-            v = self.get_cookie('pan_site_is_web')
-            ref = self.get_cookie('pan_site_ref')
-            _force = self.get_cookie('pan_site_force')
-            self.set_cookie('pan_site_force', '')
-            print('v:', v)
-            print('ref:', ref)
-            # uri = url_encode('https://www.oopsteam.site/authlogin/')
-            uri = 'https://www.oopsteam.site/authlogin/'
-            # uri = 'http://localhost:8080/authlogin'
-            if '1' == v:
-                # self.render('index.html', **{'ref': ref, 'force': _force})
-                self.set_header("Referer", "https://www.oopsteam.site/index.html")
-                self.redirect(get_bd_auth_uri(uri, display='page'))
-            else:
-                self.to_write_json({"result": "fail", "state": -1, 'force': _force,
-                                    "lg": self.redirect(get_bd_auth_uri(uri))})
-        elif path.endswith("/fresh_token/"):
-            pan_id = self.get_argument('panid')
-            pan_service.fresh_token(pan_id)
-            self.to_write_json({"result": "ok"})
-        else:
-            if path and len(path) > 1 and path[0] == '/':
-                path = path[1:]
-                self.render(path, **{'ref': '', 'force': ''})
-            else:
-                self.render('index.html', **{'ref': '', 'force': ''})
-
-    def post(self):
-        self.get()
+# class MainHandler(BaseHandler):
+#
+#     def get(self):
+#         path = self.request.path
+#         if path.endswith("/login/"):
+#             print("login body:", self.request.body)
+#             # self.get_argument("mobile_no")
+#             user_name = self.get_body_argument("mobile_no")
+#             user_passwd = self.get_body_argument("password")
+#             is_single = self.get_body_argument('single', '0', True) == '1'
+#             result = pan_service.check_user(user_name, user_passwd)
+#             print("result:", result)
+#             if is_single and 'token' in result:
+#                 result = {'token': result['token'], 'login_at': result['login_at'], 'id': result['id']}
+#             self.write(json.dumps(result))
+#         elif path.endswith("/authlogin/"):
+#             result = {'tag': 'authlogin'}
+#             for f in self.request.query_arguments:
+#                 print("{}:{}".format(f, self.get_argument(f)))
+#             self.write(json.dumps(result))
+#         elif path.endswith("/register/"):
+#             self.render('register.html')
+#         elif path.endswith("/access_code/"):
+#             print("login body:", self.request.body)
+#             token = self.get_body_argument("token")
+#             code = self.get_body_argument("code")
+#             pan_name = self.get_body_argument("pan_name")
+#             refresh_str = self.get_body_argument("refresh")
+#             print('refresh_str:', refresh_str)
+#             can_refresh = True
+#             if refresh_str == '0':
+#                 can_refresh = False
+#             payload = get_payload_from_token(token)
+#             user_id = decrypt_user_id(payload['id'], )
+#             print("payload:", payload)
+#             print("can_refresh:", can_refresh)
+#             access_token, pan_acc_id, err = pan_service.get_pan_user_access_token(user_id, code, pan_name, can_refresh)
+#             need_renew_pan_acc = pan_service.load_pan_acc_list_by_user(user_id)
+#             result = {"result": "ok", "access_token": access_token, "pan_acc_id": pan_acc_id, "token": self.token}
+#             if need_renew_pan_acc:
+#                 result['pan_acc_list'] = need_renew_pan_acc
+#             if err:
+#                 result = {"result": "fail", "error": err}
+#             print("result:", result)
+#             self.to_write_json(result)
+#         elif path.endswith("/save/"):
+#             mobile_no = self.get_body_argument("mobile_no")
+#             passwd = self.get_body_argument("password")
+#             token, fuzzy_id, err = pan_service.save_user(mobile_no, passwd)
+#             result = {"result": "ok", "token": token, "fuzzy_id": fuzzy_id}
+#             if err:
+#                 result = {"result": "fail", "error": err}
+#             print("result:", result)
+#             self.write(json.dumps(result))
+#         elif path.endswith("/ready_login/"):
+#             v = self.get_cookie('pan_site_is_web')
+#             ref = self.get_cookie('pan_site_ref')
+#             _force = self.get_cookie('pan_site_force')
+#             self.set_cookie('pan_site_force', '')
+#             print('ready_login v:', v)
+#             print('ready_login ref:', ref)
+#             uri = 'https://www.oopsteam.site/authlogin/'
+#             # uri = 'http://localhost:8080/authlogin'
+#             if '1' == v:
+#                 self.render('index.html', **{'ref': ref, 'force': _force})
+#                 # self.set_header("Referer", "https://www.oopsteam.site/index.html")
+#                 # self.redirect(get_bd_auth_uri(uri, display='page'))
+#             else:
+#                 self.to_write_json({"result": "fail", "state": -1, 'force': _force,
+#                                     "lg": get_bd_auth_uri(uri)})
+#         elif path.endswith("/fresh_token/"):
+#             pan_id = self.get_argument('panid')
+#             pan_service.fresh_token(pan_id)
+#             self.to_write_json({"result": "ok"})
+#         else:
+#             if path and len(path) > 1 and path[0] == '/':
+#                 path = path[1:]
+#                 self.render(path, **{'ref': '', 'force': ''})
+#             else:
+#                 self.render('index.html', **{'ref': '', 'force': ''})
+#
+#     def post(self):
+#         self.get()
 

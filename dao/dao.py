@@ -3,7 +3,7 @@
 Created by susy at 2019/10/17
 """
 
-from dao.models import db, Accounts, DataItem, PanAccounts, ShareLogs, TransferLogs, AccountExt, UserRootCfg, \
+from dao.models import db, Accounts, DataItem, DataItemExt, PanAccounts, ShareLogs, TransferLogs, AccountExt, UserRootCfg, \
     query_wrap_db
 from utils import utils_es, get_now_datetime
 from dao.es_dao import es_dao_local
@@ -45,6 +45,19 @@ class DataDao(object):
 
     @classmethod
     @query_wrap_db
+    def query_pan_acc_count_by_acc_id(cls, acc_id):
+        model_rs: ModelSelect = PanAccounts.select(fn.count(PanAccounts.id).where(
+            PanAccounts.user_id == acc_id).alias('count'))
+        if model_rs:
+            model_dict = model_rs.dicts()
+            if model_dict:
+                v = model_dict[0].get('count')
+                if v:
+                    return v
+        return 0
+
+    @classmethod
+    @query_wrap_db
     def pan_account_by_id(cls, id):
         try:
             return PanAccounts.get(id=id)
@@ -55,12 +68,11 @@ class DataDao(object):
 
     @classmethod
     @query_wrap_db
-    def pan_account_list(cls, account_id=None) -> list:
+    def pan_account_list(cls, account_id=None, cnt=5) -> list:
         if account_id:
-            _pan_account_list = PanAccounts.select().where(PanAccounts.user_id == account_id)
+            _pan_account_list = PanAccounts.select().where(PanAccounts.user_id == account_id).order_by(PanAccounts.pin.desc()).order_by(PanAccounts.use_count).offset(0).limit(cnt)
         else:
-            _pan_account_list = PanAccounts.select().order_by(PanAccounts.use_count)[0:10]
-        pan_acc_list = []
+            _pan_account_list = PanAccounts.select().order_by(PanAccounts.pin.desc()).order_by(PanAccounts.use_count).offset(0).limit(cnt)
         print("pan_account_list:", _pan_account_list)
         # for acc in _pan_account_list:
         #     if transfer_to_dict:
@@ -78,6 +90,16 @@ class DataDao(object):
 
     @classmethod
     @query_wrap_db
+    def account_ext_by_acc_id(cls, account_id) -> AccountExt:
+        return AccountExt.select().where(AccountExt.account_id == account_id).first()
+
+    @classmethod
+    @query_wrap_db
+    def account_ext_by_bd_user_id(cls, user_id) -> AccountExt:
+        return AccountExt.select().where(AccountExt.user_id == user_id).first()
+
+    @classmethod
+    @query_wrap_db
     def check_expired_pan_account(cls, size=10, callback=None):
         fetch_size = size
         while fetch_size == size:
@@ -91,7 +113,8 @@ class DataDao(object):
     def check_expired_pan_account_by_id(cls, pan_id, callback=None):
         _pan_account_list = PanAccounts.select().where(PanAccounts.id == pan_id, PanAccounts.expires_at < get_now_datetime())
         if callback:
-            callback(_pan_account_list)
+            return callback(_pan_account_list)
+        return None
 
     @classmethod
     @query_wrap_db
@@ -110,6 +133,16 @@ class DataDao(object):
     @query_wrap_db
     def get_data_item_by_id(cls, pk_id):
         return DataItem.get_by_id(pk=pk_id)
+
+    @classmethod
+    @query_wrap_db
+    def get_data_item_ext_by_id(cls, pk_id):
+        return DataItemExt.select().where(DataItemExt.id == pk_id).first()
+
+    @classmethod
+    @query_wrap_db
+    def data_item_ext_exist(cls, pk_id):
+        return DataItemExt.select().where(DataItemExt.id == pk_id).exists()
 
     @classmethod
     @query_wrap_db
@@ -145,6 +178,11 @@ class DataDao(object):
 
     @classmethod
     @query_wrap_db
+    def query_transfer_logs_pan_id(cls, share_log_id, pan_id):
+        return TransferLogs.select().where(TransferLogs.share_log_id == share_log_id, TransferLogs.pan_account_id == pan_id).first()
+
+    @classmethod
+    @query_wrap_db
     def query_transfer_logs_by_pk_id(cls, pk_id) -> TransferLogs:
         return TransferLogs.select().where(TransferLogs.id == pk_id).first()
 
@@ -158,9 +196,24 @@ class DataDao(object):
     def query_root_files_by_user_id(cls, account_id):
         return UserRootCfg.select().where(UserRootCfg.account_id == account_id)
 
+    @classmethod
+    @query_wrap_db
+    def check_free_root_files_exist(cls, fs_id, source):
+        return UserRootCfg.select().where(UserRootCfg.fs_id == fs_id, UserRootCfg.source == source)
+
+    @classmethod
+    @query_wrap_db
+    def query_root_files(cls):
+        return UserRootCfg.select()
+
     #################################################################
     # split line
     #################################################################
+
+    @classmethod
+    @query_wrap_db
+    def check_data_item_exists_by_parent(cls, item_id, parent_id):
+        return DataItem.select().where(DataItem.id == item_id, DataItem.parent == parent_id).exists()
 
     @classmethod
     @query_wrap_db
@@ -174,11 +227,11 @@ class DataDao(object):
 
     @classmethod
     @query_wrap_db
-    def query_file_list_by_keyword(cls, keyword, offset=0, limit=100):
-        # sql = "select * from dataitem where isdir=%s and (filename like '%%%s%%') limit %s,%s" % (0, keyword, offset, limit)
-        sql = "select * from dataitem where isdir=%s and (INSTR(filename, '%s') or INSTR(path, '%s')) limit %s,%s" % (0, keyword, keyword, offset, limit)
-        print("sql:", sql)
-        return DataItem.raw(sql)
+    def query_user_list_by_keyword(cls, keyword, offset=0, limit=100):
+        if keyword:
+            return Accounts.select().where(Accounts.name.startswith(keyword) | Accounts.fuzzy_id.startswith(keyword)).limit(limit).offset(offset)
+        else:
+            return Accounts.select().limit(limit).offset(offset)
 
     @classmethod
     @query_wrap_db
@@ -208,11 +261,6 @@ class DataDao(object):
             es_item_path = es_item_path[:-len(data_item.filename)]
             _p = es_item_path.strip('/')
             pos = len(_p.split('/'))
-        # body = utils_es.get_data_item_es_json(data_item.id, data_item.category, data_item.isdir, data_item.pin,
-        #                                       data_item.fs_id, data_item.size, data_item.account_id, data_item.filename,
-        #                                       es_item_path, data_item.server_ctime, data_item.dlink_updated_at, data_item.updated_at,
-        #                                       data_item.created_at, data_item.parent, data_item.panacc)
-
         body = utils_es.build_es_item_json_body(data_item.id, data_item.category, data_item.isdir, data_item.pin,
                                                 data_item.fs_id, data_item.size, data_item.account_id,
                                                 data_item.filename,
@@ -226,6 +274,12 @@ class DataDao(object):
     @query_wrap_db
     def find_need_update_size_dir(cls, parent_id) -> DataItem:
         return DataItem.select().where(DataItem.parent == parent_id, DataItem.isdir == 1, DataItem.sized == 0).first()
+
+    @classmethod
+    @query_wrap_db
+    def check_account_ext_exist(cls, user_id):
+        return AccountExt.select().where(AccountExt.user_id == user_id).exists()
+
 
     @classmethod
     @query_wrap_db
@@ -257,6 +311,12 @@ class DataDao(object):
             es_up_params = es_dao_local().filter_update_params(_params)
             if es_up_params:
                 es_dao_local().update_fields(pk_id, **es_up_params)
+
+    @classmethod
+    def update_data_item_ext(cls, pk_id, params):
+        _params = {p: params[p] for p in params if p in DataItemExt.field_names()}
+        with db:
+            DataItemExt.update(**_params).where(DataItemExt.id == pk_id).execute()
 
     @classmethod
     def update_data_item_by_parent_id(cls, parent_id, params):
@@ -304,6 +364,12 @@ class DataDao(object):
             PanAccounts.update(**_params).where(PanAccounts.id == pk_id).execute()
 
     @classmethod
+    def update_pan_account_by_acc_id(cls, acc_id, params):
+        _params = {p: params[p] for p in params if p in PanAccounts.field_names()}
+        with db:
+            PanAccounts.update(**_params).where(PanAccounts.user_id == acc_id).execute()
+
+    @classmethod
     def update_share_log_by_pk(cls, pk_id, params):
         """
         :param pk_id:
@@ -314,6 +380,13 @@ class DataDao(object):
         print("update_share_log_by_pk _params:", _params)
         with db:
             ShareLogs.update(**_params).where(ShareLogs.id == pk_id).execute()
+
+    @classmethod
+    def update_account_ext_by_user_id(cls, user_id, params):
+        _params = {p: params[p] for p in params if p in AccountExt.field_names()}
+        print("update_account_ext_by_user_id _params:", _params)
+        with db:
+            AccountExt.update(**_params).where(AccountExt.user_id == user_id).execute()
 
     @classmethod
     def update_transfer_log_by_pk(cls, pk_id, params):
@@ -370,13 +443,22 @@ class DataDao(object):
         cls.sync_data_item_to_es(data_item)
 
     @classmethod
+    def new_data_item_ext(cls, pk_id, params):
+        data_item_ext = DataItemExt(id=pk_id, fs_id=params["fs_id"], mlink=params["mlink"],
+                                    start_at_time=params["start_at_time"])
+        with db:
+            data_item_ext.save(force_insert=True)
+        return data_item_ext
+
+    @classmethod
     def new_pan_account(cls, user_id, name, client_id, client_secret, access_token, refresh_token, expires_at,
-                        now) -> int:
+                        now, pin=0) -> int:
 
         with db:
             pan_acc: PanAccounts = PanAccounts(user_id=user_id, name=name, client_id=client_id,
                                                client_secret=client_secret, access_token=access_token,
-                                               refresh_token=refresh_token, expires_at=expires_at, token_updated_at=now)
+                                               refresh_token=refresh_token, expires_at=expires_at, token_updated_at=now,
+                                               pin=pin)
             pan_acc.save(force_insert=True)
             pan_acc_id = pan_acc.id
         if pan_acc_id:
@@ -442,7 +524,7 @@ class DataDao(object):
     def new_accounts_ext(cls, user_id, username, realname, portrait, userdetail, birthday, marriage, sex, blood, figure,
                          constellation, education, trade, job, is_realname, account_id):
         with db:
-            acc_ext: AccountExt = AccountExt(user_id=user_id,username=username, realname=realname, portrait=portrait,
+            acc_ext: AccountExt = AccountExt(user_id=user_id, username=username, realname=realname, portrait=portrait,
                                              userdetail=userdetail, birthday=birthday, marriage=marriage, sex=sex,
                                              blood=blood, figure=figure, constellation=constellation,
                                              education=education, trade=trade, job=job, is_realname=is_realname,
@@ -454,7 +536,7 @@ class DataDao(object):
     def new_root_item(cls, user_id, pan_id):
         data_item = DataItem(category=6,
                              isdir=1,
-                             filename='root',
+                             filename=TOP_DIR_FILE_NAME,
                              fs_id='0',
                              path='/',
                              size=0,

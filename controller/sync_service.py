@@ -5,18 +5,19 @@ Created by susy at 2019/11/8
 import requests
 from dao.dao import DataDao
 from dao.community_dao import CommunityDao
-from dao.models import Accounts, PanAccounts, ShareLogs, DataItem, TransferLogs, try_release_conn
+from dao.models import PanAccounts, ShareLogs, DataItem, TransferLogs, try_release_conn, CommunityDataItem
 from utils import singleton, log, make_token, obfuscate_id, get_now_datetime, random_password, get_now_ts, restapi, guess_file_type, constant
 import pytz
 import arrow
 from controller.base_service import BaseService
 from controller.mpan_service import mpan_service
+from controller.auth_service import auth_service
 from cfg import PAN_SERVICE, MASTER_ACCOUNT_ID
 import time
-from dao.es_dao import es_dao_local
+from dao.es_dao import es_dao_local, es_dao_share
 from threading import Thread
 from utils.caches import cache_service
-from apscheduler.schedulers.background import BackgroundScheduler
+# from apscheduler.schedulers.background import BackgroundScheduler
 LOGIN_TOKEN_TIMEOUT = constant.LOGIN_TOKEN_TIMEOUT
 PAN_ACCESS_TOKEN_TIMEOUT = constant.PAN_ACCESS_TOKEN_TIMEOUT
 
@@ -159,13 +160,14 @@ class SyncPanService(BaseService):
         CommunityDao.del_share_log_by_id(share_log_id)
 
     def clear_all_expired_share_log(self):
-        item_list = CommunityDao.query_share_logs_by_hours(-24, 0, 50)
+        item_list = CommunityDao.query_share_logs_by_hours(-48, 0, 50)
         sl: ShareLogs = None
         for sl in item_list:
             self.clear_share_log(sl.id)
 
-    def clear(self, item_id, pan_id):
+    def __clear_data_item(self, item_id, pan_id):
         out_pan_acc: PanAccounts = DataDao.pan_account_by_id(pan_id)
+        _es_dao_item = self.es_dao_item
 
         def deep_clear(di, pan_acc):
             if di:
@@ -191,7 +193,9 @@ class SyncPanService(BaseService):
                         for tl in transfer_logs:
                             CommunityDao.del_transfer_log_by_id(tl.id)
 
-                self.es_dao_item.delete(di.id)
+                _es_dao_item.delete(di.id)
+                DataDao.del_data_item_by_id(di.id)
+
         root_di: DataItem = DataDao.get_data_item_by_id(item_id)
         deep_clear(root_di, out_pan_acc)
         if root_di.parent:
@@ -199,7 +203,36 @@ class SyncPanService(BaseService):
             if p_data_item:
                 mpan_service.update_dir_size(p_data_item)
         restapi.del_file(out_pan_acc.access_token, root_di.path)
-        DataDao.del_data_item_by_id(root_di.id)
+        # DataDao.del_data_item_by_id(root_di.id)
+
+    def __clear_community_item(self, item_id):
+
+        def deep_clear(di: CommunityDataItem):
+            if di:
+                if di.isdir == 1:
+                    # 迭代处理
+                    size = 50
+                    l = size
+                    while l == size:
+                        sub_items = CommunityDao.query_community_item_by_parent_all(di.fs_id, limit=size)
+                        l = 0
+                        if sub_items:
+                            l = len(sub_items)
+                            for sub_item in sub_items:
+                                deep_clear(sub_item)
+                        time.sleep(0.2)
+
+                es_dao_share().delete(di.id)
+                CommunityDao.del_community_item_by_id(di.id)
+
+        root_di: CommunityDataItem = CommunityDao.get_data_item_by_id(item_id)
+        deep_clear(root_di)
+
+    def clear(self, item_id, pan_id, source):
+        if "local" == source:
+            self.__clear_data_item(item_id, pan_id)
+        elif "shared" == source:
+            self.__clear_community_item(item_id)
 
     def check_sync_state(self, pan_id, user_id):
         rs_key = "synced:pan:dir:%s_%s" % (user_id, pan_id)
@@ -216,16 +249,4 @@ class SyncPanService(BaseService):
 
 
 sync_pan_service = SyncPanService()
-scheduler = BackgroundScheduler()
-scheduler.start()
 
-
-@scheduler.scheduled_job('interval', minutes=30)
-# @scheduler.scheduled_job('cron',hour=16,minute=9,second=20)
-def scheduler_clear_all_expired_share_log():
-    try:
-        print("will exec clear_all_expired_share_log!!!")
-        sync_pan_service.clear_all_expired_share_log()
-        try_release_conn()
-    except Exception:
-        pass

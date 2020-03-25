@@ -4,19 +4,65 @@ Created by susy at 2020/1/27
 """
 from controller.base_service import BaseService
 from utils import singleton, make_account_token, obfuscate_id, decrypt_user_id, get_now_datetime
-from dao.models import Accounts, Role, Org, BASE_FIELDS
+from dao.models import Accounts, Role, Org, BASE_FIELDS, PanAccounts, AccountExt
 from dao.auth_dao import AuthDao
-from utils.constant import FUN_TYPE
+from dao.dao import DataDao
+from utils.constant import FUN_TYPE, USER_TYPE, PAN_ACCESS_TOKEN_TIMEOUT, LOGIN_TOKEN_TIMEOUT
+from utils.caches import cache_data
+from utils import compare_dt_by_now, log, restapi, get_now_ts, get_payload_from_token
+from cfg import NEW_USER_DEFAULT, PAN_SERVICE, get_bd_auth_uri
+import time
+import arrow
+PAN_ACC_CACHE_TIMEOUT = 24 * 60 * 60
+ACCOUNT_PAN_ACC_CACHE_CNT = 5
 
 
 @singleton
 class AuthService(BaseService):
     max_page_size = 30
+    client_id = PAN_SERVICE['client_id']
+    client_secret = PAN_SERVICE['client_secret']
+    pan_auth = get_bd_auth_uri()
+
+    @cache_data("pan_acc_{1}_%s" % ACCOUNT_PAN_ACC_CACHE_CNT, timeout_seconds=PAN_ACC_CACHE_TIMEOUT)
+    def checkout_pan_accounts(self, account_id=0):
+        pan_acc_list = DataDao.pan_account_list(account_id, ACCOUNT_PAN_ACC_CACHE_CNT)
+        return {pan_acc.id: pan_acc for pan_acc in pan_acc_list}
+
+    def get_pan_account(self, pan_account_id, account_id) -> PanAccounts:
+        pan_acc_cache = self.checkout_pan_accounts(account_id)
+        if pan_account_id in pan_acc_cache:
+            return pan_acc_cache[pan_account_id]
+        return DataDao.pan_account_by_id(pan_account_id)
+
+    def default_pan_account(self, account_id) -> PanAccounts:
+        pan_acc_cache = auth_service.checkout_pan_accounts(account_id)
+        for pan_account_id in pan_acc_cache:
+            pan_acc = pan_acc_cache[pan_account_id]
+            if pan_acc.pin == 1:
+                return pan_acc
+        return None
+
+    def check_pan_token_validation(self, pan_acc: PanAccounts):
+        if compare_dt_by_now(pan_acc.expires_at) <= 0:
+            new_pan = self.fresh_token(pan_acc.id)
+            if new_pan:
+                pan_acc.access_token = new_pan.access_token
+                pan_acc.refresh_token = new_pan.refresh_token
+                pan_acc.expires_at = new_pan.expires_at
+                pan_acc.token_updated_at = new_pan.token_updated_at
+        return pan_acc
 
     def build_user_payload(self, account: Accounts) -> (str, dict):
         auth_user_dict = AuthDao.auth_user(account.id)
         fuzzy_id = obfuscate_id(account.id)
         auth_user_dict['id'] = fuzzy_id
+        pan_acc_cache = self.checkout_pan_accounts(account.id)
+        for pan_account_id in pan_acc_cache:
+            pan_acc = pan_acc_cache[pan_account_id]
+            if pan_acc.pin == 1:
+                auth_user_dict['_p'] = obfuscate_id(pan_account_id)
+                break
         print("auth_user_dict:", auth_user_dict)
         tk = make_account_token(auth_user_dict)
         print('make_account_token:', tk)
@@ -180,5 +226,262 @@ class AuthService(BaseService):
             AuthDao.new_account(name, nickname, mobile_no, password, org_id, role_id, type, extorgs, extroles,
                                 get_now_datetime(), lambda account: self.build_user_payload(account))
         return True
+
+    def login_check_user(self, acc: Accounts):
+        need_renew_pan_acc = []
+        if acc:
+            pan_acc_list = DataDao.pan_account_list(acc.id)
+            # pan_acc: PanAccounts = DataDao.pan_account_list(acc.id)
+            need_renew_access_token = False
+            l = len(pan_acc_list)
+            for pan_acc in pan_acc_list:
+                if pan_acc.client_id != self.client_id or pan_acc.client_secret != self.client_secret:
+                    need_renew_access_token = True
+                    need_renew_pan_acc.append({"id": pan_acc.id, "name": pan_acc.name, "use_cnt": pan_acc.use_count,
+                                               "refresh": False, 'auth': self.pan_auth})
+                elif pan_acc.access_token and pan_acc.token_updated_at:
+                    tud = arrow.get(pan_acc.token_updated_at).replace(tzinfo=self.default_tz)
+                    if (arrow.now(self.default_tz) - tud).total_seconds() > PAN_ACCESS_TOKEN_TIMEOUT:
+                        need_renew_access_token = True
+                        need_renew_pan_acc.append({"id": pan_acc.id, "name": pan_acc.name, "use_cnt": pan_acc.use_count,
+                                                   "refresh": True, 'auth': self.pan_auth})
+                else:
+                    need_renew_access_token = True
+                    need_renew_pan_acc.append({"id": pan_acc.id, "name": pan_acc.name, "use_cnt": pan_acc.use_count,
+                                               "refresh": True, 'auth': self.pan_auth})
+            if l == 0:
+                need_renew_access_token = True
+            # if pan_acc and pan_acc['access_token'] and pan_acc['token_updated_at']:
+            #     tud = arrow.get(pan_acc['token_updated_at']).replace(tzinfo=self.default_tz)
+            #     if (arrow.now(self.default_tz) - tud).total_seconds() < PAN_ACCESS_TOKEN_TIMEOUT:
+            #         need_renew_access_token = False
+
+            lud = arrow.get(acc.login_updated_at).replace(tzinfo=self.default_tz)
+            diff = arrow.now(self.default_tz) - lud
+            params = {}
+            if diff.total_seconds() > LOGIN_TOKEN_TIMEOUT or not acc.login_token:
+                if not acc.fuzzy_id:
+                    acc.fuzzy_id = obfuscate_id(acc.id)
+                    params["fuzzy_id"] = acc.fuzzy_id
+                # login_token = make_token(acc.fuzzy_id)
+                login_token, _ = auth_service.build_user_payload(acc)
+                acc.login_token = login_token
+                params["login_token"] = login_token
+                lud = params["login_updated_at"] = get_now_datetime()
+                DataDao.update_account_by_pk(acc.id, params=params)
+            else:
+                tk = acc.login_token
+                if tk:
+                    user_payload = get_payload_from_token(tk)
+                    if user_payload:
+                        tm = user_payload['tm']
+                        ctm = get_now_ts()
+                        if ctm - tm > LOGIN_TOKEN_TIMEOUT:
+                            # login_token = make_token(acc.fuzzy_id)
+                            login_token, _ = auth_service.build_user_payload(acc)
+                            acc.login_token = login_token
+                            params["login_token"] = login_token
+                            lud = params["login_updated_at"] = get_now_datetime()
+                            DataDao.update_account_by_pk(acc.id, params=params)
+            log.debug("login_token:{}".format(acc.login_token))
+            result = {"need_renew_access_token": need_renew_access_token}
+            if need_renew_access_token:
+                result['auth'] = self.pan_auth
+            result['token'] = acc.login_token
+            result['login_at'] = int(arrow.get(lud).timestamp * 1000)
+            # print('login_at:', result['login_at'])
+            result['pan_acc_list'] = need_renew_pan_acc
+            account_ext = DataDao.account_ext_by_acc_id(acc.id)
+            result['username'] = account_ext.username
+            result['portrait'] = account_ext.portrait
+            result['id'] = acc.fuzzy_id
+            return result
+
+        return None
+
+    def _default_new_user_build_user_payload(self, account: Accounts, params):
+        auth_user_dict = AuthDao.auth_user(account.id)
+        fuzzy_id = obfuscate_id(account.id)
+        auth_user_dict['id'] = fuzzy_id
+        auth_user_dict['_id'] = account.id
+        auth_user_dict['login_updated_at'] = account.login_updated_at
+
+        access_token = params.get('access_token')
+        refresh_token = params.get('refresh_token')
+        expires_at = params.get('expires_at')
+
+        client_id = PAN_SERVICE['client_id']
+        client_secret = PAN_SERVICE['client_secret']
+        pan_acc_id = DataDao.new_pan_account(account.id, account.name, client_id, client_secret,
+                                             access_token, refresh_token, expires_at, get_now_datetime(), pin=1)
+        auth_user_dict['_p'] = obfuscate_id(pan_acc_id)
+        print("auth_user_dict:", auth_user_dict)
+        tk = make_account_token(auth_user_dict)
+        print('make_account_token:', tk)
+        return tk, auth_user_dict
+
+    def _new_user(self, name, password, nickname, access_token, refresh_token, expires_at):
+        mobile_no = ''
+        origin_name = name
+        exists_user = AuthDao.check_user_only_by_name(name)
+        dog = 20
+        while dog > 0 and exists_user:
+            name = "{}_{}".format(origin_name, str(int(time.time()))[-4:])
+            exists_user = AuthDao.check_user_only_by_name(name)
+            time.sleep(1)
+            dog = dog - 1
+        org_id = NEW_USER_DEFAULT['org_id']
+        role_id = NEW_USER_DEFAULT['role_id']
+        extroles = []
+        extorgs = []
+        type = USER_TYPE['SINGLE']
+        user_token, user_ext_dict = AuthDao.new_account(name, nickname, mobile_no, password, org_id, role_id, type,
+                                                        extorgs, extroles, get_now_datetime(),
+                                                        lambda account, ctx:
+                                                        self._default_new_user_build_user_payload(account, ctx), {
+                                                            "access_token": access_token,
+                                                            "refresh_token": refresh_token,
+                                                            "expires_at": expires_at
+                                                        })
+
+        return user_token, user_ext_dict
+
+    def bd_sync_login(self, params):
+        acc_name = params.get('acc_name')
+        refresh_token = params.get('refresh_token')
+        access_token = params.get('access_token')
+        expires_in = params.get('expires_in')
+        userid = int(params.get('userid'))
+        portrait = params.get('portrait')
+        username = params.get('username')
+        openid = params.get('openid')
+        is_realname = int(params.get('is_realname', '1'))
+        realname = ''
+        userdetail = ''
+        birthday = ''
+        marriage = ''
+        sex = ''
+        blood = ''
+        figure = ''
+        constellation = ''
+        education = ''
+        trade = ''
+        job = ''
+        expires_in = expires_in - 20 * 60  # seconds
+        expires_at = arrow.now(self.default_tz).shift(seconds=+expires_in).datetime
+        acc_ext: AccountExt = DataDao.account_ext_by_bd_user_id(userid)
+        print("find acc_ext:", acc_ext)
+        now_tm = get_now_datetime()
+        result = {}
+        if not acc_ext:
+            # new user
+            print("not find acc_ext userid:", userid)
+            user_token, user_ext_dict = self._new_user(acc_name, '654321', username, access_token,
+                                                                   refresh_token, expires_at)
+            acc_id = user_ext_dict['_id']
+            DataDao.new_accounts_ext(userid, username, realname, portrait, userdetail, birthday, marriage, sex,
+                                     blood, figure, constellation, education, trade, job, is_realname,
+                                     account_id=acc_id)
+            login_updated_at = user_ext_dict['login_updated_at']
+            lud = arrow.get(login_updated_at).replace(tzinfo=self.default_tz)
+            result['token'] = user_token
+            result['login_at'] = int(arrow.get(lud).timestamp * 1000)
+            # print('login_at:', result['login_at'])
+            result['pan_acc_list'] = []
+            result['username'] = username
+            result['portrait'] = portrait
+            result['id'] = user_ext_dict['id']
+        else:
+            print("find acc_ext:", acc_ext.username)
+            acc_id = acc_ext.account_id
+            account: Accounts = DataDao.account_by_id(acc_id)
+            DataDao.update_account_ext_by_user_id(userid, dict(username=username, portrait=portrait, account_id=acc_id))
+            pan_acc: PanAccounts = DataDao.pan_account_by_name(acc_id, acc_name)
+            if pan_acc:
+                if pan_acc.pin != 1:
+                    n = DataDao.query_pan_acc_count_by_acc_id(acc_id)
+                    if n > 1:
+                        DataDao.update_pan_account_by_acc_id(acc_id, {'pin': 0})
+                DataDao.update_pan_account_by_pk(pan_acc.id,
+                                                 {"access_token": access_token, "refresh_token": refresh_token,
+                                                  "expires_at": expires_at, "token_updated_at": now_tm, "pin": 1})
+            else:
+                client_id = PAN_SERVICE['client_id']
+                client_secret = PAN_SERVICE['client_secret']
+                pan_acc_id = DataDao.new_pan_account(acc_id, acc_name, client_id, client_secret,
+                                                     access_token, refresh_token, expires_at, get_now_datetime(), pin=1)
+
+                pan_acc = self.get_pan_account(pan_acc_id, acc_id)
+
+            result = self.login_check_user(account)
+        return result
+
+    def sync_pan_user_info(self, access_token, account_id):
+        jsonrs = restapi.sync_user_info(access_token, True)
+        if jsonrs:
+            userid = jsonrs.get('userid', '')
+            username = jsonrs.get('username', '')
+            realname = jsonrs.get('realname', '')
+            portrait = jsonrs.get('portrait', '')
+            userdetail = jsonrs.get('userdetail', '')
+            birthday = jsonrs.get('birthday', '')
+            marriage = jsonrs.get('marriage', '')
+            sex = jsonrs.get('sex', '')
+            blood = jsonrs.get('blood', '')
+            figure = jsonrs.get('figure', '')
+            constellation = jsonrs.get('constellation', '')
+            education = jsonrs.get('education', '')
+            trade = jsonrs.get('trade', '')
+            job = jsonrs.get('job', '')
+            is_realname = jsonrs.get('is_realname', '')
+            if not DataDao.check_account_ext_exist(userid):
+                DataDao.new_accounts_ext(userid, username, realname, portrait, userdetail, birthday, marriage, sex,
+                                         blood, figure, constellation, education, trade, job, is_realname,
+                                         account_id=account_id)
+            else:
+                DataDao.update_account_ext_by_user_id(userid, dict(username=username, realname=realname,
+                                                                   portrait=portrait, userdetail=userdetail,
+                                                                   birthday=birthday, marriage=marriage, sex=sex,
+                                                                   blood=blood, figure=figure,
+                                                                   constellation=constellation, education=education,
+                                                                   trade=trade, job=job, is_realname=is_realname,
+                                                                   account_id=account_id))
+
+    def fresh_token(self, pan_id):
+        def cb(pan_accounts):
+            now = arrow.now(self.default_tz)
+            pan: PanAccounts = None
+            need_sleep = False
+            for pan in pan_accounts:
+                if pan.refresh_token:
+                    if need_sleep:
+                        time.sleep(3)
+                    jsonrs = restapi.refresh_token(pan.refresh_token, True)
+                    access_token = jsonrs["access_token"]
+                    refresh_token = jsonrs["refresh_token"]
+                    expires_in = jsonrs["expires_in"] - 20*60  # seconds
+                    expires_at = now.shift(seconds=+expires_in).datetime
+                    now_tm = get_now_datetime()
+                    DataDao.update_pan_account_by_pk(pan.id,
+                                                     {"access_token": access_token, "refresh_token": refresh_token,
+                                                      "expires_at": expires_at, "token_updated_at": now_tm})
+                    pan.access_token = access_token
+                    pan.refresh_token = refresh_token
+                    pan.expires_at = expires_at
+                    pan.token_updated_at = now_tm
+                    try:
+                        log.info("sync pan user[{},{}] info to db!".format(access_token, pan.user_id))
+                        self.sync_pan_user_info(access_token, pan.user_id)
+                    except Exception as e:
+                        log.error("sync_pan_user_info err:", e)
+                    need_sleep = True
+            return pan
+
+        if pan_id:
+            return DataDao.check_expired_pan_account_by_id(pan_id, callback=cb)
+        else:
+            DataDao.check_expired_pan_account(callback=cb)
+        return None
+
 
 auth_service = AuthService()
