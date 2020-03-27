@@ -101,7 +101,8 @@ if __name__ == "__main__":
     port = service['port']
     # server = HTTPServer(application, ssl_options=ssl_ctx)
     server = HTTPServer(application)
-    server.listen(port)
+    # server.listen(port)
+    server.listen(port, '127.0.0.1')
     # application.listen(port)
     print("Listen HTTP @ %s" % port)
     IOLoop.instance().start()
