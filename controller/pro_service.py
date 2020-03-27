@@ -20,6 +20,7 @@ from utils import scale_size, decrypt_user_id, decrypt_id
 from cfg import PAN_ROOT_DIR
 import arrow
 import sys
+import time
 sys.setrecursionlimit(1000000)
 
 
@@ -305,6 +306,7 @@ class ProductService(BaseService):
             key = self.parse_query_key(file_path)
             # 迁出后, 获取信息
             async_service.update_state(key_prefix, user_id, {"state": 0, "pos": 3})
+            time.sleep(3)
             client_data_item = self.check_file_by_key_search(key, top_dir_item.path, top_dir_item.id, share_log.md5_val, fs_id, user_ref_id, pan_acc)
             if client_data_item:
                 return 0, client_data_item
@@ -387,17 +389,21 @@ class ProductService(BaseService):
                         _result['err'] = _rs['err']
                 else:
                     # copy
-                    _st, _client_data_item = self.copy_to_my_pan(user_id, user_ref_id, share_log, default_pan_id)
-                    _result['state'] = _st
-                    if _st < 0:
-                        if _st == -3:
-                            _result['err'] = LOGIC_ERR_TXT['mk_top_fail']
-                        elif _st == -4:
-                            _result['err'] = LOGIC_ERR_TXT['rename_fail']
-                    if _client_data_item:
-                        _result['item'] = ctx.__build_client_item_simple_dict(_client_data_item)
-                        _result['item']['id'] = obfuscate_id(_client_data_item.id)
-                        _result['pos'] = 4
+                    if share_log.is_black == 1:
+                        _result['state'] = -9
+                        _result['err'] = share_log.err
+                    else:
+                        _st, _client_data_item = self.copy_to_my_pan(user_id, user_ref_id, share_log, default_pan_id)
+                        _result['state'] = _st
+                        if _st < 0:
+                            if _st == -3:
+                                _result['err'] = LOGIC_ERR_TXT['mk_top_fail']
+                            elif _st == -4:
+                                _result['err'] = LOGIC_ERR_TXT['rename_fail']
+                        if _client_data_item:
+                            _result['item'] = ctx.__build_client_item_simple_dict(_client_data_item)
+                            _result['item']['id'] = obfuscate_id(_client_data_item.id)
+                            _result['pos'] = 4
             return _result
 
         st = self.check_file_authorized(user_ref_id, item_id, pids, tag)
@@ -428,6 +434,61 @@ class ProductService(BaseService):
                 err_msg = LOGIC_ERR_TXT['need_access']
             result = {"state": st, "err": err_msg}
 
+        return result
+
+    def check_transfer_file(self, user_id, user_ref_id, default_pan_id, item_id, pids, tag):
+        ctx = self
+        key_prefix = "client:ready:"
+        if not default_pan_id:
+            pan_acc = auth_service.default_pan_account(user_id)
+            if pan_acc:
+                default_pan_id = pan_acc.id
+        if not default_pan_id:
+            return {"state": -2, "err": LOGIC_ERR_TXT['need_pann_acc']}
+
+        def final_do():
+            pass
+
+        def to_do(key, rs_key):
+            _result = {'state': 0}
+            data_item: DataItem = DataDao.get_data_item_by_id(item_id)
+            _rs, share_log = open_service.build_shared_log(data_item)
+            if not share_log:
+                if 'state' in _rs:
+                    _result['state'] = _rs['state']
+                if 'err' in _rs:
+                    _result['state'] = -9
+                    _result['err'] = _rs['err']
+            else:
+                if share_log.is_black == 1:
+                    _result['state'] = -9
+                    _result['err'] = share_log.err
+                else:
+                    _result['item'] = {"link": share_log.link, "pass": share_log.password}
+                    _result['pos'] = 1
+            # copy
+
+            return _result
+
+        st = self.check_file_authorized(user_ref_id, item_id, pids, tag)
+        result = {'state': 0}
+        if st == 0:
+            if "self" == tag:
+                # 找不到文件 search
+                return {"state": -5, "err": LOGIC_ERR_TXT['not_exists']}
+            else:
+                async_service.init_state(key_prefix, user_id, {"state": 0, "pos": 0})
+                async_rs = async_service.async_checkout_client_item(key_prefix, user_id, to_do, final_do)
+                if async_rs['state'] == 'block':
+                    result['state'] = -11
+                    result['err'] = LOGIC_ERR_TXT['sys_lvl_down']
+        else:
+            err_msg = LOGIC_ERR_TXT['unknown']
+            if -10 == st:
+                err_msg = LOGIC_ERR_TXT['ill_data']
+            elif -2 == st:
+                err_msg = LOGIC_ERR_TXT['need_access']
+            result = {"state": st, "err": err_msg}
         return result
 
     def checkout_dlink(self, item_id, user_id, user_ref_id):

@@ -300,11 +300,11 @@ class PanService(BaseService):
         #     params["item"]["start_at_time"] = data_item_ext.start_at_time
         return params
 
-    def query_root_list(self, account_id):
+    def query_root_list(self, account_id=None):
         if account_id:
             root_item_list = DataDao.query_root_files_by_user_id(account_id)
         else:
-            root_item_list = DataDao.query_root_files()
+            root_item_list = DataDao.query_free_root_files()
         params = []
         for item in root_item_list:
             item_id = item.fs_id
@@ -465,30 +465,44 @@ class PanService(BaseService):
                 print("share_folder jsonrs:", jsonrs, ",fs_id:", fs_id)
                 if restapi.is_black_list_error(jsonrs):
                     share_log.is_black = 1
-                    DataDao.update_share_log_by_pk(share_log_id, {"is_black": share_log.is_black})
+                    err_msg = jsonrs.get('err_msg', '')
+                    if "show_msg" in jsonrs:
+                        err_msg = jsonrs['show_msg']
+                    share_log.err = err_msg
+                    DataDao.update_share_log_by_pk(share_log_id, {"is_black": share_log.is_black, "err": share_log.err})
                     dict_obj = ShareLogs.to_dict(share_log)
                     dict_obj['expired_at'] = expired_at
                     return dict_obj, share_log, data_item
                 if "shareid" in jsonrs and "shorturl" in jsonrs:
-                    share_log.share_id = str(jsonrs["shareid"])
-                    share_log.link = jsonrs["link"]
-                    share_log.shorturl = jsonrs["shorturl"]
-                    share_log.pin = 2
-                    params = {"share_id": share_log.share_id, "link": share_log.link, "shorturl": share_log.shorturl, "pin": share_log.pin}
-                    DataDao.update_share_log_by_pk(share_log_id, params)
-                    jsonrs = restapi.get_share_randsk(share_log.share_id, share_log.password, share_log.common_short_url())
-                    print("get_share_randsk jsonrs:", jsonrs, ",fs_id:", fs_id)
-                    if "randsk" in jsonrs:
-                        share_log.randsk = jsonrs["randsk"]
-                        jsonrs = restapi.get_share_info(share_log.share_id, share_log.special_short_url(), share_log.randsk)
-                        if jsonrs and "shareid" in jsonrs and "uk" in jsonrs:
-                            share_log.uk = str(jsonrs["uk"])
-                            share_log.pin = 3
-                            params = {"randsk": share_log.randsk, "uk": share_log.uk, "pin": share_log.pin}
-                            DataDao.update_share_log_by_pk(share_log_id, params)
-                            dict_obj = ShareLogs.to_dict(share_log)
-                            dict_obj['expired_at'] = expired_at
-                            return dict_obj, share_log, data_item
+                    _shareid = jsonrs["shareid"]
+                    if _shareid == -1:
+                        err_msg = jsonrs.get('err_msg', '')
+                        share_log.is_failed = 1
+                        share_log.err = err_msg
+                        DataDao.update_share_log_by_pk(share_log_id,
+                                                       {"is_failed": share_log.is_failed, "err": share_log.err})
+                        dict_obj = ShareLogs.to_dict(share_log)
+                        return dict_obj, share_log, data_item
+                    else:
+                        share_log.share_id = str(jsonrs["shareid"])
+                        share_log.link = jsonrs["link"]
+                        share_log.shorturl = jsonrs["shorturl"]
+                        share_log.pin = 2
+                        params = {"share_id": share_log.share_id, "link": share_log.link, "shorturl": share_log.shorturl, "pin": share_log.pin}
+                        DataDao.update_share_log_by_pk(share_log_id, params)
+                        jsonrs = restapi.get_share_randsk(share_log.share_id, share_log.password, share_log.common_short_url())
+                        print("get_share_randsk jsonrs:", jsonrs, ",fs_id:", fs_id)
+                        if "randsk" in jsonrs:
+                            share_log.randsk = jsonrs["randsk"]
+                            jsonrs = restapi.get_share_info(share_log.share_id, share_log.special_short_url(), share_log.randsk)
+                            if jsonrs and "shareid" in jsonrs and "uk" in jsonrs:
+                                share_log.uk = str(jsonrs["uk"])
+                                share_log.pin = 3
+                                params = {"randsk": share_log.randsk, "uk": share_log.uk, "pin": share_log.pin}
+                                DataDao.update_share_log_by_pk(share_log_id, params)
+                                dict_obj = ShareLogs.to_dict(share_log)
+                                dict_obj['expired_at'] = expired_at
+                                return dict_obj, share_log, data_item
 
         return {}, None, data_item
 

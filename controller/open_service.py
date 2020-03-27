@@ -75,8 +75,11 @@ class OpenService(BaseService):
                 d_val = int(get_now_datetime_format('MMDD'))
                 dict_obj, share_log, data_item = pan_service.share_folder(fs_id)
                 if share_log:
-                    rs = {'state': 0, 'info': shared_format(share_log.link, share_log.password)}
-                    self.update_share_fr(m_val, h_val, d_val, pan_id, sharefr)
+                    if share_log.is_black == 1:
+                        rs = {'state': 0, 'info': share_log.err}
+                    else:
+                        rs = {'state': 0, 'info': shared_format(share_log.link, share_log.password)}
+                        self.update_share_fr(m_val, h_val, d_val, pan_id, sharefr)
 
         return rs, share_log
 
@@ -86,7 +89,7 @@ class OpenService(BaseService):
         if item:
             if not CommunityDao.local_check_free_by_id(item.id):
                 return {'state': -1, 'err': SHARED_BAN_ERR}, None
-        rs, share_log = self.build_shared_log(fs_id)
+        rs, share_log = self.build_shared_log(item)
         return rs
 
     def update_share_fr(self, m_val, h_val, d_val, pan_id, sharefr):

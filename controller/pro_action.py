@@ -82,7 +82,13 @@ class ProductHandler(BaseHandler):
             result = product_service.check_copy_file(self.user_id, self.ref_id, self.default_pan_id, itemid, pids, tag)
             # result = product_service.test_async_task(self.user_id, self.default_pan_id)
             self.to_write_json(result)
-
+        elif path.endswith("/checktransferfile"):
+            item_fuzzy_id = self.get_argument("id")
+            pids = self.get_argument("pids")
+            tag = self.get_argument("tag")
+            itemid = int(decrypt_id(item_fuzzy_id))
+            result = product_service.check_transfer_file(self.user_id, self.ref_id, self.default_pan_id, itemid, pids, tag)
+            self.to_write_json(result)
         elif path.endswith("dlink"):
             item_fuzzy_id = self.get_argument("id")
             item_id = int(decrypt_id(item_fuzzy_id))

@@ -455,6 +455,7 @@ class ShareLogs(BaseModel):
     share_id = CharField(null=True, max_length=64)
     link = CharField(null=True, max_length=1024)
     dlink = CharField(null=True, max_length=1024)
+    err = CharField(null=True, max_length=1024)
     shorturl = CharField(null=True, max_length=128)
     randsk = CharField(null=True, max_length=128)
     uk = CharField(null=True, max_length=32)
@@ -462,12 +463,13 @@ class ShareLogs(BaseModel):
     pin = IntegerField(null=False, default=0)
     account_id = IntegerField(null=False, default=0)
     is_black = IntegerField(null=False, default=0)
+    is_failed = IntegerField(null=False, default=0)
     pan_account_id = IntegerField(null=False)
 
     @classmethod
     def field_names(cls):
         return BASE_FIELDS + ["id", "fs_id", "filename", "password", "share_id", "period", "link", "pin", "dlink", "account_id",
-                              "uk", "randsk", "is_black", "pan_account_id"]
+                              "uk", "randsk", "is_black", "pan_account_id", "err", "is_failed"]
 
     @classmethod
     def to_dict(cls, instance):

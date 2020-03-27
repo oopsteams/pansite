@@ -206,6 +206,11 @@ class DataDao(object):
     def query_root_files(cls):
         return UserRootCfg.select()
 
+    @classmethod
+    @query_wrap_db
+    def query_free_root_files(cls):
+        return UserRootCfg.select().where(UserRootCfg.source == 'local')
+
     #################################################################
     # split line
     #################################################################
@@ -377,7 +382,7 @@ class DataDao(object):
         :return:
         """
         _params = {p: params[p] for p in params if p in ShareLogs.field_names()}
-        print("update_share_log_by_pk _params:", _params)
+        # print("update_share_log_by_pk _params:", _params)
         with db:
             ShareLogs.update(**_params).where(ShareLogs.id == pk_id).execute()
 
