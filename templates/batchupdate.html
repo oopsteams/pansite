@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Batch Update</title>
+    <link href="/static/js/jquery-ui/jquery-ui.css" rel="stylesheet">
+    <script src="/static/js/jquery-ui/external/jquery/jquery.js"></script>
+    <script src="/static/js/jquery-ui/jquery.cookie.min.js"></script>
+    <script src="/static/js/jquery-ui/jquery-ui.js"></script>
+    <script src="/static/js/base.js"></script>
+</head>
+<body>
+    <form id="batch_update_form" onsubmit="return false">
+        <dl>
+            <dt>更新列名(Pan:{{name}})</dt>
+            <dd>
+                <select name="cname">
+                    {% for cl in columns %}
+                        <option value="{{cl}}">{{cl}}</option>
+                    {% end %}
+                </select>
+            </dd>
+            <dt><label for="datas">更新内容</label></dt>
+            <dd><textarea id="datas" rows="10" cols="10" name="datas" style="width:800px;height:400px;"></textarea></dd>
+        </dl>
+        <input name="pan_id" type="hidden" value="{{pan_id}}"/>
+        <input type="submit" tabindex="-1" onclick="update_items()"/>
+    </form>
+</body>
+<script>
+    let panid = "{{pan_id}}";
+    let update_items = function(){
+            let data = $('#batch_update_form').serializeArray();
+            let jsonObj={"pan_id": panid};
+            $(data).each(function(){
+                jsonObj[this.name]=this.value;
+            });
+            console.log('dist_product:', jsonObj);
+            call_service('/man/batchupdatedo?tk='+GetQueryString('tk'), jsonObj, function (res) {
+                console.log('res result:', res);
+
+            });
+        };
+</script>
+</html>

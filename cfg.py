@@ -52,9 +52,13 @@ PAN_SERVICE = {
     # "client_secret": "mf0GdhafvYWMS8PdUdBPGo7ENPdObUWI",
     "client_secret": "k0yydQlmLkKorwwhzqrmYGkL09za6Oyk",
     "access_token": "22.5903885244c6dae9b856d52a1d6bd374.315360000.1886082029.2717926781-9850001",
-    "auth_domain": "openapi.baidu.com/oauth/2.0/"
+    "auth_domain": "openapi.baidu.com/oauth/2.0/",
+    "auth_dns_domain": "openapi.baidu.com"
 }
-
+PAN_ROOT_DIR = {
+    "name": "_SHAREDSYS",
+    "alias": "分享盘"
+}
 ES = {
     "hosts": [{"host": "127.0.0.1"}],
 
@@ -71,3 +75,23 @@ ES = {
         "doctype": "dataitem"
     }
 }
+
+NEW_USER_DEFAULT = dict(org_id=5, role_id=1)
+
+
+def bd_auth_path(redirect_uri='oob', display='pad', skip_login=False):
+    client_id = PAN_SERVICE['client_id']
+    force_login = 1
+    if skip_login:
+        pan_auth = "authorize?response_type=code&client_id={}&redirect_uri={}&scope=basic,netdisk&display={}&" \
+                   "qrcode=0".format(client_id, redirect_uri, display)
+    else:
+        pan_auth = "authorize?response_type=code&client_id={}&redirect_uri={}&scope=basic,netdisk&display={}&" \
+               "qrcode=0&force_login={}".format(client_id, redirect_uri, display, force_login)
+    return pan_auth
+
+
+def get_bd_auth_uri(redirect_uri='oob', display='pad'):
+    auth_point = "{}://{}".format(PAN_SERVICE['protocol'], PAN_SERVICE['auth_domain'])
+    pan_auth = "{}{}".format(auth_point, bd_auth_path(redirect_uri, display))
+    return pan_auth

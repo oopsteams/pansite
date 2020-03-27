@@ -25,9 +25,13 @@ class CheckLogin(MiddleWare):
         headers = handler.request.headers
         token = headers.get('Suri-Token', None)
         if not token:
+            token = headers.get('SURI-TOKEN', None)
+        if not token:
             token = handler.get_argument('tk', None, True)
             handler.is_web = True
-        # print("CheckLogin in token:", token)
+        print("Middle CheckLogin in token:", token)
+        if "undefined" == token:
+            token = None
         if "login" != token and token:
             handler.user_payload = get_payload_from_token(token)
             handler.token = token
@@ -38,6 +42,12 @@ class CheckLogin(MiddleWare):
                     fuzzy_user_id = handler.user_payload['id']
                     handler.user_id = decrypt_user_id(fuzzy_user_id)
                     handler.user_payload['user_id'] = handler.user_id
+                if '_p' in handler.user_payload:
+                    fuzzy_pan_id = handler.user_payload['_p']
+                    handler.default_pan_id = decrypt_user_id(fuzzy_pan_id)
+                if 'au' in handler.user_payload:
+                    au = handler.user_payload['au']
+                    handler.ref_id = au['rfid']
 
         pass
 
@@ -46,7 +56,7 @@ class CheckLogin(MiddleWare):
 class CheckAuth(MiddleWare):
 
     def process_request(self, handler: RequestHandler):
-        print("CheckAuth in ....")
+        # print("CheckAuth in ....")
         handler.query_path = handler.request.path
         pass
 

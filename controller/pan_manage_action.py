@@ -4,17 +4,17 @@ Created by susy at 2019/12/24
 """
 from controller.action import BaseHandler
 from dao.community_dao import CommunityDao
+from dao.dao import DataDao
 from tornado.web import authenticated
-from utils import compare_dt_by_now
+from utils import compare_dt_by_now, decrypt_id
 from controller.mpan_service import mpan_service
 from controller.sync_service import sync_pan_service
+from controller.service import pan_service
+from dao.models import DataItem
 from utils.constant import USER_TYPE
 
 
 class ManageHandler(BaseHandler):
-
-    def post(self):
-        self.get()
 
     @authenticated
     def get(self):
@@ -27,14 +27,14 @@ class ManageHandler(BaseHandler):
                 else:
                     pan['expired'] = 0
             params = {'items': pan_acc_list}
-            print("params:", params)
+            # print("params:", params)
             self.render('panmanage.html', **params)
         elif path.endswith("/ftree"):
             pan_id = self.get_argument("panid", "0")
             params = {'pan_id': pan_id}
             self.render('mantree.html', **params)
         elif path.endswith("/fload"):
-            pan_id = self.get_argument("panid", "0")
+            # pan_id = self.get_argument("panid", "0")
             source = self.get_argument("source", "")
             node_id = self.get_argument("id")
             parent_path = self.get_argument("path")
@@ -44,9 +44,10 @@ class ManageHandler(BaseHandler):
             # print("user_payload:", self.user_payload)
             params = []
             if not source or "local" == source:
-                print("fload node_id:", node_id, ", pan_id:", pan_id, ", source:", source)
+                # print("fload node_id:", node_id, ", pan_id:", pan_id, ", source:", source)
                 if not '#' == node_id:
-                    parent_id = int(node_id)
+                    node_id_val = decrypt_id(node_id)
+                    parent_id = int(node_id_val)
                     params = mpan_service.query_file_list(parent_id)
                 else:
                     params = mpan_service.fetch_root_item_by_user(self.user_id)
@@ -68,7 +69,7 @@ class ManageHandler(BaseHandler):
                                   "data": {"path": "/", "fs_id": 0,
                                            "server_ctime": 0,
                                            "isdir": 1, "source": "shared", "_id": 0,
-                                           "pin": 0}, "children": True, "icon": "jstree-folder"}
+                                           "pin": 0}, "children": True, "icon": "folder"}
 
                     shared_params = [node_param]
                 if shared_params:
@@ -114,7 +115,8 @@ class ManageHandler(BaseHandler):
         elif path.endswith("/clear"):
             item_id = int(self.get_argument("id", "0"))
             pan_id = int(self.get_argument("panid", "0"))
-            sync_pan_service.clear(item_id, pan_id)
+            source = self.get_argument("source", "")
+            sync_pan_service.clear(item_id, pan_id, source)
             self.to_write_json({'state': 0})
         elif path.endswith("/fparts"):
             # pan_id = self.get_argument("id", "0")
@@ -130,5 +132,38 @@ class ManageHandler(BaseHandler):
             share_item_id = int(self.get_argument("id", "0"))
             sync_pan_service.clear_share_log(share_item_id)
             self.to_write_json({'state': 0})
+        elif path.endswith("/pan_acc_list"):
+            need_renew_pan_acc = pan_service.all_pan_acc_list_by_user(self.user_id)
+            result = {"result": "ok", "pan_acc_list": need_renew_pan_acc}
+            print("result:", result)
+            self.to_write_json(result)
+        elif path.endswith("/batchupdate"):
+            pan_id = self.get_argument("panid", "0")
+            pan_acc = pan_service.get_pan_account(pan_id, self.user_id)
+            cls = [fn for fn in DataItem.field_names() if fn not in ["id", "created_at", "updated_at", "pan_acc", "account_id"]]
+            params = {"pan_id": int(pan_id), "name": pan_acc.name, "columns": cls}
+            self.render('batchupdate.html', **params)
+        elif path.endswith("/batchupdatedo"):
+            pan_id = self.get_argument("panid", "0")
+            cname = self.get_argument("cname")
+            datas = self.get_argument("datas", "")
+            lines = datas.split("\n")
+            kv = {}
+            cnt = 0
+            for line in lines:
+                vals = line.split("\t")
+                if len(vals) == 2:
+                    cnt = cnt + 1
+                    kv[vals[0]] = vals[1]
+                    DataDao.update_data_item(int(vals[0]), {cname: vals[1].strip()})
+                    print("update id:", vals[0], ",", cname, "=", vals[1])
+            rs = {"state": 0, "cnt": cnt, "lines_cnt": len(lines), "cname": cname}
+            # print("kv:", kv)
+            # print("cnt:", cnt, ",lines cnt:", len(lines), "cname:", cname, "pan_id:", pan_id)
+            self.to_write_json(rs)
         else:
             self.to_write_json({})
+
+    def post(self):
+        self.get()
+

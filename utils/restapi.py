@@ -5,8 +5,24 @@ Created by susy at 2019/10/19
 import requests
 from cfg import PAN_SERVICE
 import time
+import json
+from utils import url_encode, get_now_ts
 from utils.constant import PAN_ERROR_CODES
 POINT = "{protocol}://{domain}".format(protocol=PAN_SERVICE['protocol'], domain=PAN_SERVICE['domain'])
+
+
+# auth
+def access_token_code(code):
+    auth_point = "{}://{}".format(PAN_SERVICE['protocol'], PAN_SERVICE['auth_domain'])
+    _params = {'grant_type': 'authorization_code', 'client_id': PAN_SERVICE["client_id"],
+              'code': code,
+              'redirect_uri': 'oob',
+              'client_secret': PAN_SERVICE["client_secret"]}
+    pan_url = '{}token'.format(auth_point)
+    rs = requests.get(pan_url, params=_params)
+    # print(rs.content)
+    jsonrs = rs.json()
+    return jsonrs
 
 
 def refresh_token(refresh_token, recursion):
@@ -30,6 +46,7 @@ def refresh_token(refresh_token, recursion):
             return {}
 
 
+# pan accounts
 def sync_user_info(access_token, recursion):
     auth_point = "{}://{}".format(PAN_SERVICE['protocol'], "openapi.baidu.com/rest/2.0/passport/users/getInfo")
     params = {"access_token": access_token}
@@ -50,7 +67,7 @@ def sync_user_info(access_token, recursion):
 
 
 def file_list(access_token, parent_dir: None, recursion=True):
-    url_path = '/file'
+    url_path = 'file'
     from_dir = '/'
     if parent_dir:
         from_dir = parent_dir
@@ -73,7 +90,7 @@ def file_list(access_token, parent_dir: None, recursion=True):
 
 
 def file_search(access_token, key, web=0, parent_dir=None):
-    url_path = '/file'
+    url_path = 'file'
     from_dir = '/'
     if parent_dir:
         from_dir = parent_dir
@@ -89,7 +106,7 @@ def file_search(access_token, key, web=0, parent_dir=None):
 
 
 def del_file(access_token, filepath):
-    url_path = '/file'
+    url_path = 'file'
     params = {"method": 'filemanager', "access_token": access_token, "opera": "delete"}
     datas = {"async": 0, "filelist": '["%s"]' % filepath}
     headers = {"User-Agent": "pan.baidu.com"}
@@ -107,8 +124,29 @@ def del_file(access_token, filepath):
     return jsonrs
 
 
+def file_rename(access_token, filepath, newname):
+    url_path = 'file'
+    params = {"method": 'filemanager', "access_token": access_token, "opera": "rename"}
+    filelist = '[{%s}]' % ('"path":"{path}", "newname":"{newname}"'.format(path=filepath, newname=newname))
+    datas = {"async": 0, "filelist": filelist}
+    headers = {"User-Agent": "pan.baidu.com"}
+    # print("file_rename file:", access_token, ",path:", filepath, ", filelist:", datas["filelist"])
+    rs = requests.post("%s/%s" % (POINT, url_path), params=params, data=datas, headers=headers)
+    # print("content:", rs.content)
+    jsonrs = rs.json()
+    print("file_rename jsonrs:", jsonrs)
+    err_no = jsonrs.get("errno", None)
+    if err_no:
+        err_msg = jsonrs.get("err_msg", "")
+        if not err_msg:
+            err_msg = PAN_ERROR_CODES.get(err_no, "")
+            jsonrs["err_msg"] = err_msg
+    # {'errno': 0, 'info': [{'errno': 0, 'path': '/_SHAREDSYS/07声梦奇缘精讲：第5课.mp4'}], 'request_id': 1739388018147258558}
+    return jsonrs
+
+
 def pan_mkdir(access_token, filepath):
-    url_path = '/file'
+    url_path = 'file'
     params = {"method": 'create', "access_token": access_token}
     datas = {"path": filepath, "size": 0, "isdir": 1, "rtype": 0}
     headers = {"User-Agent": "pan.baidu.com"}
@@ -116,7 +154,7 @@ def pan_mkdir(access_token, filepath):
     # print("content:", rs.content)
     jsonrs = rs.json()
     print(jsonrs)
-    err_no = jsonrs["errno"]
+    err_no = jsonrs.get("errno", None)
     if err_no:
         err_msg = jsonrs.get("err_msg", "")
         if not err_msg:
@@ -160,24 +198,62 @@ def query_file_head(url):
     return last_loc_url
 
 
-def get_dlink_by_sync_file(access_token, fs_id):
+def get_media_flv_info(access_token, fpath):
+    url_path = 'file'
+    params = {"method": 'streaming', "access_token": access_token, "path": fpath, "type": "M3U8_FLV_264_480", "nom3u8": 1}
+    ua = "xpanvideo;{app};{ver};{sys};{sys_ver};flv".format(app="netdisk", ver='2.2.1', sys="pc-mac", sys_ver="10.13.6")
+    headers = {"User-Agent": ua}
+    url = "%s/%s" % (POINT, url_path)
+    print("params:", params)
+    print("url:", url)
+    rs = requests.get(url, params=params, headers=headers, verify=False)
+    jsonrs = rs.json()
+    err_no = jsonrs["errno"]
+    if err_no:
+        err_msg = jsonrs.get("err_msg", "")
+        if not err_msg:
+            err_msg = PAN_ERROR_CODES.get(err_no, "")
+            jsonrs["err_msg"] = err_msg
+    else:
+        mlink = "%s/%s" % (POINT, url_path)
+        mlink = "{qp}?method=streaming&path={path}&type=M3U8_FLV_264_480&adToken={adToken}".format(qp=mlink,
+                                                                                                   path=fpath,
+                                                                                                   adToken=
+                                                                                                   jsonrs['adToken'])
+        jsonrs['mlink_start_at'] = jsonrs['ltime'] + get_now_ts()
+        jsonrs['mlink'] = mlink
+    print("get_media_flv_info jsonrs:", jsonrs)
+    return jsonrs
+
+
+def get_dlink_by_sync_file(access_token, fs_id, need_thumbs=False):
+    need_thumb_val = 0
+    if need_thumbs:
+        need_thumb_val = 1
     url_path = 'multimedia'
-    params = {"method": 'filemetas', "access_token": access_token, "dlink": 1, "fsids": str([fs_id])}
+    params = {"method": 'filemetas', "access_token": access_token, "dlink": 1, "fsids": str([fs_id]), "thumb": need_thumb_val}
     headers = {"User-Agent": "pan.baidu.com"}
     url = "%s/%s" % (POINT, url_path)
     print('get_dlink_by_sync_file:', url)
     print('get_dlink_by_sync_file params:', params)
-    rs = requests.get(url, params=params, headers=headers, verify=False)
-    jsonrs = rs.json()
-    print(jsonrs)
-    if jsonrs:
-        sync_list = jsonrs.get('list', [])
-        for sync_item in sync_list:
-            if fs_id == sync_item['fs_id']:
-                dlink = sync_item['dlink']
+    thumbs = {}
+    try:
+        rs = requests.get(url, params=params, headers=headers, verify=False)
+        jsonrs = rs.json()
+        print(jsonrs)
 
-                return dlink
-    return None
+        if jsonrs:
+            sync_list = jsonrs.get('list', [])
+            for sync_item in sync_list:
+                if fs_id == sync_item['fs_id']:
+                    dlink = sync_item['dlink']
+                    if need_thumbs:
+                        if "thumbs" in sync_item:
+                            thumbs = sync_item["thumbs"]
+                    return dlink, thumbs
+    except Exception:
+        pass
+    return None, thumbs
 
 
 def is_black_list_error(jsonrs):
@@ -201,7 +277,7 @@ def share_folder(access_token, fs_id, pwd, period=1):
         if not err_msg:
             err_msg = PAN_ERROR_CODES.get(err_no, "")
             jsonrs["err_msg"] = err_msg
-    print("share_folder:", jsonrs)
+    # print("share_folder:", jsonrs)
     return jsonrs
 
 
@@ -264,14 +340,24 @@ def transfer_share_files(access_token, share_id, from_uk, randsk, fs_id, path, r
     # params 内部转码后报参数错误
     url = url + "?access_token={}&shareid={}&from={}&sekey={}&async=0".format(access_token, share_id, from_uk, randsk)
     datas = {"fsidlist": "[%s]" % fs_id, "path": path}
+    print("transfer_share_files url:", url, ",fsidlist:", datas['fsidlist'], ",path:", path)
     rs = requests.post(url, data=datas, headers=headers, verify=False)
     jsonrs = rs.json()
     err_no = jsonrs["errno"]
     if err_no:
-        if 12 == err_no and recursion:
-            time.sleep(0.5)
-            print("transfer_share_files will retry on time!")
-            return transfer_share_files(access_token, share_id, from_uk, randsk, fs_id, path, False)
+        if 12 == err_no:
+            if "info" in jsonrs:
+                info_list = jsonrs["info"]
+                if info_list:
+                    _info = info_list[0]
+                    info_err_no = _info.get("errno", None)
+                    if info_err_no and info_err_no == -30 and "path" in _info:
+                        return {"errno": -30, "path": _info["path"]}
+            if recursion:
+                time.sleep(0.5)
+                print("transfer_share_files will retry on time!")
+                return transfer_share_files(access_token, share_id, from_uk, randsk, fs_id, path, False)
+
         err_msg = jsonrs.get("err_msg", "")
         if not err_msg:
             err_msg = PAN_ERROR_CODES.get(err_no, "")
@@ -299,24 +385,13 @@ def split_file_content(size, cnt, fs_id):
                         'over': 0, 'pos': 0, 'retry': 0, 'loader_id': 0, 'state': 2}
     task_list.append(last_task_params)
     print(json.dumps(task_list))
-    """
-    [{"id": "486285832886933_0", "source_id": "486285832886933", "start": 0, "end": 187011800, "over": 0, "pos": 0, "retry": 0, "loader_id": "764089406647763", "state": 2}, 
-    {"id": "486285832886933_1", "source_id": "486285832886933", "start": 187011800, "end": 374023600, "over": 0, "pos": 0, "retry": 0, "loader_id": "829701452358797", "state": 2}, 
-    {"id": "486285832886933_2", "source_id": "486285832886933", "start": 374023600, "end": 561035400, "over": 0, "pos": 0, "retry": 0, "loader_id": "983165288609397", "state": 2}, 
-    {"id": "486285832886933_3", "source_id": "486285832886933", "start": 561035400, "end": 748047200, "over": 0, "pos": 0, "retry": 0, "loader_id": "872834555384471", "state": 2}, 
-    {"id": "486285832886933_4", "source_id": "486285832886933", "start": 748047200, "end": 935059000, "over": 0, "pos": 0, "retry": 0, "loader_id": "1088251260278364", "state": 2}, 
-    {"id": "486285832886933_5", "source_id": "486285832886933", "start": 935059000, "end": 1122070800, "over": 0, "pos": 0, "retry": 0, "loader_id": "480739065037370", "state": 2}, 
-    {"id": "486285832886933_6", "source_id": "486285832886933", "start": 1122070800, "end": 1309082600, "over": 0, "pos": 0, "retry": 0, "loader_id": "399246329215356", "state": 2}, 
-    {"id": "486285832886933_7", "source_id": "486285832886933", "start": 1309082600, "end": 1496094400, "over": 0, "pos": 0, "retry": 0, "loader_id": "1008597274162596", "state": 2}, 
-    {"id": "486285832886933_8", "source_id": "486285832886933", "start": 1496094400, "end": 1683106197, "over": 0, "pos": 0, "retry": 0, "loader_id": "1008597274162596", "state": 2}]
-    """
 
 
 
 if __name__ == '__main__':
     from controller.service import pan_service
     from dao.dao import DataDao
-    at = pan_service.pan_acc.access_token
+    # at = pan_service.pan_acc.access_token
     # print(file_list(at, "/"))
     fs_id = '214812092436210'
     path = '/家长看（C妈力荐）  PDF 做孩子最好的英语学习规划师  中国儿童英语习得全路线图.pdf'
@@ -348,4 +423,8 @@ if __name__ == '__main__':
     """
     # 删除某一个文件
     # del_file(_pan_acc.access_token, "/家长看（C妈力荐）  PDF 做孩子最好的英语学习规划师  中国儿童英语习得全路线图.pdf")
-    split_file_content(1683106197, 9, '486285832886933')
+    # split_file_content(1683106197, 9, '486285832886933')
+    # get_media_flv_info()
+    params = {'method': 'streaming', 'access_token': '21.769a60e242d94eee55fa72128d788bc9.2592000.1585700305.3090991555-17490062', 'path': '/知识库/02.会员库/完结/D【英语学习】/31【粽子英语】/01.迪斯尼英语【完结】/25. 精讲课：第25集（上）.mp4', 'type': 'M3U8_FLV_264_480', 'nom3u8': 1}
+    # rs = get_media_flv_info('21.769a60e242d94eee55fa72128d788bc9.2592000.1585700305.3090991555-17490062', '/知识库/02.会员库/完结/D【英语学习】/31【粽子英语】/01.迪斯尼英语【完结】/25. 精讲课：第25集（上）.mp4')
+    file_rename("21.9cf5249bec2419e49c6434e70f2ac146.2592000.1584546455.721132532-17490062", "/_SHAREDSYS/07声梦奇缘精讲：第5课.mp4", "865202870529846.mp4", "/_SHAREDSYS/")

@@ -1,0 +1,39 @@
+#tree .jstree-themeicon-custom{
+	background-image:url('/static/img/icons.png');
+	background-repeat: no-repeat;
+}
+#tree .jstree-node{
+	text-align: left;
+}
+#tree .folder { background-position: right -18px; }
+#tree .file { background-position: 0 0; }
+#tree .file-pdf { background-position: -18px 0 }
+#tree .file-as { background-position: -36px 0 }
+#tree .file-c { background-position: -72px -0px }
+#tree .file-iso { background-position: -108px -0px }
+#tree .file-htm, #tree .file-html, #tree .file-xml, #tree .file-xsl { background-position: -126px -0px }
+#tree .file-cf { background-position: -162px -0px }
+#tree .file-cpp { background-position: -216px -0px }
+#tree .file-cs { background-position: -236px -0px }
+#tree .file-sql { background-position: -272px -0px }
+#tree .file-xls, #tree .file-xlsx { background-position: -362px -0px }
+#tree .file-h { background-position: -488px -0px }
+#tree .file-crt, #tree .file-pem, #tree .file-cer { background-position: -452px -18px }
+#tree .file-php { background-position: -108px -18px }
+#tree .file-jpg, #tree .file-jpeg, #tree .file-png, #tree .file-gif, #tree .file-bmp { background-position: -126px -18px }
+#tree .file-ppt, #tree .file-pptx { background-position: -144px -18px }
+#tree .file-rb { background-position: -180px -18px }
+#tree .file-text, #tree .file-srt, #tree .file-txt, #tree .file-md, #tree .file-log, #tree .file-htaccess { background-position: -254px -18px }
+#tree .file-doc, #tree .file-docx { background-position: -362px -18px }
+#tree .file-zip, #tree .file-gz, #tree .file-tar, #tree .file-rar { background-position: -416px -18px }
+#tree .file-js { background-position: -434px -18px }
+#tree .file-css { background-position: -144px -0px }
+#tree .file-fla { background-position: -398px -0px }
+#tree .file-mp4 { background-position: 0px -36px }
+#tree .file-mp3 { background-position: -18px -36px }
+#tree .file-flv { background-position: -36px -36px }
+#tree .file-avi { background-position: -54px -36px }
+#tree .file-mkv { background-position: -72px -36px }
+#tree .file-ts { background-position: -90px -36px }
+#tree .file-dmg { background-position: -108px -36px }
+#tree .file-apk { background-position: -126px -36px }

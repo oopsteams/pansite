@@ -30,13 +30,14 @@ class EsConnections(object):
             "isdir": {"type": "integer"},
             "pin": {"type": "integer"},
             "pos": {"type": "integer"},
-            "fs_id": {"type": "long"},
+            "fs_id": {"type": "keyword"},
             "size": {"type": "long"},
             "account": {"type": "long"},
             "tags": self._tag_prop,
             "filename": {"type": "keyword", "copy_to": "all"},
+            "aliasname": {"type": "keyword", "copy_to": "all"},
             "path": self._path_prop,
-            "parent": {"type": "long"},
+            "parent": {"type": "keyword"},
             "server_ctime": {"type": "long"},
             "updated_at": self.date_time_prop,
             "created_at": self.date_time_prop,
@@ -220,10 +221,10 @@ class EsDao(object):
     def refresh(self):
         self.es.indices.refresh(self.index_name)
 
-    def es_get(self, doc_id, fields=None):
+    def es_get(self, doc_id, conditions=None):
         if doc_id:
-            if fields:
-                result = self.es.get(index=self.index_name, id=doc_id, doc_type=self.doc_type, params=fields)
+            if conditions:
+                result = self.es.get(index=self.index_name, id=doc_id, doc_type=self.doc_type, params=conditions)
             else:
                 result = self.es.get(index=self.index_name, id=doc_id, doc_type=self.doc_type)
             return result
@@ -231,13 +232,15 @@ class EsDao(object):
 
     def es_search_exec(self, es_body, fields=None):
         # logger.debug("utils.is_not_production()=%s" % utils.is_not_production())
-        logger.debug("es_search_exec=%s" % ("%s" % es_body).replace("'", "\""))
-
-        if fields:
-            result = self.es.search(index=self.index_name, body=es_body, params=fields)
-        else:
-            result = self.es.search(index=self.index_name, body=es_body)
-
+        # logger.debug("es_search_exec=%s" % ("%s" % es_body).replace("'", "\""))
+        result = {}
+        try:
+            if fields:
+                result = self.es.search(index=self.index_name, body=es_body, params=fields)
+            else:
+                result = self.es.search(index=self.index_name, body=es_body)
+        except Exception as e:
+            logger.warn("es_search_exec:%s,%s" % (es_body, e), exc_info=True)
         return result
 
 

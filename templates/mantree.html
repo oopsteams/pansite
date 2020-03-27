@@ -2,321 +2,105 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <style>
-	html { margin:0; padding:0; font-size:62.5%; }
-	body { margin:0 auto; padding:20px 10px; font-size:14px; font-size:1.4em; }
-	h1 { font-size:1.8em; }
-	.pan-tree { overflow:auto; border:1px solid silver; min-height:200px;}
 
-    #dialog-form .validateTips { border: 1px solid transparent; padding: 0.3em; }
-    #dialog-form .form_table label,#dialog-form input { display:block; }
-    #dialog-form .form_table input.text { margin-bottom:12px; width:95%; padding: .4em; }
-	</style>
     <link href="/static/js/jstree/themes/default/style.min.css" rel="stylesheet">
     <link href="/static/js/jquery-ui/jquery-ui.css" rel="stylesheet">
+    <link href="/static/css/main.css" rel="stylesheet">
+    <style>
+        html { margin:0; padding:0; font-size:62.5%; }
+        body { margin:0 auto; padding:20px 10px; font-size:14px; font-size:1.4em; }
+        h1 { font-size:1.8em; }
+	    .pan-tree { overflow:auto; border:1px solid silver; min-height:200px;}
+
+        #dialog-form .validateTips { border: 1px solid transparent; padding: 0.3em; }
+        #dialog-form .form_table label,#dialog-form input { display:block; }
+        #dialog-form .form_table input.text { margin-bottom:12px; width:95%; padding: .4em; }
+        .custom-combobox-pagination {
+            width:20px;
+            height:20px;
+        }
+        .custom-combobox {
+            position: relative;
+            display: inline-block;
+        }
+        .custom-combobox-toggle {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            margin-left: -1px;
+            padding: 0;
+        }
+        .custom-combobox-input {
+            margin: 0;
+            padding: 5px 10px;
+        }
+        .ui-draggable, .ui-droppable {
+            background-position: top;
+        }
+        .odd {
+            background-color: #dddddd;
+        }
+	</style>
     <script src="/static/js/jquery-ui/external/jquery/jquery.js"></script>
     <script src="/static/js/jstree/jstree.min.js"></script>
     <script src="/static/js/jquery-ui/jquery-ui.js"></script>
     <script src="/static/js/base.js"></script>
-
+    <script src="/static/js/mancombobox.js"></script>
     <title>Manage File Tree</title>
 </head>
 <body>
     <div class="toolbar">
         <button id="home">Home</button>
         <button id="panmanage">网盘维护</button>
-        <button id="self_sync_root">同步根目录</button>
+        <!--<button id="self_sync_root">同步根目录</button>-->
 
     </div>
 	<h1>我的网盘资源</h1>
-	<div id="lazy" class="pan-tree"></div>
+	<div id="tree" class="pan-tree"></div>
     <div id="dialog-message" title="正在处理等待同步">
         <div class="progress-label">处理中...</div>
         <div id="progressbar"></div>
     </div>
     <div id="dialog-form" title="Create new user">
       <p class="validateTips">All form fields are required.</p>
-      <form>
+      <form id="product_form">
         <fieldset class="form_table">
           <label for="p_name">商品名称</label>
-          <input type="text" name="p_name" id="p_name" value="" class="text ui-widget-content ui-corner-all">
-          <label for="p_price">商品价格</label>
-          <input type="text" name="p_price" id="p_price" value="" class="text ui-widget-content ui-corner-all">
-
+          <input type="text" name="p_name" id="p_name" value="" class="text ui-widget-content ui-corner-all"/>
+          <label for="p_price">商品价格(单位:元)</label>
+          <input type="text" name="p_price" id="p_price" value="" class="text ui-widget-content ui-corner-all"/>
+            <input type="hidden" name="isdir" id="isdir" value="0" />
+            <input type="hidden" name="itemid" id="itemid" value="0" />
           <!-- Allow form submission with keyboard without duplicating the dialog button -->
-          <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+          <input type="submit" tabindex="-1" style="position:absolute; top:-1000px"/>
         </fieldset>
           <fieldset>
             <legend>配置方式: </legend>
-              <label for="radio-1">当前目标</label>
-            <input type="radio" name="radio-1" id="radio-1">
-            <label for="radio-2">迭代所有</label>
-            <input type="radio" name="radio-1" id="radio-2">
+              <label for="current">当前目标</label>
+            <input type="radio" value="top" name="layer" id="current" checked/>
+            <label for="recursive">迭代所有</label>
+            <input type="radio" value="all" name="layer" id="recursive"/>
           </fieldset>
       </form>
     </div>
+    <div id="dialog-dist-form" title="Dist Product">
+        <label for="p_name">商品名称:</label><label id="pro_name"></label>
+
+      <p>用户查询</p>
+        <p class="validateTips">All form fields are required.</p>
+      <form id="dist_product_form">
+          <select id="dist_combobox">
+            <option value="">Select one...</option>
+          </select>
+          <input type="hidden" name="itemid" id="pro_itemid" value="0" />
+      </form>
+    </div>
+    <script src="/static/js/pantree.js"></script>
 	<script>
 	// html demo
-    let pan_id = '{{pan_id}}';
-    let dialog = null,form_dialog = null;
-    function refresh_jstree(node_id){
-        let inst = $.jstree.reference(node_id);
-        let node = inst.get_node(node_id);
-        let parent_node_id = inst.get_parent(node);
-        let parent_node = null;
-        if(parent_node_id){
-            parent_node = inst.get_node(parent_node_id);
-        }
-        setTimeout(function () {
-            if(parent_node){
-                inst.refresh(parent_node);
-            } else {
-                alert('refresh all!!!');
-                inst.refresh();
-            }
-        }, 800);
-    }
+
 	// lazy demo
-	$('#lazy').jstree({
-		'core' : {
-			'data' : {
-				"url" : "fload?lazy&tk="+GetQueryString('tk')+'&panid='+pan_id,
-				"data" : function (node) {
-				    console.log("lazy node:", node);
-				    let p = "/";
-				    let _params = { "id" : node.id, "path": p }
-				    if(node.data){
-                        $.extend(_params, node.data)
-                    }
-					return _params;
-				}
-			},
-            'themes' : {
-                'responsive' : false,
-                'variant' : 'small',
-                'stripes' : true
-            }
-		},
-        "contextmenu":{
-		    'items': function (node) {
-                let ctxmenu = $.jstree.defaults.contextmenu.items();
-                delete ctxmenu.ccp;
-                delete ctxmenu.remove;
-                delete ctxmenu.rename;
-                delete ctxmenu.create;
 
-                ctxmenu.clear={
-                    'separator_after': false,
-                    'separator_before': false,
-                    'label': '清除',
-                    'action': function(data){
-                        dialog.dialog( "open" );
-                        let inst = $.jstree.reference(data.reference),
-                            node = inst.get_node(data.reference);
-
-                        let params = {tk: GetQueryString('tk'), 'panid': pan_id, 'id': node.data._id};
-                        console.log('clear dir:', params);
-                        call_service_by_get('/man/clear', params, function (res) {
-                            let st = res['state'];
-                            if(st == 0){
-                                inst = $.jstree.reference(data.reference);
-                                node = inst.get_node(data.reference);
-                                inst.delete_node(node);
-                                refresh_jstree(data.reference);
-                                dialog.dialog( "close" );
-                            }
-                        });
-                    }
-                };
-                if(node.data.isdir === 1){
-                    if(node.data.source == 'local') {
-                        ctxmenu.sync = {
-                            'separator_after': false,
-                            'separator_before': false,
-                            'label': '同步目录',
-                            'action': function (data) {
-                                dialog.dialog("open");
-                                let inst = $.jstree.reference(data.reference),
-                                    node = inst.get_node(data.reference);
-                                let params = {tk: GetQueryString('tk'), recursion: 0, 'panid': pan_id, 'id': node.data._id};
-                                call_service_by_get('/source/syncallnodes', params, function (res) {
-                                    let result = res['result'];
-                                    console.log('res result:', result);
-                                    check_state(function (ok) {
-                                        inst.refresh(node);
-                                        dialog.dialog("close");
-                                    });
-                                });
-
-                            }
-                        };
-                    }
-                    if(node.data.path != '/') {
-                        if(node.data.source == 'local'){
-                            ctxmenu.syncall = {
-                                'separator_after': false,
-                                'separator_before': false,
-                                'label': '同步所有',
-                                'action': function (data) {
-                                    dialog.dialog("open");
-                                    let inst = $.jstree.reference(data.reference),
-                                        node = inst.get_node(data.reference);
-                                    let params = {tk: GetQueryString('tk'), recursion: 1, 'panid': pan_id, 'id': node.data._id};
-                                    call_service_by_get('/source/syncallnodes', params, function (res) {
-                                        let result = res['result'];
-                                        console.log('res result:', result);
-                                        check_state(function (ok) {
-                                            inst.refresh(node);
-                                            dialog.dialog("close");
-                                        });
-                                    });
-
-                                }
-                            };
-                        }
-                        ctxmenu.sub_dir_show = {
-                            'separator_after': false,
-                            'separator_before': true,
-                            'label': '标记子目录搜索可见',
-                            'action': function (data) {
-                                dialog.dialog("open");
-                                // console.log('isvisible data:', data);
-                                let inst = $.jstree.reference(data.reference),
-                                    node = inst.get_node(data.reference);
-                                let params = {
-                                    tk: GetQueryString('tk'),
-                                    recursion: 1,
-                                    'panid': pan_id,
-                                    'id': node.id,
-                                    'parent': node.data.p_id,
-                                    'source': node.data.source
-                                };
-                                let url = '/man/show';
-                                call_service_by_get(url, params, function (res) {
-                                    setTimeout(()=>{
-                                        inst.refresh(node);
-                                        dialog.dialog("close");
-                                    }, 5000)
-
-                                });
-                            }
-                        };
-                        ctxmenu.sub_dir_hide = {
-                            'separator_after': false,
-                            'separator_before': false,
-                            'label': '标记子目录搜索隐藏',
-                            'action': function (data) {
-                                dialog.dialog("open");
-                                let inst = $.jstree.reference(data.reference),
-                                    node = inst.get_node(data.reference);
-                                // console.log('sub_dir_hide node:', node);
-                                let params = {
-                                    tk: GetQueryString('tk'),
-                                    recursion: 1,
-                                    'panid': pan_id,
-                                    'id': node.id,
-                                    'parent': node.data.p_id,
-                                    'source': node.data.source
-                                };
-                                let url = '/man/hide';
-                                call_service_by_get(url, params, function (res) {
-                                    setTimeout(()=>{
-                                        inst.refresh(node);
-                                        dialog.dialog("close");
-                                    }, 5000)
-                                });
-                            }
-                        };
-                    }
-                }
-                if(node.data.path != '/') {
-                    ctxmenu.product = {
-                        'separator_after': false,
-                        'separator_before': true,
-                        'label': '标记为商品',
-                        'action': function (data) {
-                            form_dialog.dialog("open");
-                            let inst = $.jstree.reference(data.reference),
-                                node = inst.get_node(data.reference);
-                            $('#p_name').val(node.text);
-                            /*
-                            dialog.dialog( "open" );
-                            let inst = $.jstree.reference(data.reference),
-                                node = inst.get_node(data.reference);
-                            let params = {tk: GetQueryString('tk'), recursion: 1, 'panid': pan_id, 'id': node.id};
-                            call_service_by_get('/product/tag', params, function (res) {
-                                let result = res['result'];
-                                console.log('res result:', result);
-                                inst.refresh(node);
-                                dialog.dialog( "close" );
-                            });
-                            */
-                        }
-                    };
-                }
-                let label = '标记搜索可见';
-                let url = '/man/show';
-                let pin_v = 1;
-                if(node.data.pin == 1){
-                    label = '标记搜索隐藏';
-                    url = '/man/hide';
-                    pin_v = 0;
-                }
-                // console.log('menu node:', node);
-                ctxmenu.isvisible={
-                        'separator_after': false,
-                        'separator_before': true,
-                        'label': label,
-                        'action': function(data){
-                            dialog.dialog( "open" );
-                            // console.log('isvisible data:', data);
-                            let inst = $.jstree.reference(data.reference),
-                                node = inst.get_node(data.reference);
-                            let params = {tk: GetQueryString('tk'), recursion: 1, 'panid': pan_id, 'id': node.data._id, 'source': node.data.source};
-                            call_service_by_get(url, params, function (res) {
-                                // inst.refresh(node);
-                                node.data.pin = pin_v;
-                                let el = $('#'+node.a_attr.id);
-                                if(el){
-                                    if(pin_v == 1){
-                                        el.css('color', 'red');
-                                    } else {
-                                        el.css('color', 'black');
-                                    }
-                                }
-
-                                dialog.dialog( "close" );
-                            });
-
-                        }
-                    };
-
-                if(node.hasOwnProperty('menus')){
-                    for(var m in node.menus){
-                        ctxmenu[m] = node.menus[m];
-                    }
-                }
-                return ctxmenu;
-            }
-        },
-        "types":{
-            '#': {"valid_children": ["root"]},
-            "root": {"valid_children":["default"]},
-            'default': {'icon': 'folder', "valid_children": ["default","file"]},
-            'file': {'valid_children': [], 'icon': 'glyphicon glyphicon-file'}
-        },
-        "plugins" : [
-            "contextmenu", "dnd", "search",
-            "state", "types", "wholerow"
-            // , "checkbox"
-          ]
-	}).on('show_contextmenu.jstree', function(e, data){
-
-
-    }).on('changed.jstree', function(e, data){
-
-
-    });
 	/*
 	*
 	headers = {"SURI-TOKEN": tk, "Content-Type": "application/x-www-form-urlencoded"};
@@ -331,19 +115,38 @@
 		};
 	*
 	* */
-	function check_state(cb) {
+	function updateTips( tips, t ) {
+      tips.text( t ).addClass( "ui-state-highlight" );
+      setTimeout(function() {
+        tips.removeClass( "ui-state-highlight", 1500 );
+      }, 500 );
+    }
+	function check_state(pan_id, cb) {
         let params = {tk: GetQueryString('tk'), 'panid': pan_id};
         call_service_by_get('/source/syncstate', params, function (res) {
                 let st = res['state'];
-                if(1 == st){
+                if(1 === st){
                     cb(true)
                 } else {
-                    setTimeout(function(){check_state(cb)}, 5000)
+                    setTimeout(function(){check_state(pan_id, cb)}, 5000)
                 }
             });
     }
     $(function(){
         $( "#dialog-form input[type=radio]" ).checkboxradio();
+        /////////////////////////////////////////////////////////
+
+        $("#dist_combobox").combobox({"parent": $("#dist_product_form"), "src":function(request, cb){
+                let kw = request.term;
+                let __params = {"offset":0, "tk": GetQueryString('tk'), 'kw':kw, 'page': request.page}
+                call_service_by_get('/product/su', __params, function (res) {
+                    let result = res;
+                    console.log('res result:', result);
+                    cb(result);
+                });
+
+            }});
+        //////////////////////////////////////////////////////combobox
         dialog = $( "#dialog-message" ).dialog({
             autoOpen: false,
             closeOnEscape: false,
@@ -354,7 +157,7 @@
             beforeClose: function() {}
 
           });
-        let $panmanage = $( "#panmanage" ), $self_sync_root = $("#self_sync_root");
+        let $panmanage = $( "#panmanage" );
         $panmanage.button({
           "icon": "ui-icon-wrench",
           "showLabel": true
@@ -366,20 +169,20 @@
             document.location.href='/man/init?tk=' + GetQueryString('tk');
         }).end();
 
-        $self_sync_root.button({icon: "ui-icon-transferthick-e-w", showLabel: true}).on("click", function (event, ui) {
-                $self_sync_root.button('disable');
-                // let params = {tk: GetQueryString('tk'), id: 0, recursion: 0};
-                let params = {tk: GetQueryString('tk'), recursion: 0, 'panid': pan_id};
-                call_service_by_get('/source/syncallnodes', params, function (res) {
-                    let result = res['result'];
-                    console.log('res result:', result);
-                    check_state(function (ok) {
-                        $("#self_sync_root").button('enable');
-                        $.jstree.reference('#lazy').refresh();
-                    });
-                });
-            // setTimeout(()=>{$("#self_sync_root").button('enable');}, 5000);
-        }).end();
+        // $self_sync_root.button({icon: "ui-icon-transferthick-e-w", showLabel: true}).on("click", function (event, ui) {
+        //         $self_sync_root.button('disable');
+        //         // let params = {tk: GetQueryString('tk'), id: 0, recursion: 0};
+        //         let params = {tk: GetQueryString('tk'), recursion: 0, 'panid': pan_id};
+        //         call_service_by_get('/product/syncallnodes', params, function (res) {
+        //             let result = res['result'];
+        //             console.log('res result:', result);
+        //             check_state(function (ok) {
+        //                 $("#self_sync_root").button('enable');
+        //                 $.jstree.reference('#tree').refresh();
+        //             });
+        //         });
+        //     // setTimeout(()=>{$("#self_sync_root").button('enable');}, 5000);
+        // }).end();
 
         let progressbar = $( "#progressbar" );
         progressbar.progressbar({
@@ -396,18 +199,57 @@
             $(".ui-dialog button").last().trigger( "focus" );
           }
         });
+        /* 分配商品 */
+        let dist_product = function(){
+            let combobox_instance = $("#dist_combobox").combobox('instance');
+            let data = $('#dist_product_form').serializeArray();
+            let tips = $( ".validateTips" , "#dialog-dist-form");
+            let jsonObj={};
+            $(data).each(function(){
+                jsonObj[this.name]=this.value;
+            });
+            console.log("dist_combobox val:",combobox_instance.input.val())
+            jsonObj["user_name"] = combobox_instance.input.val();
+            console.log('dist_product:', jsonObj);
+            call_service('/product/buy?tk='+GetQueryString('tk'), jsonObj, function (res) {
+                let st = res['state'];
+                if(st === 0){
+                    alert(res['msg']);
+                    dist_form_dialog.dialog( "close" );
+                }else{
+                    alert('Failed!');
+                }
+                // console.log('res result:', result);
 
+            });
+        };
         /* 创建商品 */
         let set_product = function(){
-            let all_r_list = $( "#dialog-form input[type=radio]" );
-            for(let i=0; i<all_r_list.length; i++){
-                let ri = all_r_list[i];
-                console.log('ri:', ri);
-            }
+            let data = $('#product_form').serializeArray();
+            let jsonObj={};
+            $(data).each(function(){
+                jsonObj[this.name]=this.value;
+            });
+            console.log('set_product:', jsonObj);
+            dialog.dialog("open");
+            call_service('/product/tag?tk='+GetQueryString('tk'), jsonObj, function (res) {
+                let result = res['result'];
+                console.log('res result:', result);
+                if(form_dialog.ctx){
+                    setTimeout(() => {
+                        form_dialog.ctx.inst.refresh(form_dialog.ctx.inst.node);
+                        form_dialog.ctx = null;
+                        dialog.dialog("close");
+                        form_dialog.dialog( "close" );
+                    }, 5000)
+                } else {
+                    form_dialog.dialog( "close" )
+                }
+            });
         };
         let p_name = $('#p_name');
         let p_price = $('#p_price');
-        let allFields = $( [] ).add( p_name ).add( p_price ), tips = $( ".validateTips" );
+        let allFields = $( [] ).add( p_name ).add( p_price ), tips = $( ".validateTips" , "#dialog-form");
         form_dialog = $( "#dialog-form" ).dialog({
               autoOpen: false,
               height: 400,
@@ -420,10 +262,28 @@
                 }
               },
               close: function() {
-                form[ 0 ].reset();
                 allFields.removeClass( "ui-state-error" );
               }
             });
+        dist_form_dialog = $("#dialog-dist-form").dialog({
+            autoOpen: false,
+              height: 400,
+              width: 350,
+              modal: true,
+            buttons: {
+                "分配商品": dist_product,
+                Cancel: function() {
+                  dist_form_dialog.dialog( "close" );
+                }
+              },
+              open:function(){
+                // $("#dialog-dist-form").css('z-index', 99);
+                // $("#dialog-dist-form").parent().css('z-index', 99);
+              },
+              close: function() {
+
+              }
+        });
 
     });
 

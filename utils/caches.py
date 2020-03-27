@@ -13,30 +13,61 @@ class CacheService:
     def __init__(self):
         pass
 
-    def put(self, key, val):
+    def put_on_not_exists(self, key, val):
         if key in self.SYNC_PAN_DIR_CACHES:
             return False
         else:
             self.SYNC_PAN_DIR_CACHES[key] = val
             return True
 
+    def put(self, key, val):
+        if key in self.SYNC_PAN_DIR_CACHES:
+            _val = self.SYNC_PAN_DIR_CACHES[key]
+            if type(val) is dict and type(_val) is dict:
+                for k in val:
+                    _val[k] = val[k]
+            return False
+        else:
+            self.SYNC_PAN_DIR_CACHES[key] = val
+            return True
+
+    def replace(self, key, val):
+        self.SYNC_PAN_DIR_CACHES[key] = val
+
     def rm(self, key):
         if key in self.SYNC_PAN_DIR_CACHES:
             return self.SYNC_PAN_DIR_CACHES.pop(key)
         return None
 
+    def get(self, key):
+        if key in self.SYNC_PAN_DIR_CACHES:
+            return self.SYNC_PAN_DIR_CACHES[key]
+        return None
+
 
 cache_service = CacheService()
-
+DATA_CACHES_TIMEOUT_KEYS_INDEX = []
 LAST_CLEAR_CACHE_CONST = dict(tm=get_now_ts(), timeout=3600)
 DATA_CACHES = {}
 
 
 def _clear_cache():
     if get_now_ts() - LAST_CLEAR_CACHE_CONST['tm'] > LAST_CLEAR_CACHE_CONST['timeout']:
-        all_keys = [k for k in DATA_CACHES]
-        for key in all_keys:
-            _get_from_cache(key)
+        _l = len(DATA_CACHES_TIMEOUT_KEYS_INDEX)
+        idx = 0
+        for idx in range(_l, 0, -1):
+            data_obj = DATA_CACHES_TIMEOUT_KEYS_INDEX[idx-1]
+            tm = data_obj.get('tm', 0)
+            time_out = data_obj.get('to', 0)
+            if time_out and get_now_ts() - tm > time_out:
+                print("find timeout idx:", idx)
+                break
+        if idx > 0:
+            print("clear cache by idx:", idx)
+            for i in range(idx, 0, -1):
+                d = DATA_CACHES_TIMEOUT_KEYS_INDEX.pop(i-1)
+                k = d['key']
+                _get_from_cache(k)
 
         LAST_CLEAR_CACHE_CONST['tm'] = get_now_ts()
 
@@ -51,21 +82,44 @@ def _get_from_cache(key):
         DATA_CACHES.pop(key)
         return None
     else:
+        print("_get_from_cache hit ok! key:", key)
         return data_obj.get('data', None)
 
 
+def get_from_cache(key):
+    return _get_from_cache(key)
+
+
 def _put_to_cache(key, val, timeout_seconds=0):
-    data_obj = {'data': val, 'tm': get_now_ts(), 'to': timeout_seconds}
+    data_obj = {'data': val, 'tm': get_now_ts(), 'to': timeout_seconds, 'key': key}
+    print("_put_to_cache key:", key)
     DATA_CACHES[key] = data_obj
+    if timeout_seconds > 0:
+        DATA_CACHES_TIMEOUT_KEYS_INDEX.append(data_obj)
+        DATA_CACHES_TIMEOUT_KEYS_INDEX.sort(key=lambda el: el['tm'] + el['to'])
+
     _clear_cache()
 
 
-def cache_data(cache_key, timeout_seconds=0, verify_dict_key=None, verify_object_attr=None):
+def clear_cache(key):
+    idx = 0
+    _l = len(DATA_CACHES_TIMEOUT_KEYS_INDEX)
+    for idx in range(_l, 0, -1):
+        data_obj = DATA_CACHES_TIMEOUT_KEYS_INDEX[idx - 1]
+        _key = data_obj.get('key', '')
+        if _key == key:
+            break
+    if idx > 0:
+        DATA_CACHES_TIMEOUT_KEYS_INDEX.pop(idx - 1)
+        DATA_CACHES.pop(key)
+
+
+def cache_data(cache_key, timeout_seconds=0, verify_key=None):
     def cache_decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             if isinstance(cache_key, str):
-                key = cache_key % locals()
+                key = cache_key.format(*args)
             elif callable(cache_key):
                 key = cache_key(*args, **kwargs)
             else:
@@ -73,11 +127,12 @@ def cache_data(cache_key, timeout_seconds=0, verify_dict_key=None, verify_object
 
             data = _get_from_cache(key)
             if data:
-                if not verify_dict_key and not verify_object_attr:
-                    return data
-                if verify_dict_key and verify_dict_key in data:
-                    return data
-                if verify_object_attr and hasattr(data, verify_object_attr):
+                if verify_key:
+                    if type(data) is dict and verify_key in data:
+                        return data
+                    elif type(data) is object and hasattr(data, verify_key):
+                        return data
+                else:
                     return data
 
             result = func(*args, **kwargs)

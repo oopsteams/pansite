@@ -35,6 +35,16 @@ class CommunityDao(object):
 
     @classmethod
     @query_wrap_db
+    def get_data_item_by_id(cls, pk_id):
+        return CommunityDataItem.get_by_id(pk=pk_id)
+
+    @classmethod
+    @query_wrap_db
+    def query_community_item_by_parent_all(cls, parent_id, offset=0, limit=100):
+        return CommunityDataItem.select().where(CommunityDataItem.parent == parent_id).limit(limit).offset(offset)
+
+    @classmethod
+    @query_wrap_db
     def query_share_logs_by_hours(cls, hours, offset=0, limit=100):
         return ShareLogs.select().where(ShareLogs.updated_at < get_now_datetime(hours*60*60)).limit(limit).offset(offset)
 
@@ -114,7 +124,7 @@ class CommunityDao(object):
         with db:
             ShareFr.update(**_params).where(ShareFr.id == pk_id).execute()
 
-
+    # Del
     @classmethod
     def del_transfer_log_by_id(cls, pk_id):
         with db:
@@ -124,6 +134,33 @@ class CommunityDao(object):
     def del_share_log_by_id(cls, pk_id):
         with db:
             ShareLogs.delete().where(ShareLogs.id == pk_id).execute()
+
+    @classmethod
+    def del_community_item_by_id(cls, pk_id):
+        with db:
+            CommunityDataItem.delete().where(CommunityDataItem.id == pk_id).execute()
+
+    @classmethod
+    def del_save_community_list(cls, item_list, show):
+        if show == 1:
+            with db:
+                if show == 1:
+                    for cdi in item_list:
+                        CommunityVisible(id=cdi.id, show=1).save(force_insert=True)
+                else:
+                    for cdi in item_list:
+                        CommunityVisible.delete().where(CommunityVisible.id == cdi.id)
+
+    @classmethod
+    def del_save_local_list(cls, item_list, show):
+        if show == 1:
+            with db:
+                if show == 1:
+                    for cdi in item_list:
+                        LocalVisible(id=cdi.id, show=1).save(force_insert=True)
+                else:
+                    for cdi in item_list:
+                        LocalVisible.delete().where(LocalVisible.id == cdi.id)
 
     # new data
     @classmethod
@@ -147,12 +184,21 @@ class CommunityDao(object):
                                           parent=params.get('parent', ''), server_ctime=params.get('server_ctime', 0),
                                           sourceid=sourceid, sourceuid=sourceuid, md5_val="",
                                           sized=params.get("sized", 1), pin=params.get("pin", 0))
-
             with db:
                 data_item.save(force_insert=True)
                 if data_item.pin == 1:
                     CommunityVisible(id=data_item.id, show=1)
             cls.sync_community_item_to_es(data_item, source)
+        else:
+            print("new_community_item will update item:", params)
+            data_item: CommunityDataItem = CommunityDataItem.select().where(CommunityDataItem.fs_id == params['id']).first()
+            print("data_item parent:", data_item.parent, ",size:", data_item.size)
+            if data_item.parent != params.get('parent', '') or data_item.size != params.get('size', 0):
+                with db:
+                    CommunityDataItem.update(parent=params.get('parent', ''), size=params.get('size', 0)).where(
+                        CommunityDataItem.id == data_item.id).execute()
+                cls.update_es_by_community_item(data_item.id, {'parent': params.get('parent', ''),
+                                                               'size': params.get('size', 0)})
 
     @classmethod
     def sync_community_item_to_es(cls, data_item: CommunityDataItem, source):
@@ -161,8 +207,9 @@ class CommunityDao(object):
         if es_item_path.endswith(data_item.filename):
             # print("new path:", data_item.id)
             es_item_path = es_item_path[:-len(data_item.filename)]
-            _p = es_item_path.strip('/')
-            pos = len(_p.split('/'))
+            _p = data_item.path.strip('/')
+            if _p:
+                pos = len(_p.split('/'))
         body = utils_es.build_es_item_json_body(data_item.id, data_item.category, data_item.isdir, data_item.pin,
                                               data_item.fs_id, data_item.size, data_item.account_id, data_item.filename,
                                               es_item_path, data_item.server_ctime, data_item.updated_at,
@@ -174,6 +221,11 @@ class CommunityDao(object):
         es.index(data_item.id, body)
 
     @classmethod
+    def update_es_by_community_item(cls, doc_id, params):
+        es = es_dao_share()
+        es.update_fields(doc_id, **params)
+
+    @classmethod
     def new_community_visible(cls, _id, show):
         if not CommunityVisible.select().where(CommunityVisible.id == _id).exists():
             if show == 1:
@@ -183,17 +235,6 @@ class CommunityDao(object):
         else:
             if show == 0:
                 CommunityVisible.delete().where(CommunityVisible.id == _id)
-
-    @classmethod
-    def del_save_community_list(cls, item_list, show):
-        if show == 1:
-            with db:
-                if show == 1:
-                    for cdi in item_list:
-                        CommunityVisible(id=cdi.id, show=1).save(force_insert=True)
-                else:
-                    for cdi in item_list:
-                        CommunityVisible.delete().where(CommunityVisible.id == cdi.id)
 
     @classmethod
     def new_community_visible_by_parent(cls, parent_id, show):
@@ -234,17 +275,6 @@ class CommunityDao(object):
                 LocalVisible.delete().where(LocalVisible.id == _id)
 
     @classmethod
-    def del_save_local_list(cls, item_list, show):
-        if show == 1:
-            with db:
-                if show == 1:
-                    for cdi in item_list:
-                        LocalVisible(id=cdi.id, show=1).save(force_insert=True)
-                else:
-                    for cdi in item_list:
-                        LocalVisible.delete().where(LocalVisible.id == cdi.id)
-
-    @classmethod
     def new_local_visible_by_parent(cls, parent_id, show):
         offset = 0
         size = 500
@@ -253,7 +283,7 @@ class CommunityDao(object):
         dog = 1000000
         while ln == size and dog > 0:
             dog = dog - 1
-            ms = DataItem.select().where(DataItem.parent == parent_id).offset(offset).limit(size)
+            ms = DataItem.select().where(DataItem.parent == parent_id, DataItem.isdir == 0).offset(offset).limit(size)
             ln = len(ms)
             item_list = []
             for cdi in ms:
