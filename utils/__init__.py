@@ -75,6 +75,18 @@ def object_to_dict(instance, fields=[], excludes=[]):
     return info
 
 
+def split_filename(filename):
+    if not filename:
+        return '', ''
+    name = filename
+    suffix = ''
+    __idx = filename.rfind(".")
+    if __idx > 0:
+        name = filename[0:__idx]
+        suffix = filename[__idx+1:]
+
+    return name, suffix
+
 def compare_dt(dt1, dt2) -> int:
     arrow_dt1 = arrow.get(dt1).replace(tzinfo=default_tz)
     arrow_dt2 = arrow.get(dt2).replace(tzinfo=default_tz)

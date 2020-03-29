@@ -17,7 +17,7 @@ from controller.pro_action import ProductHandler
 from controller.middle_ware import get_middleware
 from controller.async_action import AsyncHandler
 from controller.main_action import MainHandler
-
+from utils import log as logger
 scheduler = TornadoScheduler()
 scheduler.start()
 
@@ -35,7 +35,6 @@ def update_sys_cfg(release=True):
 # @scheduler.scheduled_job('cron',hour=16,minute=9,second=20)
 def scheduler_clear_all_expired_share_log():
     try:
-        print("will exec clear_all_expired_share_log!!!")
         sync_pan_service.clear_all_expired_share_log()
         update_sys_cfg(False)
         try_release_conn()
@@ -46,11 +45,10 @@ def scheduler_clear_all_expired_share_log():
 def update_access_token():
     try:
         from dao.models import PanAccounts
-        print("will exec update_access_token!!!")
         # sync_pan_service.clear_all_expired_share_log()
         pan_acc_list = PanAccounts.select().where(PanAccounts.user_id == 1)
         for pan_acc in pan_acc_list:
-            print("will validation pan acc:", pan_acc.id, ",name;", pan_acc.name)
+            logger.info("will validation pan acc:", pan_acc.id, ",name;", pan_acc.name)
             auth_service.check_pan_token_validation(pan_acc)
 
         try_release_conn()
@@ -101,8 +99,8 @@ if __name__ == "__main__":
     port = service['port']
     # server = HTTPServer(application, ssl_options=ssl_ctx)
     server = HTTPServer(application)
-    # server.listen(port)
-    server.listen(port, '127.0.0.1')
+    server.listen(port)
+    # server.listen(port, '127.0.0.1')
     # application.listen(port)
     print("Listen HTTP @ %s" % port)
     IOLoop.instance().start()

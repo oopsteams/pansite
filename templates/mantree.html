@@ -8,13 +8,13 @@
     <link href="/static/css/main.css" rel="stylesheet">
     <style>
         html { margin:0; padding:0; font-size:62.5%; }
-        body { margin:0 auto; padding:20px 10px; font-size:14px; font-size:1.4em; }
+        body { margin:0 auto; padding:20px 10px; font-size:1.4em; }
         h1 { font-size:1.8em; }
 	    .pan-tree { overflow:auto; border:1px solid silver; min-height:200px;}
 
-        #dialog-form .validateTips { border: 1px solid transparent; padding: 0.3em; }
-        #dialog-form .form_table label,#dialog-form input { display:block; }
-        #dialog-form .form_table input.text { margin-bottom:12px; width:95%; padding: .4em; }
+        .validateTips { border: 1px solid transparent; padding: 0.3em; }
+        .form_table label,#dialog-form input { display:block; }
+        .form_table input.text { margin-bottom:12px; width:95%; padding: .4em; }
         .custom-combobox-pagination {
             width:20px;
             height:20px;
@@ -93,6 +93,21 @@
             <option value="">Select one...</option>
           </select>
           <input type="hidden" name="itemid" id="pro_itemid" value="0" />
+      </form>
+    </div>
+    <div id="dialog-rename-form" title="Rename">
+        <p class="validateTips">All form fields are required.</p>
+      <form id="rename_item_form">
+          <fieldset class="form_table">
+              <dl>
+                  <dt><label for="old_name">商品名称</label></dt>
+                  <dd><input type="text" name="old_name" id="old_name" value="" class="text ui-widget-content ui-corner-all"/></dd>
+                  <dt><label for="alias_name">商品别名</label></dt>
+                  <dd><input type="text" name="alias_name" id="alias_name" value="" class="text ui-widget-content ui-corner-all"/></dd>
+              </dl>
+              <input type="hidden" name="itemid" id="rename_itemid" value="0" />
+              <input type="hidden" name="source" id="rename_source" value="0" />
+          </fieldset>
       </form>
     </div>
     <script src="/static/js/pantree.js"></script>
@@ -199,6 +214,75 @@
             $(".ui-dialog button").last().trigger( "focus" );
           }
         });
+        /*Rename*/
+        let rename_item = function(){
+
+            let to_do_rename = function(){
+                let data = $('#rename_item_form').serializeArray();
+                let jsonObj={};
+                $(data).each(function(){
+                    jsonObj[this.name]=this.value;
+                });
+                console.log('rename_item:', jsonObj);
+                dialog.dialog("open");
+
+                call_service('/man/rename?tk='+GetQueryString('tk'), jsonObj, function (res) {
+                    let st = res['state'];
+                    console.log('res result:', res);
+                    if(st<0){
+                        let errmsg = '重命名失败!';
+                        if(res.hasOwnProperty('errmsg')){
+                            errmsg = res['errmsg']
+                        }
+                        dialog.dialog("close");
+                        rename_form_dialog.dialog( "close" );
+                        alert(errmsg)
+                    } else {
+                        if(rename_form_dialog.ctx){
+                            setTimeout(() => {
+                                rename_form_dialog.ctx.inst.refresh(rename_form_dialog.ctx.node);
+                                rename_form_dialog.ctx = null;
+                                dialog.dialog("close");
+                                rename_form_dialog.dialog( "close" );
+                            }, 5000)
+                        } else {
+                            rename_form_dialog.dialog( "close" )
+                        }
+                    }
+
+                });
+
+            }
+
+            let tips = $( ".validateTips" , "#dialog-rename-form");
+            let node = rename_form_dialog.ctx.node
+            let new_fn = $('#old_name').val();
+            let new_alias_fn = $('#alias_name').val();
+            if(node.data.fn === new_fn && new_alias_fn === node.data.alias){
+                return;
+            } else {
+                let ori_ext_name = extname(node.data.fn);
+                let new_fn_ext_name = extname(new_fn);
+                let alias_ext_name = extname(new_alias_fn);
+                let permit_rename = false;
+                if(ori_ext_name !== alias_ext_name && new_alias_fn !== node.data.alias){
+                    updateTips(tips, '别名扩展名['+alias_ext_name+']与文件扩展名['+ori_ext_name+']不一致!');
+                    permit_rename = confirm('别名扩展名['+alias_ext_name+']与文件扩展名['+ori_ext_name+']不一致!要继续执行修改操作吗?')
+                } else {
+                    permit_rename = true;
+                }
+                if(permit_rename && ori_ext_name !== new_fn_ext_name && new_fn !== node.data.fn){
+                    updateTips(tips, '扩展名['+new_fn_ext_name+']与原文件扩展名['+ori_ext_name+']不一致!');
+                    permit_rename = confirm('扩展名['+new_fn_ext_name+']与原文件扩展名['+ori_ext_name+']不一致!要继续执行修改操作吗?')
+                } else {
+                    permit_rename = true;
+                }
+                if(permit_rename){
+                    to_do_rename();
+                }
+            }
+
+        };
         /* 分配商品 */
         let dist_product = function(){
             let combobox_instance = $("#dist_combobox").combobox('instance');
@@ -237,7 +321,7 @@
                 console.log('res result:', result);
                 if(form_dialog.ctx){
                     setTimeout(() => {
-                        form_dialog.ctx.inst.refresh(form_dialog.ctx.inst.node);
+                        form_dialog.ctx.inst.refresh(form_dialog.ctx.node);
                         form_dialog.ctx = null;
                         dialog.dialog("close");
                         form_dialog.dialog( "close" );
@@ -279,6 +363,23 @@
               open:function(){
                 // $("#dialog-dist-form").css('z-index', 99);
                 // $("#dialog-dist-form").parent().css('z-index', 99);
+              },
+              close: function() {
+
+              }
+        });
+        rename_form_dialog = $("#dialog-rename-form").dialog({
+            autoOpen: false,
+              height: 400,
+              width: 550,
+              modal: true,
+            buttons: {
+                "提交修改": rename_item,
+                Cancel: function() {
+                  rename_form_dialog.dialog( "close" );
+                }
+              },
+              open:function(){
               },
               close: function() {
 

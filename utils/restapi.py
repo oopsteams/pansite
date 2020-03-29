@@ -163,10 +163,13 @@ def pan_mkdir(access_token, filepath):
     return jsonrs
 
 
-def sync_file(access_token, fsids):
+def sync_file(access_token, fsids, fetch_dlink=True):
     url_path = 'multimedia'
     print(str(fsids))
-    params = {"method": 'filemetas', "access_token": access_token, "dlink": 1, "fsids": str(fsids)}
+    dlink_tag = 1
+    if not fetch_dlink:
+        dlink_tag = 0
+    params = {"method": 'filemetas', "access_token": access_token, "dlink": dlink_tag, "fsids": str(fsids)}
     headers = {"User-Agent": "pan.baidu.com"}
     print("%s/%s" % (POINT, url_path))
     rs = requests.get("%s/%s" % (POINT, url_path), params=params, headers=headers, verify=False)
@@ -174,6 +177,7 @@ def sync_file(access_token, fsids):
     print(jsonrs)
     if jsonrs:
         return jsonrs.get('list', [])
+    return []
 
 
 def query_file_head(url):
