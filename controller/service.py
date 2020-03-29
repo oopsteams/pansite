@@ -418,7 +418,7 @@ class PanService(BaseService):
                 alias_fn, alias_extname = split_filename(aliasname)
                 if not alias_extname:
                     alias_extname = extname
-                aliasname = "{}.{}".format(alias_fn, alias_extname)
+                aliasname = "{}{}".format(alias_fn, "." + alias_extname if alias_extname.strip() else "")
                 # __idx = fn_name.rfind(".")
                 # if __idx > 0:
                 #     fn_name = fn_name[0:__idx]

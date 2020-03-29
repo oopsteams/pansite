@@ -222,7 +222,7 @@ class OpenService(BaseService):
                     alias_fn, alias_extname = split_filename(aliasname)
                     if not alias_extname:
                         alias_extname = extname
-                    aliasname = "{}.{}".format(alias_fn, alias_extname)
+                    aliasname = "{}{}".format(alias_fn, "."+alias_extname if alias_extname.strip() else "")
                     fn_name = "[{}]{}".format(fn_name, aliasname)
                 item = {'filename': "%s(%s)" % (fn_name, scale_size(_s["_source"]["size"])),
                         'path': _s["_source"]["path"], 'source': _s["_source"]["source"], 'isdir': _s["_source"]["isdir"],
