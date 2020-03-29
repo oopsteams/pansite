@@ -3,7 +3,7 @@
 Created by susy at 2019/12/18
 """
 from controller.base_service import BaseService
-from utils import singleton, log, compare_dt_by_now, get_now_datetime_format, scale_size
+from utils import singleton, log, compare_dt_by_now, get_now_datetime_format, scale_size, split_filename
 from dao.models import CommunityDataItem, DataItem, ShareLogs, ShareFr, ShareApp, AppCfg
 from utils.utils_es import SearchParams, build_query_item_es_body
 from dao.es_dao import es_dao_share, es_dao_local
@@ -214,11 +214,16 @@ class OpenService(BaseService):
                 else:
                     app_name = '#'
                 fn_name = _s["_source"]["filename"]
+                aliasname = None
                 if "aliasname" in _s["_source"] and _s["_source"]["aliasname"]:
-                    __idx = fn_name.rfind(".")
-                    if __idx > 0:
-                        fn_name = fn_name[0:__idx]
-                    fn_name = "[{}]{}".format(fn_name, _s["_source"]["aliasname"])
+                    aliasname = _s["_source"]["aliasname"]
+                if aliasname:
+                    fn_name, extname = split_filename(fn_name)
+                    alias_fn, alias_extname = split_filename(aliasname)
+                    if not alias_extname:
+                        alias_extname = extname
+                    aliasname = "{}.{}".format(alias_fn, alias_extname)
+                    fn_name = "[{}]{}".format(fn_name, aliasname)
                 item = {'filename': "%s(%s)" % (fn_name, scale_size(_s["_source"]["size"])),
                         'path': _s["_source"]["path"], 'source': _s["_source"]["source"], 'isdir': _s["_source"]["isdir"],
                         'fs_id': _s["_source"]["fs_id"], 'pin': _s["_source"]["pin"],

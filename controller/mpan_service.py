@@ -10,7 +10,7 @@ from utils.utils_es import SearchParams, build_query_item_es_body
 from dao.es_dao import es_dao_share, es_dao_local
 from dao.models import DataItem
 from utils.constant import TOP_DIR_FILE_NAME, SHARE_ES_TOP_POS, PRODUCT_TAG
-from utils import scale_size
+from utils import scale_size, split_filename
 import sys
 sys.setrecursionlimit(1000000)
 
@@ -23,10 +23,10 @@ class MPanService(BaseService):
         for item in root_item_ms:
             _item_path = item.path
             pan = item.pan
-            params.append({"id": obfuscate_id(item.id), "text": pan.name, "data": {"path": _item_path, "_id": obfuscate_id(item.id),
-                                                                     "server_ctime": item.server_ctime, "isdir": 1,
-                                                                     "source": 'local'}, "children": True,
-                           "icon": "folder"})
+            params.append({"id": obfuscate_id(item.id), "text": pan.name, "data": {
+                "path": _item_path, "_id": obfuscate_id(item.id), "server_ctime": item.server_ctime, "isdir": 1,
+                "source": 'local', "fn": "", "alias": "", "pos": 0
+            }, "children": True, "icon": "folder"})
         return params
 
     def parse_price(self, format_size, times):
@@ -55,13 +55,6 @@ class MPanService(BaseService):
     def query_file_list(self, parent_item_id):
         # item_list = CommunityDao.query_data_item_by_parent(parent_item_id, True, pan_id, limit=1000)
         params = []
-        # for item in item_list:
-        #     _item_path = item.path
-        #     params.append({"id": item.id, "text": item.filename, "data": {"path": _item_path,
-        #                                                                   "server_ctime": item.server_ctime,
-        #                                                                   "isdir": item.isdir, "source": 'local'},
-        #                    "children": True, "icon": "folder"})
-        # print("dirs total:", len(params))
 
         sp: SearchParams = SearchParams.build_params(0, 1000)
         # sp.add_must(is_match=False, field="path", value=parent_path)
@@ -79,13 +72,20 @@ class MPanService(BaseService):
 
         for _s in hits_rs["hits"]:
             icon_val = "jstree-file"
-            fn_name = _s["_source"]["filename"]
-            txt = fn_name
+            ori_fn_name = _s["_source"]["filename"]
+            ori_aliasname = ''
             if "aliasname" in _s["_source"] and _s["_source"]["aliasname"]:
-                __idx = fn_name.rfind(".")
-                if __idx > 0:
-                    fn_name = fn_name[0:__idx]
-                txt = "[{}]{}".format(fn_name, _s["_source"]["aliasname"])
+                ori_aliasname = _s["_source"]["aliasname"]
+            aliasname = ori_aliasname
+            fn_name = ori_fn_name
+            txt = fn_name
+            if aliasname:
+                fn_name, extname = split_filename(fn_name)
+                alias_fn, alias_extname = split_filename(aliasname)
+                if not alias_extname:
+                    alias_extname = extname
+                aliasname = "{}.{}".format(alias_fn, alias_extname)
+                txt = "[{}]{}".format(fn_name, aliasname)
             tags = _s["_source"]["tags"]
             if not tags:
                 tags = []
@@ -116,7 +116,9 @@ class MPanService(BaseService):
                           "data": {"path": _s["_source"]["path"], "server_ctime": _s["_source"].get("server_ctime", 0),
                                    "isdir": _s["_source"]["isdir"], "source": _s["_source"]["source"],
                                    "pin": _s["_source"]["pin"], "_id": item_fuzzy_id, "isp": isp,
-                                   "sourceid": _s["_source"]["sourceid"], "p_id": _s["_source"]["id"], "price": price},
+                                   "sourceid": _s["_source"]["sourceid"], "p_id": _s["_source"]["id"], "price": price,
+                                   "fn": ori_fn_name, "alias": ori_aliasname
+                                   },
                           "children": has_children, "icon": icon_val}
             if a_attr:
                 node_param['a_attr'] = a_attr
@@ -143,11 +145,17 @@ class MPanService(BaseService):
             icon_val = "jstree-file"
             fn_name = _s["_source"]["filename"]
             txt = fn_name
+            aliasname = ''
             if "aliasname" in _s["_source"] and _s["_source"]["aliasname"]:
-                __idx = fn_name.rfind(".")
-                if __idx > 0:
-                    fn_name = fn_name[0:__idx]
-                txt = "[{}]{}".format(fn_name, _s["_source"]["aliasname"])
+                aliasname = _s["_source"]["aliasname"]
+            if aliasname:
+                fn_name, extname = split_filename(fn_name)
+                alias_fn, alias_extname = split_filename(aliasname)
+                if not alias_extname:
+                    alias_extname = extname
+                aliasname = "{}.{}".format(alias_fn, alias_extname)
+                txt = "[{}]{}".format(fn_name, aliasname)
+
             has_children = False
             a_attr = {}
             if _s["_source"]["isdir"] == 1:

@@ -98,7 +98,8 @@ class ManageHandler(BaseHandler):
         elif path.endswith("/hide"):
             source = self.get_argument("source", "")
             parent = self.get_argument("parent", "")
-            node_id = self.get_argument("id")
+            node_fuzzy_id = self.get_argument("id")
+            node_id = decrypt_id(node_fuzzy_id)
             print("source:", source, ",parent:", parent, ",node_id:", node_id)
             if "local" == source:
                 if parent:
@@ -113,11 +114,21 @@ class ManageHandler(BaseHandler):
 
             self.to_write_json({})
         elif path.endswith("/clear"):
-            item_id = int(self.get_argument("id", "0"))
+            item_fuzzy_id = self.get_argument("id", None)
+            item_id = int(decrypt_id(item_fuzzy_id))
             pan_id = int(self.get_argument("panid", "0"))
             source = self.get_argument("source", "")
             sync_pan_service.clear(item_id, pan_id, source)
             self.to_write_json({'state': 0})
+        elif path.endswith("/rename"):
+            item_fuzzy_id = self.get_argument("itemid", None)
+            item_id = int(decrypt_id(item_fuzzy_id))
+            old_name = self.get_argument("old_name", "")
+            alias_name = self.get_argument("alias_name", "")
+            source = self.get_argument("source", "")
+            result = sync_pan_service.rename(item_id, old_name, alias_name, source)
+            self.to_write_json(result)
+
         elif path.endswith("/fparts"):
             # pan_id = self.get_argument("id", "0")
             # print("hello fparts!")

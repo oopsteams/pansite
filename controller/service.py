@@ -7,7 +7,7 @@ from dao.dao import DataDao
 from dao.client_data_dao import ClientDataDao
 from dao.models import Accounts, PanAccounts, ShareLogs, DataItem, TransferLogs, CommunityDataItem, ClientDataItem
 from utils import singleton, log, make_token, obfuscate_id, get_now_datetime, random_password, get_now_ts, restapi, \
-    guess_file_type, constant
+    guess_file_type, constant, split_filename
 from utils.utils_es import SearchParams, build_query_item_es_body
 from utils import get_payload_from_token, is_video_media, is_image_media, scale_size
 from dao.es_dao import es_dao_share, es_dao_local
@@ -410,11 +410,19 @@ class PanService(BaseService):
             format_size = scale_size(_s["_source"]["size"])
             media_type = self.check_data_item_media_type(category, fn_name)
             txt = fn_name
+            aliasname = None
             if "aliasname" in _s["_source"] and _s["_source"]["aliasname"]:
-                __idx = fn_name.rfind(".")
-                if __idx > 0:
-                    fn_name = fn_name[0:__idx]
-                txt = "[{}]{}".format(fn_name, _s["_source"]["aliasname"])
+                aliasname = _s["_source"]["aliasname"]
+            if aliasname:
+                fn_name, extname = split_filename(fn_name)
+                alias_fn, alias_extname = split_filename(aliasname)
+                if not alias_extname:
+                    alias_extname = extname
+                aliasname = "{}.{}".format(alias_fn, alias_extname)
+                # __idx = fn_name.rfind(".")
+                # if __idx > 0:
+                #     fn_name = fn_name[0:__idx]
+                txt = "[{}]{}".format(fn_name, aliasname)
             f_type = guess_file_type(fn_name)
             if f_type:
                 icon_val = "file file-%s" % f_type

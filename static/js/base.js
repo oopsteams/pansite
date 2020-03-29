@@ -8,6 +8,19 @@ function GetQueryString(name){
      return null;
 }
 
+function extname(filename) {
+    if(!filename || typeof filename !== 'string'){
+        return false
+    }
+    if(filename.indexOf('.')>0){
+        let a = filename.split('').reverse().join('');
+        let b = a.substring(0, a.search(/\./)).split('').reverse().join('')
+        return b;
+    } else {
+        return '';
+    }
+}
+
 function call_service(point, params, cb) {
    $.ajax({
            url:point,

@@ -234,6 +234,51 @@ class SyncPanService(BaseService):
         elif "shared" == source:
             self.__clear_community_item(item_id)
 
+    def rename(self, item_id, old_name, alias_name, source):
+        result = {'state': 0}
+        if "local" == source:
+            data_item: DataItem = DataDao.get_data_item_by_id(item_id)
+            print("rename data_item:", DataItem.to_dict(data_item))
+            print("old_name:", old_name)
+            print("alias_name:", alias_name)
+            if data_item.filename != old_name or data_item.aliasname != alias_name:
+                params = {"filename": old_name, "aliasname": alias_name}
+                fs_id = int(data_item.fs_id)  # 重要, 网盘服务中类型为Int,本地为了兼容所有类型id使用了varchar
+                pan_acc: PanAccounts = auth_service.get_pan_account(data_item.panacc, data_item.account_id)
+                file_info_json = restapi.sync_file(pan_acc.access_token, [fs_id], False)
+                if file_info_json:
+                    find_item = False
+                    for sync_item in file_info_json:
+                        if sync_item['fs_id'] == fs_id:
+                            find_item = True
+                            origin_filename = sync_item['filename']
+                            if origin_filename != old_name:
+                                origin_path = sync_item['path']
+                                _jsonrs = restapi.file_rename(pan_acc.access_token, origin_path, old_name)
+                                err_no = _jsonrs.get("errno", None)
+                                if 'info' in _jsonrs and not err_no:
+                                    info_list = _jsonrs['info']
+                                    print("rename info_list:", info_list)
+                                    if origin_path != data_item.path:
+                                        params["path"] = origin_path
+                                    DataDao.update_data_item(data_item.id, params)
+                                else:
+                                    err_msg = _jsonrs.get("errmsg", "")
+                                    result['state'] = -1
+                                    result['err'] = err_msg
+                                    return result
+                            else:
+                                DataDao.update_data_item(data_item.id, params)
+                    if not find_item:
+                        result['state'] = -2
+                        result['errmsg'] = "not find file in NetDisk,[{}]".format(data_item.filename)
+                        return result
+                else:
+                    result['state'] = -2
+                    result['err'] = "not find file in NetDisk,[{}]".format(data_item.filename)
+                    return result
+            return result
+
     def check_sync_state(self, pan_id, user_id):
         rs_key = "synced:pan:dir:%s_%s" % (user_id, pan_id)
         return cache_service.rm(rs_key)

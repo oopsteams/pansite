@@ -1,5 +1,5 @@
 // let pan_id = '{{pan_id}}';
-let dialog = null,form_dialog = null, dist_form_dialog = null;
+let dialog = null,form_dialog = null, dist_form_dialog = null, rename_form_dialog = null;
 function refresh_jstree(node_id){
     let inst = $.jstree.reference(node_id);
     let node = inst.get_node(node_id);
@@ -116,24 +116,47 @@ $('#tree').jstree({
                 'separator_before': false,
                 'label': '清除',
                 'action': function (data) {
-                    dialog.dialog("open");
                     let inst = $.jstree.reference(data.reference),
                         node = inst.get_node(data.reference);
-
-                    let params = {tk: GetQueryString('tk'), 'panid': node.data.sourceid, 'id': node.data._id, 'source': node.data.source};
-                    console.log('clear dir:', params);
-                    call_service_by_get('/man/clear', params, function (res) {
-                        let st = res['state'];
-                        if (st === 0) {
-                            inst = $.jstree.reference(data.reference);
-                            node = inst.get_node(data.reference);
-                            inst.delete_node(node);
-                            refresh_jstree(data.reference);
-                            dialog.dialog("close");
-                        }
-                    });
+                    let confirm_val = prompt("确认要清除[" + node.text + "]吗?确认请输入DELETE.", "");
+                    if ("DELETE" === confirm_val) {
+                        dialog.dialog("open");
+                        let params = {
+                            tk: GetQueryString('tk'),
+                            'panid': node.data.sourceid,
+                            'id': node.data._id,
+                            'source': node.data.source
+                        };
+                        console.log('clear dir:', params);
+                        call_service_by_get('/man/clear', params, function (res) {
+                            let st = res['state'];
+                            if (st === 0) {
+                                inst = $.jstree.reference(data.reference);
+                                node = inst.get_node(data.reference);
+                                inst.delete_node(node);
+                                refresh_jstree(data.reference);
+                                dialog.dialog("close");
+                            }
+                        });
+                    }
                 }
             };
+            if (node.data.source === 'local') {
+                ctxmenu.rename = {
+                    'separator_after': false,
+                    'separator_before': false,
+                    'label': '重命名',
+                    'action': function (data) {
+                        let inst = $.jstree.reference(data.reference), node = inst.get_node(data.reference);
+                        rename_form_dialog.dialog("open");
+                        $('#old_name').val(node.data.fn);
+                        $('#alias_name').val(node.data.alias);
+                        $('#rename_itemid').val(node.data._id);
+                        $('#rename_source').val(node.data.source);
+                        rename_form_dialog.ctx = {"inst": inst, "node": node};
+                    }
+                };
+            }
             if (node.data.isdir === 0) {
 
             }
