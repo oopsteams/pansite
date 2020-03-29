@@ -84,7 +84,7 @@ class MPanService(BaseService):
                 alias_fn, alias_extname = split_filename(aliasname)
                 if not alias_extname:
                     alias_extname = extname
-                aliasname = "{}.{}".format(alias_fn, alias_extname)
+                aliasname = "{}{}".format(alias_fn, "." + alias_extname if alias_extname else "")
                 txt = "[{}]{}".format(fn_name, aliasname)
             tags = _s["_source"]["tags"]
             if not tags:
@@ -153,7 +153,7 @@ class MPanService(BaseService):
                 alias_fn, alias_extname = split_filename(aliasname)
                 if not alias_extname:
                     alias_extname = extname
-                aliasname = "{}.{}".format(alias_fn, alias_extname)
+                aliasname = "{}{}".format(alias_fn, "." + alias_extname if alias_extname else "")
                 txt = "[{}]{}".format(fn_name, aliasname)
 
             has_children = False
