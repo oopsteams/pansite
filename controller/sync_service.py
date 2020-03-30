@@ -41,6 +41,7 @@ class SyncPanService(BaseService):
                 self.__clear_data_items(di.id, -1, False)
             doc_ids.append(di.id)
         if doc_ids:
+            log.info("delete file by parent_id:{}".format(parent_id))
             self.es_dao_item.bulk_delete(doc_ids)
             DataDao.del_data_item_by_parent_synced(parent_id, synced, is_dir)
 
