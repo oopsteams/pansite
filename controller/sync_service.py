@@ -183,8 +183,8 @@ class SyncPanService(BaseService):
         for sl in item_list:
             self.clear_share_log(sl.id)
 
-    def __clear_data_item(self, item_id, pan_id):
-        out_pan_acc: PanAccounts = DataDao.pan_account_by_id(pan_id)
+    def __clear_data_item(self, item_id):
+        # out_pan_acc: PanAccounts = DataDao.pan_account_by_id(pan_id)
         _es_dao_item = self.es_dao_item
 
         def deep_clear(di, pan_acc):
@@ -215,12 +215,21 @@ class SyncPanService(BaseService):
                 DataDao.del_data_item_by_id(di.id)
 
         root_di: DataItem = DataDao.get_data_item_by_id(item_id)
-        deep_clear(root_di, out_pan_acc)
-        if root_di.parent:
-            p_data_item = DataDao.get_data_item_by_fs_id(root_di.parent)
-            if p_data_item:
-                mpan_service.update_dir_size(p_data_item)
-        restapi.del_file(out_pan_acc.access_token, root_di.path)
+        if root_di:
+            pan_acc: PanAccounts = auth_service.get_pan_account(root_di.panacc, root_di.account_id)
+            deep_clear(root_di, pan_acc)
+            if root_di.parent:
+                p_data_item = DataDao.get_data_item_by_fs_id(root_di.parent)
+                if p_data_item:
+                    mpan_service.update_dir_size(p_data_item)
+            jsonrs = restapi.del_file(pan_acc.access_token, root_di.path)
+            if "errno" in jsonrs and jsonrs["errno"]:
+                errmsg = jsonrs.get("errmsg", "")
+                if not errmsg:
+                    errmsg = "clear failed!"
+                return {"state": -1, "errmsg": errmsg}
+            else:
+                return {"state": 0}
         # DataDao.del_data_item_by_id(root_di.id)
 
     def __clear_community_item(self, item_id):
@@ -246,11 +255,14 @@ class SyncPanService(BaseService):
         root_di: CommunityDataItem = CommunityDao.get_data_item_by_id(item_id)
         deep_clear(root_di)
 
-    def clear(self, item_id, pan_id, source):
+    def clear(self, item_id, source):
+        rs = {"state": 0}
         if "local" == source:
-            self.__clear_data_item(item_id, pan_id)
+            self.__clear_data_item(item_id)
         elif "shared" == source:
             self.__clear_community_item(item_id)
+
+        return rs
 
     def rename(self, item_id, old_name, alias_name, source):
         result = {'state': 0}
