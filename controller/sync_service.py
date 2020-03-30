@@ -41,6 +41,7 @@ class SyncPanService(BaseService):
                 self.__clear_data_items(di.id, -1, False)
             doc_ids.append(di.id)
         if doc_ids:
+            log.info("delete file by parent_id:{}".format(parent_id))
             self.es_dao_item.bulk_delete(doc_ids)
             DataDao.del_data_item_by_parent_synced(parent_id, synced, is_dir)
 
@@ -53,12 +54,14 @@ class SyncPanService(BaseService):
                 parent_id = data_item.id
             else:
                 return
-            log.info("sync file")
+            log.info("sync file:{}, filename:{}".format(data_item.id, data_item.filename))
             if data_item.isdir == 1:
                 json_data_list = restapi.file_list(pan_acc.access_token, from_dir)
                 if json_data_list is not None:
                     log.info("update synced is -1, parent_id:{}".format(parent_id))
                     DataDao.update_data_item_by_parent_id(parent_id, {"synced": -1})
+                else:
+                    log.warn("json_data_list is null!")
                 if json_data_list:
                     for fi in json_data_list:
                         item_map = dict(category=fi['category'],
@@ -86,6 +89,8 @@ class SyncPanService(BaseService):
                             DataDao.save_data_item(fi['isdir'], item_map)
                             # print("will save data item:", item_map)
                         time.sleep(0.1)
+                else:
+                    log.info("have not any sub files!")
                 self.__clear_data_items(parent_id, -1, True)
                 self.__clear_data_items(parent_id, -1, False)
             DataDao.update_data_item(data_item.id, {"synced": 1})

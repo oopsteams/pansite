@@ -75,10 +75,10 @@ def file_list(access_token, parent_dir: None, recursion=True):
     headers = {"User-Agent": "pan.baidu.com"}
     rs = requests.get("%s/%s" % (POINT, url_path), params=params, headers=headers)
     logger.info("file_list request state:{}".format(rs.status_code))
-    logger.info("file_list content:{}".format(rs.content))
     if rs.status_code == 200:
         jsonrs = rs.json()
         data_list = jsonrs.get('list', [])
+        logger.info("file_list count:{}".format(len(data_list)))
         # layer = 0
         return data_list
     else:
