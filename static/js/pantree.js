@@ -130,7 +130,14 @@ $('#tree').jstree({
                         console.log('clear dir:', params);
                         call_service_by_get('/man/clear', params, function (res) {
                             let st = res['state'];
-                            if (st === 0) {
+                            if (st < 0) {
+                                let errmsg = '删除失败!';
+                                if (res.hasOwnProperty('errmsg')) {
+                                    errmsg = res['errmsg']
+                                }
+                                dialog.dialog("close");
+                                alert(errmsg)
+                            } else if (st === 0) {
                                 inst = $.jstree.reference(data.reference);
                                 node = inst.get_node(data.reference);
                                 inst.delete_node(node);

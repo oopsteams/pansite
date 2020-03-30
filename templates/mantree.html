@@ -55,6 +55,17 @@
         <!--<button id="self_sync_root">同步根目录</button>-->
 
     </div>
+    <div>
+        <form id="manu_form">
+            <label for="dir_file_item_id">(目录/文件)ID</label>
+            <input type="text" name="dir_file_item_id" id="dir_file_item_id" value="" />
+            <select id="source_type">
+                <option value="local">local</option>
+                <option value="shared">shared</option>
+            </select>
+            <button id="manu_file_del">删除</button>
+        </form>
+    </div>
 	<h1>我的网盘资源</h1>
 	<div id="tree" class="pan-tree"></div>
     <div id="dialog-message" title="正在处理等待同步">
@@ -199,6 +210,39 @@
         }).on('click', function (event, ui) {
             document.location.href='/man/init?tk=' + GetQueryString('tk');
         }).end();
+
+        $("#manu_file_del").button({
+          "icon": "ui-icon-trash",
+          "showLabel": true
+        }).on("click", function (event, ui) {
+            let data = $('#manu_form').serializeArray();
+            let jsonObj={};
+            $(data).each(function(){
+                jsonObj[this.name]=this.value;
+            });
+            let source_val = $("#source_type").val();
+            jsonObj['source'] = source_val
+            console.log('jsonObj:', jsonObj);
+            let confirm_val = prompt("确认要清除[" + node.text + "]吗?确认请输入DELETE.", "");
+            if ("DELETE" === confirm_val) {
+                dialog.dialog("open");
+                call_service('/man/clear?tk='+GetQueryString('tk'), jsonObj, function (res) {
+                let st = res['state'];
+                if (st < 0) {
+                    let errmsg = '删除失败!';
+                    if (res.hasOwnProperty('errmsg')) {
+                        errmsg = res['errmsg']
+                    }
+                    dialog.dialog("close");
+                    alert(errmsg)
+                } else if (st === 0) {
+                    dialog.dialog("close");
+                }
+
+            });
+            }
+
+        });
 
         // $self_sync_root.button({icon: "ui-icon-transferthick-e-w", showLabel: true}).on("click", function (event, ui) {
         //         $self_sync_root.button('disable');
