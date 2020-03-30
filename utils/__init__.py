@@ -252,7 +252,7 @@ def __log_cfg(log_file_name):
                     'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件
                     'formatter': 'text',  # 标准
                     'filename': "./logs/%s.log" % log_file_name,  # 日志文件
-                    'maxBytes': 30000,  # 日志大小 300 bit
+                    'maxBytes': 10000000,  # 日志大小 10M
                     'backupCount': 5,  # 轮转文件数
                     'encoding': 'utf-8',  # 日志文件的编码，再也不用担心中文log乱码了
                 }
