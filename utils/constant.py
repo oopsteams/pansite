@@ -54,7 +54,11 @@ FUN_BASE = dict(QUERY=1, NEW=2, UPDATE=4, DEL=8, MENU=16)
 TOP_DIR_FILE_NAME = 'root'
 SHARE_ES_TOP_POS = 0
 
-PRODUCT_TAG = 'P'
+ES_TAG_MAP = dict(PRODUCT='P',
+                  FREE='F'
+                  )
+
+PRODUCT_TAG = ES_TAG_MAP['PRODUCT']
 
 LOGIC_ERR_TXT = dict(
     unknown="未知问题,联系客服",

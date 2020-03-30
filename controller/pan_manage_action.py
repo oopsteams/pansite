@@ -6,7 +6,7 @@ from controller.action import BaseHandler
 from dao.community_dao import CommunityDao
 from dao.dao import DataDao
 from tornado.web import authenticated
-from utils import compare_dt_by_now, decrypt_id
+from utils import compare_dt_by_now, decrypt_id, log as logger
 from controller.mpan_service import mpan_service
 from controller.sync_service import sync_pan_service
 from controller.service import pan_service
@@ -56,7 +56,7 @@ class ManageHandler(BaseHandler):
                 # print("parent_id, pan_id:", parent_id, pan_id)
                 # params = mpan_service.query_file_list(parent_id, pan_id)
             if not source or "shared" == source:
-                print("fload node_id:", node_id, ",fs_id:", self.get_argument("fs_id", "0"), ", source:", source)
+                # print("fload node_id:", node_id, ",fs_id:", self.get_argument("fs_id", "0"), ", source:", source)
                 shared_params = []
                 if not '#' == node_id:
                     parent_id = int(self.get_argument("fs_id", "0"))
@@ -83,7 +83,7 @@ class ManageHandler(BaseHandler):
             source = self.get_argument("source", "")
             parent = self.get_argument("parent", "")
             node_id = self.get_argument("id")
-            print("source:", source, ",parent:", parent, ",node_id:", node_id)
+            logger.info("source:{},parent:{},node_id:{}".format(source, parent, node_id))
             if "local" == source:
                 if parent:
                     mpan_service.update_local_sub_dir(parent, {'pin': 1})
@@ -100,7 +100,7 @@ class ManageHandler(BaseHandler):
             parent = self.get_argument("parent", "")
             node_fuzzy_id = self.get_argument("id")
             node_id = decrypt_id(node_fuzzy_id)
-            print("source:", source, ",parent:", parent, ",node_id:", node_id)
+            logger.info("hide source:{},parent:{},node_id:{}".format(source, parent, node_id))
             if "local" == source:
                 if parent:
                     mpan_service.update_local_sub_dir(parent, {'pin': 0})
@@ -129,6 +129,37 @@ class ManageHandler(BaseHandler):
             result = sync_pan_service.rename(item_id, old_name, alias_name, source)
             self.to_write_json(result)
 
+        elif path.endswith("/free"):
+            item_fuzzy_id = self.get_argument("itemid", None)
+            item_id = int(decrypt_id(item_fuzzy_id))
+            source = self.get_argument("source", "")
+            desc = self.get_argument("desc", "")
+            tags = self.get_argument("tags", "")
+            if tags:
+                tags = tags.split(',')
+            else:
+                tags = []
+            if "local" != source:
+                self.to_write_json({"state": -1})
+            else:
+                rs = mpan_service.free(self.user_id, item_id, desc, tags)
+                self.to_write_json(rs)
+        elif path.endswith("/unfree"):
+            item_fuzzy_id = self.get_argument("itemid", None)
+            item_id = int(decrypt_id(item_fuzzy_id))
+            fs_id = self.get_argument("fs_id", "")
+            source = self.get_argument("source", "")
+            tags = self.get_argument("tags", "")
+            if tags:
+                tags = tags.split(',')
+            else:
+                tags = []
+            if "local" != source:
+                self.to_write_json({"state": -1})
+            else:
+                rs = mpan_service.unfree(self.user_id, item_id, fs_id, tags)
+                self.to_write_json(rs)
+
         elif path.endswith("/fparts"):
             # pan_id = self.get_argument("id", "0")
             # print("hello fparts!")
@@ -146,7 +177,7 @@ class ManageHandler(BaseHandler):
         elif path.endswith("/pan_acc_list"):
             need_renew_pan_acc = pan_service.all_pan_acc_list_by_user(self.user_id)
             result = {"result": "ok", "pan_acc_list": need_renew_pan_acc}
-            print("result:", result)
+            # print("result:", result)
             self.to_write_json(result)
         elif path.endswith("/batchupdate"):
             pan_id = self.get_argument("panid", "0")
@@ -167,7 +198,7 @@ class ManageHandler(BaseHandler):
                     cnt = cnt + 1
                     kv[vals[0]] = vals[1]
                     DataDao.update_data_item(int(vals[0]), {cname: vals[1].strip()})
-                    print("update id:", vals[0], ",", cname, "=", vals[1])
+                    # print("update id:", vals[0], ",", cname, "=", vals[1])
             rs = {"state": 0, "cnt": cnt, "lines_cnt": len(lines), "cname": cname}
             # print("kv:", kv)
             # print("cnt:", cnt, ",lines cnt:", len(lines), "cname:", cname, "pan_id:", pan_id)

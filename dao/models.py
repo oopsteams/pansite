@@ -544,11 +544,11 @@ class WorkerLoadMap(Model):
 
 class UserRootCfg(BaseModel):
     id = AutoField()
-    fs_id = CharField(null=True, max_length=64)
+    fs_id = CharField(null=True, max_length=64, index=True)
     filename = CharField(null=True, max_length=256)
     account_id = IntegerField(null=False, default=0)
     panacc = IntegerField(null=True, default=0)
-    pin = IntegerField(null=False, default=0)
+    pin = IntegerField(null=False, default=0, index=0)
     source = CharField(null=True, max_length=16, index=True)
     desc = CharField(null=True, max_length=256)
 

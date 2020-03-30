@@ -18,7 +18,7 @@ class UserHandler(BaseHandler):
         rs = super().get_current_user()
         if rs:
             if self.user_type != USER_TYPE['ALL']:
-                print("user type:", self.user_type)
+                # print("user type:", self.user_type)
                 return False
         return rs
 
@@ -70,18 +70,18 @@ class UserHandler(BaseHandler):
         elif path.endswith("/new_role"):
             rs = {}
             params = json.loads(self.request.body)
-            print('body params:', params)
+            # print('body params:', params)
             auth_service.update_role(params)
             self.to_write_json(rs)
         elif path.endswith("/new_org"):
             rs = {}
             params = json.loads(self.request.body)
-            print('body params:', params)
+            # print('body params:', params)
             auth_service.update_org(params)
             self.to_write_json(rs)
         elif path.endswith("/new_user"):
             params = json.loads(self.request.body)
-            print('body params:', params)
+            # print('body params:', params)
             isok = auth_service.update_user(params)
             self.to_write_json({'ok': isok})
         else:

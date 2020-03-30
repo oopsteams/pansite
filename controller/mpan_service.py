@@ -6,10 +6,11 @@ from controller.base_service import BaseService
 from utils import singleton, log, guess_file_type, obfuscate_id
 from dao.community_dao import CommunityDao
 from dao.dao import DataDao
+from dao.man_dao import ManDao
 from utils.utils_es import SearchParams, build_query_item_es_body
 from dao.es_dao import es_dao_share, es_dao_local
-from dao.models import DataItem
-from utils.constant import TOP_DIR_FILE_NAME, SHARE_ES_TOP_POS, PRODUCT_TAG
+from dao.models import DataItem, UserRootCfg
+from utils.constant import TOP_DIR_FILE_NAME, SHARE_ES_TOP_POS, PRODUCT_TAG, ES_TAG_MAP
 from utils import scale_size, split_filename
 import sys
 sys.setrecursionlimit(1000000)
@@ -86,18 +87,25 @@ class MPanService(BaseService):
                     alias_extname = extname
                 aliasname = "{}{}".format(alias_fn, "." + alias_extname if alias_extname.strip() else "")
                 txt = "[{}]{}".format(fn_name, aliasname)
+            is_dir = _s["_source"]["isdir"] == 1
+            t_tag = ES_TAG_MAP['FREE']
+            is_free = False
             tags = _s["_source"]["tags"]
             if not tags:
                 tags = []
             isp = False
             has_children = False
             a_attr = {}
-            if _s["_source"]["pin"] == 1:
+
+            if not is_dir and _s["_source"]["pin"] == 1:
                 a_attr = {'style': 'color:red'}
             if PRODUCT_TAG in tags:
-                a_attr = {'style': 'color:green'}
+                if not a_attr:
+                    a_attr = {'style': 'color:green'}
                 isp = True
-            if _s["_source"]["isdir"] == 1:
+            if t_tag in tags:
+                is_free = True
+            if is_dir:
                 # icon_val = "jstree-folder"
                 icon_val = "folder"
                 has_children = True
@@ -110,12 +118,19 @@ class MPanService(BaseService):
             price = self.parse_price(format_size, 2)
             if format_size:
                 node_text = "{}({})".format(node_text, format_size)
+            if is_free:
+                node_text = "[{}]{}".format(t_tag, node_text)
+                if not a_attr:
+                    a_attr = {'style': 'color:green'}
+            if isp:
+                node_text = "[{}]{}".format(PRODUCT_TAG, node_text)
+            fs_id = _s["_source"]["fs_id"]
             item_id = _s["_source"]["id"]
             item_fuzzy_id = obfuscate_id(item_id)
             node_param = {"id": item_fuzzy_id, "text": node_text,
                           "data": {"path": _s["_source"]["path"], "server_ctime": _s["_source"].get("server_ctime", 0),
-                                   "isdir": _s["_source"]["isdir"], "source": _s["_source"]["source"],
-                                   "pin": _s["_source"]["pin"], "_id": item_fuzzy_id, "isp": isp,
+                                   "isdir": _s["_source"]["isdir"], "source": _s["_source"]["source"], "fs_id": fs_id,
+                                   "pin": _s["_source"]["pin"], "_id": item_fuzzy_id, "isp": isp, "tags": tags,
                                    "sourceid": _s["_source"]["sourceid"], "p_id": _s["_source"]["id"], "price": price,
                                    "fn": ori_fn_name, "alias": ori_aliasname
                                    },
@@ -195,11 +210,11 @@ class MPanService(BaseService):
 
     def update_local_sub_dir(self, parent_id, params):
         if parent_id:
-            print("local visible parent_id:",parent_id,",params:", params)
+            print("local visible parent_id:", parent_id, ",params:", params)
             CommunityDao.new_local_visible_by_parent(parent_id, params['pin'])
             sp: SearchParams = SearchParams.build_params(0, 1000)
             sp.add_must(is_match=False, field="parent", value=parent_id)
-            # sp.add_must(is_match=False, field="isdir", value=1)
+            sp.add_must(is_match=False, field="isdir", value=0)
             es_body = build_query_item_es_body(sp)
             es_dao_local().update_by_query(es_body, params)
 
@@ -284,6 +299,51 @@ class MPanService(BaseService):
                 else:
                     break
         return _rs['change']
+
+    def unfree(self, user_id, item_id, fs_id, es_tags):
+        result = {'state': 0}
+        f_tag = ES_TAG_MAP['FREE']
+        urc: UserRootCfg = ManDao.check_root_cfg_fetch(fs_id=fs_id)
+        if urc and urc.pin == 0:
+            ManDao.update_root_cfg_by_id(urc.id, {'pin': 1})
+
+        if es_tags:
+            n_tags = [et for et in es_tags if et != f_tag]
+            if len(n_tags) != len(es_tags):
+                _params = {'tags': n_tags}
+                isok = es_dao_local().update_fields(item_id, **_params)
+                if not isok:
+                    result['state'] = -2
+                    result['errmsg'] = "索引更新失败!"
+        return result
+
+    def free(self, user_id, item_id, desc, es_tags):
+        result = {'state': 0}
+        f_tag = ES_TAG_MAP['FREE']
+        data_item: DataItem = DataDao.get_data_item_by_id(item_id)
+        urc: UserRootCfg = ManDao.check_root_cfg_fetch(fs_id=data_item.fs_id)
+        if urc:
+            if urc.pin != 0:
+                ManDao.update_root_cfg_by_id(urc.id, {'pin': 0})
+                # tag free
+        else:
+            urc_id = ManDao.new_root_cfg(data_item.fs_id, data_item.filename, user_id, data_item.panacc, desc)
+            if not urc_id:
+                result['state'] = -3
+                result['errmsg'] = "新建免费资源根目录失败!"
+        if es_tags:
+            es_tags.append(f_tag)
+        else:
+            es_tags = [f_tag]
+        if result['state'] == 0:
+            _params = {'tags': es_tags}
+            es_up_params = es_dao_local().filter_update_params(_params)
+            if es_up_params:
+                isok = es_dao_local().update_fields(item_id, **es_up_params)
+                if not isok:
+                    result['state'] = -2
+                    result['errmsg'] = "索引更新失败!"
+        return result
 
 
 mpan_service = MPanService()

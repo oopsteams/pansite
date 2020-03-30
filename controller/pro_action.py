@@ -6,7 +6,7 @@ from controller.action import BaseHandler
 from controller.pro_service import product_service
 from tornado.web import authenticated
 from utils.constant import buy_success_format
-from utils import decrypt_id
+from utils import decrypt_id, log as logger
 from controller.auth_service import auth_service
 import json
 
@@ -36,7 +36,7 @@ class ProductHandler(BaseHandler):
             itemid = int(decrypt_id(item_fuzzy_id))
             if self.ref_id:
                 rfid = self.ref_id
-                print("p_name:", p_name, "p_price:", p_price, "isdir:", isdir, "layer:", layer, "itemid:", itemid)
+                logger.info("p_name:{}, p_price:{}, isdir:{}, layer:{}, itemid:{}".format(p_name, p_price, isdir, layer, itemid))
                 product = product_service.tag_product(rfid, int(itemid), layer, float(p_price))
                 if product:
                     rs = {"state": 0, "pro_no": product.pro_no, "price": product.price}
@@ -49,7 +49,7 @@ class ProductHandler(BaseHandler):
             itemid = int(decrypt_id(item_fuzzy_id))
             user_fuzzy_id = self.get_argument("sel")
             assets = product_service.buy_product(int(itemid), user_fuzzy_id)
-            print("itemid:", itemid, "user_fuzzy_id:", user_fuzzy_id)
+            logger.info("itemid:{}, user_fuzzy_id:{}".format(itemid, user_fuzzy_id))
             if not assets:
                 rs = {"state": -1}
             else:
@@ -92,7 +92,7 @@ class ProductHandler(BaseHandler):
         elif path.endswith("dlink"):
             item_fuzzy_id = self.get_argument("id")
             item_id = int(decrypt_id(item_fuzzy_id))
-            print("dlink item_id:", item_id)
+            logger.info("dlink item_id:{}".format(item_id))
             sub_params = product_service.checkout_dlink(item_id, self.user_id, self.ref_id)
             result = {"subs": sub_params}
             self.to_write_json(result)

@@ -3,7 +3,7 @@
 Created by susy at 2019/12/18
 """
 from controller.base_service import BaseService
-from utils import singleton, log, compare_dt_by_now, get_now_datetime_format, scale_size, split_filename
+from utils import singleton, log as logger, compare_dt_by_now, get_now_datetime_format, scale_size, split_filename
 from dao.models import CommunityDataItem, DataItem, ShareLogs, ShareFr, ShareApp, AppCfg
 from utils.utils_es import SearchParams, build_query_item_es_body
 from dao.es_dao import es_dao_share, es_dao_local
@@ -84,7 +84,7 @@ class OpenService(BaseService):
         return rs, share_log
 
     def fetch_shared(self, fs_id):
-        print('fs_id:', fs_id)
+        # print('fs_id:', fs_id)
         item: DataItem = DataDao.query_data_item_by_fs_id(fs_id)
         if item:
             if not CommunityDao.local_check_free_by_id(item.id):
@@ -119,11 +119,11 @@ class OpenService(BaseService):
 
     def get_app_by_id(self, app_id):
         if app_id not in self.apps_map:
-            print("to query app id!!!!!", app_id)
+            # print("to query app id!!!!!", app_id)
             sa = CommunityDao.query_app_info(app_id)
             if sa:
                 self.apps_map[app_id] = sa.name
-                print('sa name:', sa.name)
+                # print('sa name:', sa.name)
         if app_id in self.apps_map:
             return self.apps_map[app_id]
 
@@ -190,7 +190,7 @@ class OpenService(BaseService):
             sp.add_must(field='path', value="%s" % path_tag)
 
         es_body = build_query_item_es_body(sp, sort_fields=_sort_fields)
-        print("es_body:", json.dumps(es_body))
+        logger.info("es_body:{}".format(es_body))
         es_result = es_dao_fun().es_search_exec(es_body)
         total = 0
         # datas = [_s["_source"] for _s in hits_rs["hits"]]

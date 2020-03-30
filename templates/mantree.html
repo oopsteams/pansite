@@ -106,7 +106,23 @@
                   <dd><input type="text" name="alias_name" id="alias_name" value="" class="text ui-widget-content ui-corner-all"/></dd>
               </dl>
               <input type="hidden" name="itemid" id="rename_itemid" value="0" />
-              <input type="hidden" name="source" id="rename_source" value="0" />
+              <input type="hidden" name="source" id="rename_source" value="" />
+          </fieldset>
+      </form>
+    </div>
+    <div id="dialog-free-form" title="Free">
+        <p class="validateTips">All form fields are required.</p>
+      <form id="free_item_form">
+          <fieldset class="form_table">
+              <dl>
+                  <dt>目录名称</dt>
+                  <dd><label type="text" id="_name" ></label></dd>
+                  <dt><label for="desc">描述</label></dt>
+                  <dd><input type="text" name="desc" id="desc" value="" class="text ui-widget-content ui-corner-all"/></dd>
+              </dl>
+              <input type="hidden" name="itemid" id="free_itemid" value="0" />
+              <input type="hidden" name="source" id="free_source" value="" />
+              <input type="hidden" name="tags" id="free_tags" value="" />
           </fieldset>
       </form>
     </div>
@@ -214,6 +230,45 @@
             $(".ui-dialog button").last().trigger( "focus" );
           }
         });
+        /*Free*/
+        let free_item = function(){
+            let tips = $( ".validateTips" , "#dialog-free-form");
+            let desc = $('#desc').val();
+            if(desc.length === 0){
+                updateTips(tips, '请设置描述内容!');
+                return;
+            }
+            let data = $('#free_item_form').serializeArray();
+            let jsonObj={};
+            $(data).each(function(){
+                jsonObj[this.name]=this.value;
+            });
+            call_service('/man/free?tk='+GetQueryString('tk'), jsonObj, function (res) {
+                let st = res['state'];
+                console.log('res result:', res);
+                if (st < 0) {
+                    let errmsg = '免费资源设置失败!';
+                    if (res.hasOwnProperty('errmsg')) {
+                        errmsg = res['errmsg']
+                    }
+                    dialog.dialog("close");
+                    free_form_dialog.dialog("close");
+                    alert(errmsg)
+                } else {
+                     if(free_form_dialog.ctx){
+                        setTimeout(() => {
+                            free_form_dialog.ctx.inst.refresh(free_form_dialog.ctx.node);
+                            free_form_dialog.ctx = null;
+                            dialog.dialog("close");
+                            free_form_dialog.dialog( "close" );
+                        }, 5000)
+                    } else {
+                        dialog.dialog("close");
+                        free_form_dialog.dialog( "close" );
+                    }
+                }
+            });
+        }
         /*Rename*/
         let rename_item = function(){
 
@@ -246,6 +301,7 @@
                                 rename_form_dialog.dialog( "close" );
                             }, 5000)
                         } else {
+                            dialog.dialog("close");
                             rename_form_dialog.dialog( "close" )
                         }
                     }
@@ -377,6 +433,23 @@
                 "提交修改": rename_item,
                 Cancel: function() {
                   rename_form_dialog.dialog( "close" );
+                }
+              },
+              open:function(){
+              },
+              close: function() {
+
+              }
+        });
+        free_form_dialog = $("#dialog-free-form").dialog({
+            autoOpen: false,
+              height: 400,
+              width: 550,
+              modal: true,
+            buttons: {
+                "提交": free_item,
+                Cancel: function() {
+                  free_form_dialog.dialog( "close" );
                 }
               },
               open:function(){
