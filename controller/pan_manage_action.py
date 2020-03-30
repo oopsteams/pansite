@@ -120,6 +120,13 @@ class ManageHandler(BaseHandler):
             source = self.get_argument("source", "")
             rs = sync_pan_service.clear(item_id, source)
             self.to_write_json(rs)
+        elif path.endswith("/clearbyid"):
+            item_id = int(self.get_argument("id", "0"))
+            # pan_id = int(self.get_argument("panid", "0"))
+            source = self.get_argument("source", "")
+            rs = sync_pan_service.clear(item_id, source)
+            logger.info("clearbyid rs:{}".format(rs))
+            self.to_write_json(rs)
         elif path.endswith("/rename"):
             item_fuzzy_id = self.get_argument("itemid", None)
             item_id = int(decrypt_id(item_fuzzy_id))

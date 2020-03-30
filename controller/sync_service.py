@@ -230,6 +230,7 @@ class SyncPanService(BaseService):
                 return {"state": -1, "errmsg": errmsg}
             else:
                 return {"state": 0}
+        return {"state": 0}
         # DataDao.del_data_item_by_id(root_di.id)
 
     def __clear_community_item(self, item_id):
@@ -258,7 +259,7 @@ class SyncPanService(BaseService):
     def clear(self, item_id, source):
         rs = {"state": 0}
         if "local" == source:
-            self.__clear_data_item(item_id)
+           rs = self.__clear_data_item(item_id)
         elif "shared" == source:
             self.__clear_community_item(item_id)
 

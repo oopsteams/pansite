@@ -227,7 +227,7 @@
             let confirm_val = prompt("确认要清除[" + $('#dir_file_item_id').val() + "]吗?确认请输入DELETE.", "");
             if ("DELETE" === confirm_val) {
                 dialog.dialog("open");
-                call_service('/man/clear?tk='+GetQueryString('tk'), jsonObj, function (res) {
+                call_service('/man/clearbyid?tk='+GetQueryString('tk'), jsonObj, function (res) {
                 let st = res['state'];
                 if (st < 0) {
                     let errmsg = '删除失败!';
