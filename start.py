@@ -102,5 +102,5 @@ if __name__ == "__main__":
     server.listen(port)
     # server.listen(port, '127.0.0.1')
     # application.listen(port)
-    print("Listen HTTP @ %s" % port)
+    logger.info("Listen HTTP @ %s" % port)
     IOLoop.instance().start()

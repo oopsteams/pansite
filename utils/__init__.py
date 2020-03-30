@@ -243,12 +243,12 @@ def __log_cfg(log_file_name):
                 'json': {
                     'class': 'logging.handlers.TimedRotatingFileHandler',
                     'formatter': 'json',
-                    'filename': "./logs/%s.log" % log_file_name,
+                    'filename': "./logs/%s.json" % log_file_name,
                     'backupCount': 7,
                     'when': 'midnight'
                 },
                 'text': {
-                    'level': 20,
+                    'level': logging.INFO,
                     'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件
                     'formatter': 'text',  # 标准
                     'filename': "./logs/%s.log" % log_file_name,  # 日志文件
