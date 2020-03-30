@@ -86,7 +86,7 @@ def file_list(access_token, parent_dir: None, recursion=True):
             time.sleep(1)
             return file_list(access_token, parent_dir, False)
         else:
-            return []
+            return None
 
 
 def file_search(access_token, key, web=0, parent_dir=None):
