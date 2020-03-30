@@ -303,7 +303,8 @@ class MPanService(BaseService):
     def unfree(self, user_id, item_id, fs_id, es_tags):
         result = {'state': 0}
         f_tag = ES_TAG_MAP['FREE']
-        urc: UserRootCfg = ManDao.check_root_cfg_fetch(fs_id=fs_id)
+        item_id_str = str(item_id)
+        urc: UserRootCfg = ManDao.check_root_cfg_fetch(fs_id=item_id_str)
         if urc and urc.pin == 0:
             ManDao.update_root_cfg_by_id(urc.id, {'pin': 1})
 
@@ -321,13 +322,14 @@ class MPanService(BaseService):
         result = {'state': 0}
         f_tag = ES_TAG_MAP['FREE']
         data_item: DataItem = DataDao.get_data_item_by_id(item_id)
-        urc: UserRootCfg = ManDao.check_root_cfg_fetch(fs_id=data_item.fs_id)
+        item_id_str = str(item_id)
+        urc: UserRootCfg = ManDao.check_root_cfg_fetch(fs_id=item_id_str)
         if urc:
             if urc.pin != 0:
                 ManDao.update_root_cfg_by_id(urc.id, {'pin': 0})
                 # tag free
         else:
-            urc_id = ManDao.new_root_cfg(data_item.fs_id, data_item.filename, user_id, data_item.panacc, desc)
+            urc_id = ManDao.new_root_cfg(item_id_str, data_item.filename, user_id, data_item.panacc, desc)
             if not urc_id:
                 result['state'] = -3
                 result['errmsg'] = "新建免费资源根目录失败!"
