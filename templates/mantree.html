@@ -224,7 +224,7 @@
             let source_val = $("#source_type").val();
             jsonObj['source'] = source_val
             console.log('jsonObj:', jsonObj);
-            let confirm_val = prompt("确认要清除[" + node.text + "]吗?确认请输入DELETE.", "");
+            let confirm_val = prompt("确认要清除[" + $('#dir_file_item_id').val() + "]吗?确认请输入DELETE.", "");
             if ("DELETE" === confirm_val) {
                 dialog.dialog("open");
                 call_service('/man/clear?tk='+GetQueryString('tk'), jsonObj, function (res) {
