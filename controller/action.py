@@ -89,12 +89,13 @@ class BaseHandler(RequestHandler):
         if kw:
             error_trace_list = traceback.format_exception(*kw.get("exc_info"))
         if stat == 500:
-            print("server err:", error_trace_list)
+            logger.error("server err:", error_trace_list)
         elif stat == 403:
-            print("request forbidden!")
+            logger.error("request forbidden!")
         else:
-            if error_trace_list:
-                traceback.print_exc()
+            pass
+            # if error_trace_list:
+            #     traceback.print_exc()
 
         rs = {"status": -1, "error": error_trace_list}
 
@@ -103,10 +104,10 @@ class BaseHandler(RequestHandler):
     def on_finish(self):
         # print("on_response request finish.")
         if self.release_db:
-            print('need to release conn!')
+            logger.info('need to release conn!')
             try_release_conn()
         else:
-            print('not need to release conn!')
+            logger.info('not need to release conn!')
 
     def getRemoteIp(self):
         header = self.request.headers
