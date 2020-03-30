@@ -423,7 +423,7 @@ class PanService(BaseService):
                 # if __idx > 0:
                 #     fn_name = fn_name[0:__idx]
                 txt = "[{}]{}".format(fn_name, aliasname)
-            f_type = guess_file_type(fn_name)
+            f_type = guess_file_type(txt)
             if f_type:
                 icon_val = "file file-%s" % f_type
             item_fuzzy_id = obfuscate_id(_s["_source"]["id"])
