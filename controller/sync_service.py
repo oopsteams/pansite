@@ -59,6 +59,8 @@ class SyncPanService(BaseService):
                 if json_data_list is not None:
                     log.info("update synced is -1, parent_id:{}".format(parent_id))
                     DataDao.update_data_item_by_parent_id(parent_id, {"synced": -1})
+                else:
+                    log.warn("json_data_list is null!")
                 if json_data_list:
                     for fi in json_data_list:
                         item_map = dict(category=fi['category'],
