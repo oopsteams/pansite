@@ -35,6 +35,10 @@ class SyncPanService(BaseService):
         di: DataItem = None
         doc_ids = []
         for di in will_del_data_items:
+            if di.isdir == 1:
+                DataDao.update_data_item_by_parent_id(di.id, {"synced": -1})
+                self.__clear_data_items(di.id, -1, True)
+                self.__clear_data_items(di.id, -1, False)
             doc_ids.append(di.id)
         if doc_ids:
             self.es_dao_item.bulk_delete(doc_ids)
@@ -47,43 +51,49 @@ class SyncPanService(BaseService):
             if data_item:
                 from_dir = data_item.path
                 parent_id = data_item.id
-            json_data_list = restapi.file_list(pan_acc.access_token, from_dir)
-            if json_data_list is not None:
-                DataDao.update_data_item_by_parent_id(parent_id, {"synced": -1})
-            if json_data_list:
-                for fi in json_data_list:
-                    item_map = dict(category=fi['category'],
-                                    isdir=fi['isdir'],
-                                    filename=fi['server_filename'],
-                                    server_ctime=fi['server_ctime'],
-                                    fs_id=fi['fs_id'],
-                                    path=fi['path'],
-                                    size=fi['size'],
-                                    md5_val=fi.get('md5', ''),
-                                    account_id=pan_acc.user_id,
-                                    panacc=pan_acc.id,
-                                    parent=parent_id,
-                                    synced=0,
-                                    pin=0
-                                    )
-                    di: DataItem = DataDao.get_data_item_by_fs_id(item_map['fs_id'])
+            else:
+                return
+            log.info("sync file")
+            if data_item.isdir == 1:
+                json_data_list = restapi.file_list(pan_acc.access_token, from_dir)
+                if json_data_list is not None:
+                    log.info("update synced is -1, parent_id:{}".format(parent_id))
+                    DataDao.update_data_item_by_parent_id(parent_id, {"synced": -1})
+                if json_data_list:
+                    for fi in json_data_list:
+                        item_map = dict(category=fi['category'],
+                                        isdir=fi['isdir'],
+                                        filename=fi['server_filename'],
+                                        server_ctime=fi['server_ctime'],
+                                        fs_id=fi['fs_id'],
+                                        path=fi['path'],
+                                        size=fi['size'],
+                                        md5_val=fi.get('md5', ''),
+                                        account_id=pan_acc.user_id,
+                                        panacc=pan_acc.id,
+                                        parent=parent_id,
+                                        synced=0,
+                                        pin=0
+                                        )
+                        di: DataItem = DataDao.get_data_item_by_fs_id(item_map['fs_id'])
 
-                    if di:
-                        DataDao.update_data_item(di.id, item_map)
-                        data_item: DataItem = DataDao.get_data_item_by_id(di.id)
-                        DataDao.sync_data_item_to_es(data_item)
-                        # print("will update data item:", item_map)
-                    else:
-                        DataDao.save_data_item(fi['isdir'], item_map)
-                        # print("will save data item:", item_map)
-                    time.sleep(0.1)
-            self.__clear_data_items(parent_id, -1, True)
-            self.__clear_data_items(parent_id, -1, False)
+                        if di:
+                            DataDao.update_data_item(di.id, item_map)
+                            data_item: DataItem = DataDao.get_data_item_by_id(di.id)
+                            DataDao.sync_data_item_to_es(data_item)
+                            # print("will update data item:", item_map)
+                        else:
+                            DataDao.save_data_item(fi['isdir'], item_map)
+                            # print("will save data item:", item_map)
+                        time.sleep(0.1)
+                self.__clear_data_items(parent_id, -1, True)
+                self.__clear_data_items(parent_id, -1, False)
             DataDao.update_data_item(data_item.id, {"synced": 1})
 
         if data_item_list:
             for _data_item in data_item_list:
                 pan_acc: PanAccounts = DataDao.pan_account_by_id(_data_item.panacc)
+                log.info("will sync data item:{}".format(_data_item.filename))
                 req_file_list(_data_item, pan_acc)
         # else:
         #     req_file_list(None, self.pan_acc)
@@ -96,14 +106,16 @@ class SyncPanService(BaseService):
         size = 500
         offset = 0
         self.get_file_list_by_list([data_item])
-        data_item_list = DataDao.query_data_item_by_parent_pin(parent_id=data_item.id, pin=0, is_dir=is_dir,
-                                                               offset=offset, limit=size)
-        if data_item_list and recursion:
-            # get_size = len(data_item_list)
-            # count = count + get_size
-            self.get_file_list_by_list(data_item_list)
-            for di in data_item_list:
-                self.sync_dir_file_list(di, recursion)
+        if data_item.isdir and recursion:
+            data_item_list = DataDao.query_data_item_by_parent_pin(parent_id=data_item.id, pin=0, is_dir=is_dir,
+                                                                   offset=offset, limit=size)
+            if data_item_list and recursion:
+                # get_size = len(data_item_list)
+                # count = count + get_size
+                self.get_file_list_by_list(data_item_list)
+                for di in data_item_list:
+                    self.sync_dir_file_list(di, recursion)
+
         #
         # dog = 1000
         # while get_size > 0 and dog > 0:
