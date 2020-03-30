@@ -228,19 +228,19 @@
             if ("DELETE" === confirm_val) {
                 dialog.dialog("open");
                 call_service('/man/clearbyid?tk='+GetQueryString('tk'), jsonObj, function (res) {
-                let st = res['state'];
-                if (st < 0) {
-                    let errmsg = '删除失败!';
-                    if (res.hasOwnProperty('errmsg')) {
-                        errmsg = res['errmsg']
+                    let st = res['state'];
+                    if (st < 0) {
+                        let errmsg = '删除失败!';
+                        if (res.hasOwnProperty('errmsg')) {
+                            errmsg = res['errmsg']
+                        }
+                        dialog.dialog("close");
+                        alert(errmsg)
+                    } else if (st === 0) {
+                        dialog.dialog("close");
                     }
-                    dialog.dialog("close");
-                    alert(errmsg)
-                } else if (st === 0) {
-                    dialog.dialog("close");
-                }
 
-            });
+                });
             }
 
         });

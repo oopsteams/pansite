@@ -124,6 +124,7 @@ class ManageHandler(BaseHandler):
             item_id = int(self.get_argument("id", "0"))
             # pan_id = int(self.get_argument("panid", "0"))
             source = self.get_argument("source", "")
+            logger.info("clearbyid item_id:{}, source:{}".format(item_id, source))
             rs = sync_pan_service.clear(item_id, source)
             logger.info("clearbyid rs:{}".format(rs))
             self.to_write_json(rs)
