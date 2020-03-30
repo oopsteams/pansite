@@ -4,7 +4,7 @@ Created by susy at 2020/3/16
 """
 from controller.base_service import BaseService
 from utils.caches import cache_service, get_from_cache
-from utils import singleton, get_now_ts
+from utils import singleton, get_now_ts, log as logger
 from typing import Callable, Tuple
 from threading import Thread
 from dao.models import try_release_conn
@@ -36,14 +36,14 @@ class AsyncService(BaseService):
         rs_key = "async:%s:rs:%s:" % (prefix, suffix)
 
         def __run():
-            print("thread to run in.")
+            logger.info("thread to run in.")
             # cache_service.rm(rs_key)
             rs = {}
             if action:
                 try:
                     rs = action(key, rs_key)
                 except Exception as e:
-                    print(e)
+                    logger.error("exe action failed.", e)
                     pass
             self.__thread = None
             cache_service.rm(key)
@@ -72,12 +72,12 @@ class AsyncService(BaseService):
 
     def init_state(self, prefix, suffix, val):
         rs_key = "async:%s:rs:%s:" % (prefix, suffix)
-        print('async update state:', val)
+        # print('async update state:', val)
         cache_service.replace(rs_key, val)
 
     def update_state(self, prefix, suffix, val):
         rs_key = "async:%s:rs:%s:" % (prefix, suffix)
-        print('async update state:', val)
+        # print('async update state:', val)
         cache_service.put(rs_key, val)
 
     def checkout_key_state(self, prefix, suffix):

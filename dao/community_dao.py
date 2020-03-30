@@ -108,7 +108,7 @@ class CommunityDao(object):
     @query_wrap_db
     def query_app_info(cls, app_id):
         ms: ShareApp = ShareApp.select().where(ShareApp.app_id == app_id)
-        print('ms:', ms)
+        # print('ms:', ms)
         return ms.first()
 
     # Update
@@ -120,7 +120,7 @@ class CommunityDao(object):
         :return:
         """
         _params = {p: params[p] for p in params if p in ShareFr.field_names()}
-        print("update_share_fr_by_pk _params:", _params)
+        # print("update_share_fr_by_pk _params:", _params)
         with db:
             ShareFr.update(**_params).where(ShareFr.id == pk_id).execute()
 
@@ -190,9 +190,9 @@ class CommunityDao(object):
                     CommunityVisible(id=data_item.id, show=1)
             cls.sync_community_item_to_es(data_item, source)
         else:
-            print("new_community_item will update item:", params)
+            # print("new_community_item will update item:", params)
             data_item: CommunityDataItem = CommunityDataItem.select().where(CommunityDataItem.fs_id == params['id']).first()
-            print("data_item parent:", data_item.parent, ",size:", data_item.size)
+            # print("data_item parent:", data_item.parent, ",size:", data_item.size)
             if data_item.parent != params.get('parent', '') or data_item.size != params.get('size', 0):
                 with db:
                     CommunityDataItem.update(parent=params.get('parent', ''), size=params.get('size', 0)).where(
@@ -260,7 +260,7 @@ class CommunityDao(object):
 
             if item_list:
                 cls.del_save_community_list(item_list, show)
-            print("dog:", dog, ",offset:", offset)
+            # print("dog:", dog, ",offset:", offset)
             offset = offset + size
 
     @classmethod
@@ -297,5 +297,5 @@ class CommunityDao(object):
 
             if item_list:
                 cls.del_save_local_list(item_list, show)
-            print("dog:", dog, ",offset:", offset)
+            # print("dog:", dog, ",offset:", offset)
             offset = offset + size

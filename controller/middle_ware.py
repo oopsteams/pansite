@@ -2,7 +2,7 @@
 """
 Created by susy at 2020/1/27
 """
-from utils import singleton, get_payload_from_token, get_now_ts, decrypt_user_id
+from utils import singleton, get_payload_from_token, get_now_ts, decrypt_user_id, log as logger
 from utils.constant import USER_TYPE
 from tornado.web import RequestHandler
 
@@ -29,7 +29,7 @@ class CheckLogin(MiddleWare):
         if not token:
             token = handler.get_argument('tk', None, True)
             handler.is_web = True
-        print("Middle CheckLogin in token:", token)
+        logger.info("Middle CheckLogin in token:{}".format(token))
         if "undefined" == token:
             token = None
         if "login" != token and token:

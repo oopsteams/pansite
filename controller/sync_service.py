@@ -238,9 +238,9 @@ class SyncPanService(BaseService):
         result = {'state': 0}
         if "local" == source:
             data_item: DataItem = DataDao.get_data_item_by_id(item_id)
-            print("rename data_item:", DataItem.to_dict(data_item))
-            print("old_name:", old_name)
-            print("alias_name:", alias_name)
+            # print("rename data_item:", DataItem.to_dict(data_item))
+            # print("old_name:", old_name)
+            # print("alias_name:", alias_name)
             if data_item.filename != old_name or data_item.aliasname != alias_name:
                 params = {"filename": old_name, "aliasname": alias_name}
                 fs_id = int(data_item.fs_id)  # 重要, 网盘服务中类型为Int,本地为了兼容所有类型id使用了varchar
@@ -258,7 +258,7 @@ class SyncPanService(BaseService):
                                 err_no = _jsonrs.get("errno", None)
                                 if 'info' in _jsonrs and not err_no:
                                     info_list = _jsonrs['info']
-                                    print("rename info_list:", info_list)
+                                    # print("rename info_list:", info_list)
                                     if origin_path != data_item.path:
                                         params["path"] = origin_path
                                     DataDao.update_data_item(data_item.id, params)

@@ -9,7 +9,7 @@ from dao.models import Accounts, PanAccounts, ShareLogs, DataItem, TransferLogs,
 from utils import singleton, log, make_token, obfuscate_id, get_now_datetime, random_password, get_now_ts, restapi, \
     guess_file_type, constant, split_filename
 from utils.utils_es import SearchParams, build_query_item_es_body
-from utils import get_payload_from_token, is_video_media, is_image_media, scale_size
+from utils import get_payload_from_token, is_video_media, is_image_media, scale_size, log as logger
 from dao.es_dao import es_dao_share, es_dao_local
 import arrow
 from cfg import PAN_SERVICE, get_bd_auth_uri, PAN_ROOT_DIR
@@ -185,7 +185,7 @@ class PanService(BaseService):
             if can_refresh and _pan_acc.refresh_token:
                 can_refresh_token = True
         now = arrow.now(self.default_tz)
-        print("pan_acc_not_exist:{}, can_refresh_token:{}".format(pan_acc_not_exist, can_refresh_token))
+        logger.info("pan_acc_not_exist:{}, can_refresh_token:{}".format(pan_acc_not_exist, can_refresh_token))
         if pan_acc_not_exist or not can_refresh_token:
             # params = {'grant_type': 'authorization_code', 'client_id': PAN_SERVICE["client_id"],
             #           'code': code,
@@ -201,11 +201,11 @@ class PanService(BaseService):
             expires_in = jsonrs["expires_in"]  # seconds
             expires_at = now.shift(seconds=+expires_in).datetime
             if pan_acc_not_exist:
-                print("will new pan account")
+                # print("will new pan account")
                 pan_acc_id = DataDao.new_pan_account(user_id, pan_name, self.client_id, self.client_secret,
                                                      access_token, refresh_token, expires_at, get_now_datetime())
             else:
-                print("will update pan account")
+                # print("will update pan account")
                 DataDao.update_pan_account_by_pk(pan_acc_id, {"access_token": access_token, 'name': pan_name,
                                                               'client_id': self.client_id,
                                                               'client_secret': self.client_secret,

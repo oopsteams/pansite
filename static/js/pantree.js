@@ -1,5 +1,5 @@
 // let pan_id = '{{pan_id}}';
-let dialog = null,form_dialog = null, dist_form_dialog = null, rename_form_dialog = null;
+let dialog = null,form_dialog = null, dist_form_dialog = null, rename_form_dialog = null, free_form_dialog = null;
 function refresh_jstree(node_id){
     let inst = $.jstree.reference(node_id);
     let node = inst.get_node(node_id);
@@ -156,6 +156,64 @@ $('#tree').jstree({
                         rename_form_dialog.ctx = {"inst": inst, "node": node};
                     }
                 };
+                if (node.data.isdir === 1) {
+                    let label = '设置为免费资源';
+                    let f_tag = 'F';
+                    let tags = node.data.tags;
+                    let tags_str = '';
+                    let isfree = false;
+                    if(tags && tags.length>0){
+                        tags_str = tags.join();
+                        for(let i=0;i<tags.length;i++){
+                            let t = tags[i];
+                            if(t === f_tag){
+                                isfree = true;
+                                break;
+                            }
+                        }
+                    }
+                    let url = '/man/unfree';
+                    if (isfree) {
+                        label = '取消免费设置';
+                    }
+                    ctxmenu.freesw = {
+                        'separator_after': false,
+                        'separator_before': false,
+                        'label': label,
+                        'action': function (data) {
+                            let inst = $.jstree.reference(data.reference), node = inst.get_node(data.reference);
+                            if(isfree){
+                                let params = {
+                                    tk: GetQueryString('tk'),
+                                    'itemid': node.data._id,
+                                    'fs_id': node.data.fs_id,
+                                    'source': node.data.source,
+                                    'tags':tags_str
+                                };
+                                dialog.dialog("open");
+                                call_service_by_get('/man/unfree', params, function (res) {
+                                    let st = res['state'];
+                                    if (st === 0) {
+                                        setTimeout(function () {
+                                            inst.refresh(node);
+                                            dialog.dialog("close");
+                                        }, 3000);
+
+                                    }
+                                });
+                            } else {
+                                free_form_dialog.dialog("open");
+                                $('#_name').html(node.text);
+                                $('#alias_name').val(node.data.alias);
+                                $('#free_itemid').val(node.data._id);
+                                $('#free_source').val(node.data.source);
+                                $('#free_tags').val(tags_str);
+                                free_form_dialog.ctx = {"inst": inst, "node": node};
+                            }
+
+                        }
+                    };
+                }
             }
             if (node.data.isdir === 0) {
 

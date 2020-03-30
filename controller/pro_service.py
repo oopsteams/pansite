@@ -11,7 +11,7 @@ from dao.client_data_dao import ClientDataDao
 from dao.product_dao import ProductDao
 from dao.dao import DataDao
 from dao.auth_dao import AuthDao
-from utils import restapi, obfuscate_id, is_image_media, get_now_datetime
+from utils import restapi, obfuscate_id, is_image_media, get_now_datetime, log as logger
 from utils.utils_es import SearchParams, build_query_item_es_body
 from dao.es_dao import es_dao_share, es_dao_local
 from dao.models import Product, Accounts, BASE_FIELDS, Assets, ShareLogs, DataItem, ClientDataItem, TransferLogs, PanAccounts
@@ -31,7 +31,7 @@ class ProductService(BaseService):
     def tag_product(self, ref_id, itemid, layer, p_price) -> Product:
         es_rs = es_dao_local().es_get(itemid, {"_source": ",".join(['isdir', 'fs_id', 'size', 'account', 'tags',
                                                                     'filename', 'parent', 'sourceid'])})
-        print("es_rs:", es_rs, ",layer:", layer, "price:", p_price)
+        logger.info("es_rs:{},layer:{},price:{}".format(es_rs, layer, p_price))
         if es_rs and "_source" in es_rs:
             source = es_rs["_source"]
             isdir = source["isdir"]
@@ -50,7 +50,6 @@ class ProductService(BaseService):
                                                               'price': int(p_price * 100)})
             else:
                 ProductDao.update_product(itemid, {'pin': 0, 'price': int(p_price * 100)})
-            print("pro:", pro)
             return pro
 
     def un_tag_product(self, itemid):
@@ -98,7 +97,7 @@ class ProductService(BaseService):
     def check_file_authorized(self, user_ref_id, item_id, pids, tag):
         st = 0
         p_fuzzy_id_list = pids.split(",")
-        print("p_fuzzy_id_list:", p_fuzzy_id_list)
+        logger.info("p_fuzzy_id_list:{}".format(p_fuzzy_id_list))
 
         def check_mid_parent(perent_item_id):
             pos = len(p_fuzzy_id_list) - 1
@@ -253,11 +252,11 @@ class ProductService(BaseService):
                         if idx > 0:
                             ftype = old_name[idx + 1:]
                     new_name = "%s.%s" % (fs_id, ftype)
-                    print("old name:", old_name, ", new_name:", new_name)
+                    logger.info("old name:{}, new_name:{}".format(old_name, new_name))
                     _jsonrs = restapi.file_rename(pan_acc.access_token, client_data_item.path, new_name)
                     if 'info' in _jsonrs:
                         info_list = _jsonrs['info']
-                        print("rename info_list:", info_list)
+                        # print("rename info_list:", info_list)
                         new_path = "%s/%s" % (parent_dir, new_name)
                         # jsonrs = restapi.file_search(pan_acc.access_token, key=fs_id, parent_dir=parent_dir)
                         # print("search new file jsonrs:", jsonrs)
@@ -312,7 +311,7 @@ class ProductService(BaseService):
                 return 0, client_data_item
             return -4, None  # 无法转存文件
         elif jsonrs.get('errno', 0) == -30 and 'path' in jsonrs:
-            print("exists jsonrs:", jsonrs)
+            logger.info("exists jsonrs:{}".format(jsonrs))
             file_path = jsonrs.get('path', None)
             if file_path:
                 # 迁出后, 获取信息
@@ -566,7 +565,7 @@ class ProductService(BaseService):
             # 文件已迁出,等待迁入, 目录结构已存在
             async_service.update_state(key_prefix, user_id, {"state": 0, "pos": 2})
             rv = random.randint(1, 10)
-            print("rv:", rv)
+            # print("rv:", rv)
             test_err = rv <= 6
             if test_err:
                 _result['err'] = LOGIC_ERR_TXT['rename_fail']

@@ -53,7 +53,7 @@ class ClientDataDao(object):
     @classmethod
     def update_client_item(cls, pk_id, params):
         _params = {p: params[p] for p in params if p in ClientDataItem.field_names()}
-        print("update_client_item _params:", _params)
+        # print("update_client_item _params:", _params)
         with db:
             ClientDataItem.update(**_params).where(ClientDataItem.id == pk_id).execute()
 

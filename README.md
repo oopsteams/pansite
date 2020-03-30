@@ -7,3 +7,7 @@ pan site
 - Clear Account
 
     - accounts, accountext, authuser, ureference, panaccounts
+    
+- Free
+
+    - tags: free, es/db
