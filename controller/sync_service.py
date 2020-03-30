@@ -53,7 +53,7 @@ class SyncPanService(BaseService):
                 parent_id = data_item.id
             else:
                 return
-            log.info("sync file")
+            log.info("sync file:{}, filename:{}".format(data_item.id, data_item.filename))
             if data_item.isdir == 1:
                 json_data_list = restapi.file_list(pan_acc.access_token, from_dir)
                 if json_data_list is not None:
@@ -86,6 +86,8 @@ class SyncPanService(BaseService):
                             DataDao.save_data_item(fi['isdir'], item_map)
                             # print("will save data item:", item_map)
                         time.sleep(0.1)
+                else:
+                    log.info("have not any sub files!")
                 self.__clear_data_items(parent_id, -1, True)
                 self.__clear_data_items(parent_id, -1, False)
             DataDao.update_data_item(data_item.id, {"synced": 1})
