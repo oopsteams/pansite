@@ -48,34 +48,35 @@ class SyncPanService(BaseService):
                 from_dir = data_item.path
                 parent_id = data_item.id
             json_data_list = restapi.file_list(pan_acc.access_token, from_dir)
-            if json_data_list:
+            if json_data_list is not None:
                 DataDao.update_data_item_by_parent_id(parent_id, {"synced": -1})
-            for fi in json_data_list:
-                item_map = dict(category=fi['category'],
-                                isdir=fi['isdir'],
-                                filename=fi['server_filename'],
-                                server_ctime=fi['server_ctime'],
-                                fs_id=fi['fs_id'],
-                                path=fi['path'],
-                                size=fi['size'],
-                                md5_val=fi.get('md5', ''),
-                                account_id=pan_acc.user_id,
-                                panacc=pan_acc.id,
-                                parent=parent_id,
-                                synced=0,
-                                pin=0
-                                )
-                di: DataItem = DataDao.get_data_item_by_fs_id(item_map['fs_id'])
+            if json_data_list:
+                for fi in json_data_list:
+                    item_map = dict(category=fi['category'],
+                                    isdir=fi['isdir'],
+                                    filename=fi['server_filename'],
+                                    server_ctime=fi['server_ctime'],
+                                    fs_id=fi['fs_id'],
+                                    path=fi['path'],
+                                    size=fi['size'],
+                                    md5_val=fi.get('md5', ''),
+                                    account_id=pan_acc.user_id,
+                                    panacc=pan_acc.id,
+                                    parent=parent_id,
+                                    synced=0,
+                                    pin=0
+                                    )
+                    di: DataItem = DataDao.get_data_item_by_fs_id(item_map['fs_id'])
 
-                if di:
-                    DataDao.update_data_item(di.id, item_map)
-                    data_item: DataItem = DataDao.get_data_item_by_id(di.id)
-                    DataDao.sync_data_item_to_es(data_item)
-                    # print("will update data item:", item_map)
-                else:
-                    DataDao.save_data_item(fi['isdir'], item_map)
-                    # print("will save data item:", item_map)
-                time.sleep(0.1)
+                    if di:
+                        DataDao.update_data_item(di.id, item_map)
+                        data_item: DataItem = DataDao.get_data_item_by_id(di.id)
+                        DataDao.sync_data_item_to_es(data_item)
+                        # print("will update data item:", item_map)
+                    else:
+                        DataDao.save_data_item(fi['isdir'], item_map)
+                        # print("will save data item:", item_map)
+                    time.sleep(0.1)
             self.__clear_data_items(parent_id, -1, True)
             self.__clear_data_items(parent_id, -1, False)
             DataDao.update_data_item(data_item.id, {"synced": 1})

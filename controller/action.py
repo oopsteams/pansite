@@ -5,7 +5,7 @@ Created by susy at 2019/10/17
 import sys
 import json
 import traceback
-from utils import CJsonEncoder, get_payload_from_token, decrypt_user_id, get_now_ts, decrypt_id
+from utils import CJsonEncoder, get_payload_from_token, decrypt_user_id, get_now_ts, decrypt_id, log as logger
 from typing import Optional, Awaitable, Any
 from dao.dao import DataDao
 from dao.product_dao import ProductDao
@@ -289,7 +289,7 @@ class PanHandler(BaseHandler):
             item_fuzzy_id = self.get_argument("id", None)
             item_id = int(decrypt_id(item_fuzzy_id))
             pan_id = self.get_argument('panid', "0")
-            print("syncallnodes pan_id:", pan_id)
+            logger.info("syncallnodes pan_id:{}".format(pan_id))
             pan_id = int(pan_id)
             recursion = self.get_argument("recursion")
             if recursion == "1":
@@ -299,7 +299,7 @@ class PanHandler(BaseHandler):
             if not item_id:
                 if pan_id:
                     root_item: DataItem = sync_pan_service.fetch_root_item(pan_id)
-                    print('root_item:', DataItem.to_dict(root_item))
+                    logger.info('root_item:{}'.format(DataItem.to_dict(root_item)))
                     if root_item:
                         item_id = root_item.id
                     else:

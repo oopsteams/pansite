@@ -6,7 +6,7 @@ import requests
 from cfg import PAN_SERVICE
 import time
 import json
-from utils import url_encode, get_now_ts
+from utils import url_encode, get_now_ts, log as logger
 from utils.constant import PAN_ERROR_CODES
 POINT = "{protocol}://{domain}".format(protocol=PAN_SERVICE['protocol'], domain=PAN_SERVICE['domain'])
 
@@ -33,7 +33,7 @@ def refresh_token(refresh_token, recursion):
     headers = {"User-Agent": "pan.baidu.com"}
 
     rs = requests.get("%s%s" % (auth_point, path), params=params, headers=headers)
-    print("refresh_token request state:", rs.status_code)
+    logger.info("refresh_token request state:{}".format(rs.status_code))
     # print("content:", rs.content)
     if rs.status_code == 200:
         jsonrs = rs.json()
@@ -53,7 +53,7 @@ def sync_user_info(access_token, recursion):
     headers = {"User-Agent": "pan.baidu.com"}
 
     rs = requests.get(auth_point, params=params, headers=headers)
-    print("refresh_token request state:", rs.status_code)
+    logger.info("sync_user_info request state:{}".format(rs.status_code))
     # print("content:", rs.content)
     if rs.status_code == 200:
         jsonrs = rs.json()
@@ -74,8 +74,8 @@ def file_list(access_token, parent_dir: None, recursion=True):
     params = {"method": 'list', "access_token": access_token, "dir": from_dir, "limit": 10000}
     headers = {"User-Agent": "pan.baidu.com"}
     rs = requests.get("%s/%s" % (POINT, url_path), params=params, headers=headers)
-    print("file_list request state:", rs.status_code)
-    print("file_list content:", rs.content)
+    logger.info("file_list request state:{}".format(rs.status_code))
+    logger.info("file_list content:{}".format(rs.content))
     if rs.status_code == 200:
         jsonrs = rs.json()
         data_list = jsonrs.get('list', [])
@@ -86,7 +86,7 @@ def file_list(access_token, parent_dir: None, recursion=True):
             time.sleep(1)
             return file_list(access_token, parent_dir, False)
         else:
-            return []
+            return None
 
 
 def file_search(access_token, key, web=0, parent_dir=None):
@@ -97,8 +97,8 @@ def file_search(access_token, key, web=0, parent_dir=None):
     params = {"method": 'search', "access_token": access_token, "key": key, "recursion": 0, "dir": from_dir, "web": web}
     headers = {"User-Agent": "pan.baidu.com"}
     rs = requests.get("%s/%s" % (POINT, url_path), params=params, headers=headers)
-    print("file_search request state:", rs.status_code)
-    print("content:", rs.content)
+    logger.info("file_search request state:{}".format(rs.status_code))
+    logger.info("file search content:{}".format(rs.content))
     jsonrs = rs.json()
     data_list = jsonrs.get('list', [])
     # layer = 0
@@ -110,11 +110,11 @@ def del_file(access_token, filepath):
     params = {"method": 'filemanager', "access_token": access_token, "opera": "delete"}
     datas = {"async": 0, "filelist": '["%s"]' % filepath}
     headers = {"User-Agent": "pan.baidu.com"}
-    print("del file:", access_token, ",path:", filepath)
+    logger.info("del file:{}".format(filepath))
     rs = requests.post("%s/%s" % (POINT, url_path), params=params, data=datas, headers=headers)
     # print("content:", rs.content)
     jsonrs = rs.json()
-    print(jsonrs)
+    # print(jsonrs)
     err_no = jsonrs["errno"]
     if err_no:
         err_msg = jsonrs.get("err_msg", "")
@@ -134,7 +134,7 @@ def file_rename(access_token, filepath, newname):
     rs = requests.post("%s/%s" % (POINT, url_path), params=params, data=datas, headers=headers)
     # print("content:", rs.content)
     jsonrs = rs.json()
-    print("file_rename jsonrs:", jsonrs)
+    logger.info("file_rename jsonrs:{}".format(jsonrs))
     err_no = jsonrs.get("errno", None)
     if err_no:
         err_msg = jsonrs.get("err_msg", "")
@@ -153,7 +153,7 @@ def pan_mkdir(access_token, filepath):
     rs = requests.post("%s/%s" % (POINT, url_path), params=params, data=datas, headers=headers)
     # print("content:", rs.content)
     jsonrs = rs.json()
-    print(jsonrs)
+    # print(jsonrs)
     err_no = jsonrs.get("errno", None)
     if err_no:
         err_msg = jsonrs.get("err_msg", "")
@@ -165,16 +165,16 @@ def pan_mkdir(access_token, filepath):
 
 def sync_file(access_token, fsids, fetch_dlink=True):
     url_path = 'multimedia'
-    print(str(fsids))
+    # print(str(fsids))
     dlink_tag = 1
     if not fetch_dlink:
         dlink_tag = 0
     params = {"method": 'filemetas', "access_token": access_token, "dlink": dlink_tag, "fsids": str(fsids)}
     headers = {"User-Agent": "pan.baidu.com"}
-    print("%s/%s" % (POINT, url_path))
+    logger.info("sync_file %s/%s" % (POINT, url_path))
     rs = requests.get("%s/%s" % (POINT, url_path), params=params, headers=headers, verify=False)
     jsonrs = rs.json()
-    print(jsonrs)
+    # print(jsonrs)
     if jsonrs:
         return jsonrs.get('list', [])
     return []
@@ -194,11 +194,11 @@ def query_file_head(url):
             res = requests.head(loc_url, headers=headers)
             last_loc_url = loc_url
             loc_url = res.headers.get('Location', '')
-    print("recursive_cnt:", recursive_cnt)
+    # print("recursive_cnt:", recursive_cnt)
     # print("header:", res.headers)
-    print("last_loc_url:", last_loc_url)
+    # print("last_loc_url:", last_loc_url)
     # print("md5_val:", md5_val)
-    print("status_code:", res.status_code)
+    logger.info("query_file_head status_code:{}".format(res.status_code))
     return last_loc_url
 
 
@@ -208,8 +208,7 @@ def get_media_flv_info(access_token, fpath):
     ua = "xpanvideo;{app};{ver};{sys};{sys_ver};flv".format(app="netdisk", ver='2.2.1', sys="pc-mac", sys_ver="10.13.6")
     headers = {"User-Agent": ua}
     url = "%s/%s" % (POINT, url_path)
-    print("params:", params)
-    print("url:", url)
+    logger.info("get_media_flv_info params:{}, url:{}".format(params, url))
     rs = requests.get(url, params=params, headers=headers, verify=False)
     jsonrs = rs.json()
     err_no = jsonrs["errno"]
@@ -226,7 +225,7 @@ def get_media_flv_info(access_token, fpath):
                                                                                                    jsonrs['adToken'])
         jsonrs['mlink_start_at'] = jsonrs['ltime'] + get_now_ts()
         jsonrs['mlink'] = mlink
-    print("get_media_flv_info jsonrs:", jsonrs)
+    logger.info("get_media_flv_info jsonrs:{}".format(jsonrs))
     return jsonrs
 
 
@@ -238,13 +237,13 @@ def get_dlink_by_sync_file(access_token, fs_id, need_thumbs=False):
     params = {"method": 'filemetas', "access_token": access_token, "dlink": 1, "fsids": str([fs_id]), "thumb": need_thumb_val}
     headers = {"User-Agent": "pan.baidu.com"}
     url = "%s/%s" % (POINT, url_path)
-    print('get_dlink_by_sync_file:', url)
-    print('get_dlink_by_sync_file params:', params)
+    logger.info('get_dlink_by_sync_file:{}'.format(url))
+    logger.info('get_dlink_by_sync_file params:{}'.format(params))
     thumbs = {}
     try:
         rs = requests.get(url, params=params, headers=headers, verify=False)
         jsonrs = rs.json()
-        print(jsonrs)
+        # print(jsonrs)
 
         if jsonrs:
             sync_list = jsonrs.get('list', [])
@@ -293,7 +292,7 @@ def get_share_randsk(share_id, pwd, surl):
     datas = {"pwd": pwd}
     rs = requests.post(url, data=datas, params=params, headers=headers, verify=False)
     jsonrs = rs.json()
-    print(jsonrs)
+    # print(jsonrs)
     err_no = jsonrs["errno"]
     if err_no:
         err_msg = jsonrs.get("err_msg", "")
@@ -316,7 +315,7 @@ def get_share_list(share_id, short_url, randsk):
         if not err_msg:
             err_msg = PAN_ERROR_CODES.get(err_no, "")
             jsonrs["err_msg"] = err_msg
-    print("get_share_list:", jsonrs)
+    logger.info("get_share_list:{}".format(jsonrs))
     return jsonrs
 
 
@@ -331,7 +330,7 @@ def get_share_info(share_id, special_short_url, randsk):
     err_no = jsonrs["errno"]
     if err_no:
         jsonrs["errno"] = 0
-    print("get_share_info:", jsonrs)
+    logger.info("get_share_info:{}".format(jsonrs))
     return jsonrs
 
 
@@ -344,7 +343,7 @@ def transfer_share_files(access_token, share_id, from_uk, randsk, fs_id, path, r
     # params 内部转码后报参数错误
     url = url + "?access_token={}&shareid={}&from={}&sekey={}&async=0".format(access_token, share_id, from_uk, randsk)
     datas = {"fsidlist": "[%s]" % fs_id, "path": path}
-    print("transfer_share_files url:", url, ",fsidlist:", datas['fsidlist'], ",path:", path)
+    logger.info("transfer_share_files url:{},fsidlist:{},path:{}".format(url, datas['fsidlist'], path))
     rs = requests.post(url, data=datas, headers=headers, verify=False)
     jsonrs = rs.json()
     err_no = jsonrs["errno"]
@@ -359,14 +358,14 @@ def transfer_share_files(access_token, share_id, from_uk, randsk, fs_id, path, r
                         return {"errno": -30, "path": _info["path"]}
             if recursion:
                 time.sleep(0.5)
-                print("transfer_share_files will retry on time!")
+                logger.info("transfer_share_files will retry on time!")
                 return transfer_share_files(access_token, share_id, from_uk, randsk, fs_id, path, False)
 
         err_msg = jsonrs.get("err_msg", "")
         if not err_msg:
             err_msg = PAN_ERROR_CODES.get(err_no, "")
             jsonrs["err_msg"] = err_msg
-    print("transfer_share_files:", jsonrs)
+    logger.info("transfer_share_files:{}".format(jsonrs))
     return jsonrs
 
 
