@@ -132,7 +132,7 @@ class DataDao(object):
     @classmethod
     @query_wrap_db
     def get_data_item_by_id(cls, pk_id):
-        return DataItem.get_by_id(pk=pk_id)
+        return DataItem.select().where(DataItem.id == pk_id).first()
 
     @classmethod
     @query_wrap_db
