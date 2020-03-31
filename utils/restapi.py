@@ -31,10 +31,10 @@ def refresh_token(refresh_token, recursion):
     params = {"grant_type": 'refresh_token', "refresh_token": refresh_token, "client_id": PAN_SERVICE["client_id"],
               "client_secret": PAN_SERVICE["client_secret"]}
     headers = {"User-Agent": "pan.baidu.com"}
-
     rs = requests.get("%s%s" % (auth_point, path), params=params, headers=headers)
-    logger.info("refresh_token request state:{}".format(rs.status_code))
+    # logger.info("refresh_token request state:{}".format(rs.status_code))
     # print("content:", rs.content)
+    logger.info("restapi refresh_token:{}, status_code:{}".format(refresh_token, rs.status_code))
     if rs.status_code == 200:
         jsonrs = rs.json()
         return jsonrs
@@ -53,8 +53,9 @@ def sync_user_info(access_token, recursion):
     headers = {"User-Agent": "pan.baidu.com"}
 
     rs = requests.get(auth_point, params=params, headers=headers)
-    logger.info("sync_user_info request state:{}".format(rs.status_code))
+    # logger.info("sync_user_info request state:{}".format(rs.status_code))
     # print("content:", rs.content)
+    logger.info("restapi sync_user_info access_token:{}, status_code:{}".format(access_token, rs.status_code))
     if rs.status_code == 200:
         jsonrs = rs.json()
         return jsonrs
@@ -74,11 +75,12 @@ def file_list(access_token, parent_dir: None, recursion=True):
     params = {"method": 'list', "access_token": access_token, "dir": from_dir, "limit": 10000}
     headers = {"User-Agent": "pan.baidu.com"}
     rs = requests.get("%s/%s" % (POINT, url_path), params=params, headers=headers)
-    logger.info("file_list request state:{}".format(rs.status_code))
+    # logger.info("file_list request state:{}".format(rs.status_code))
+    logger.info("restapi file_list parent_dir:{}, status_code:{}".format(parent_dir, rs.status_code))
     if rs.status_code == 200:
         jsonrs = rs.json()
         data_list = jsonrs.get('list', [])
-        logger.info("file_list count:{}".format(len(data_list)))
+        logger.info("restapi file_list count:{}".format(len(data_list)))
         # layer = 0
         return data_list
     else:
@@ -97,8 +99,9 @@ def file_search(access_token, key, web=0, parent_dir=None):
     params = {"method": 'search', "access_token": access_token, "key": key, "recursion": 0, "dir": from_dir, "web": web}
     headers = {"User-Agent": "pan.baidu.com"}
     rs = requests.get("%s/%s" % (POINT, url_path), params=params, headers=headers)
-    logger.info("file_search request state:{}".format(rs.status_code))
-    logger.info("file search content:{}".format(rs.content))
+    # logger.info("file_search request state:{}".format(rs.status_code))
+    # logger.info("file search content:{}".format(rs.content))
+    logger.info("restapi file_search key:{}, status_code:{}".format(key, rs.status_code))
     jsonrs = rs.json()
     data_list = jsonrs.get('list', [])
     # layer = 0
@@ -110,12 +113,12 @@ def del_file(access_token, filepath):
     params = {"method": 'filemanager', "access_token": access_token, "opera": "delete"}
     datas = {"async": 0, "filelist": '["%s"]' % filepath}
     headers = {"User-Agent": "pan.baidu.com"}
-    logger.info("del file:{}".format(filepath))
     rs = requests.post("%s/%s" % (POINT, url_path), params=params, data=datas, headers=headers)
     # print("content:", rs.content)
     jsonrs = rs.json()
     # print(jsonrs)
     err_no = jsonrs["errno"]
+    logger.info("restapi del file:{}, err_no:{}".format(filepath, err_no))
     if err_no:
         err_msg = jsonrs.get("err_msg", "")
         if not err_msg:
@@ -134,8 +137,8 @@ def file_rename(access_token, filepath, newname):
     rs = requests.post("%s/%s" % (POINT, url_path), params=params, data=datas, headers=headers)
     # print("content:", rs.content)
     jsonrs = rs.json()
-    logger.info("file_rename jsonrs:{}".format(jsonrs))
     err_no = jsonrs.get("errno", None)
+    logger.info("restapi file_rename:{}, err_no:{}".format(filepath, err_no))
     if err_no:
         err_msg = jsonrs.get("err_msg", "")
         if not err_msg:
@@ -155,6 +158,7 @@ def pan_mkdir(access_token, filepath):
     jsonrs = rs.json()
     # print(jsonrs)
     err_no = jsonrs.get("errno", None)
+    logger.info("restapi pan_mkdir:{}, err_no:{}".format(filepath, err_no))
     if err_no:
         err_msg = jsonrs.get("err_msg", "")
         if not err_msg:
@@ -171,11 +175,13 @@ def sync_file(access_token, fsids, fetch_dlink=True):
         dlink_tag = 0
     params = {"method": 'filemetas', "access_token": access_token, "dlink": dlink_tag, "fsids": str(fsids)}
     headers = {"User-Agent": "pan.baidu.com"}
-    logger.info("sync_file %s/%s" % (POINT, url_path))
+    # logger.info("sync_file %s/%s" % (POINT, url_path))
     rs = requests.get("%s/%s" % (POINT, url_path), params=params, headers=headers, verify=False)
     jsonrs = rs.json()
     # print(jsonrs)
     if jsonrs:
+        err_no = jsonrs.get("errno", None)
+        logger.info("restapi sync_file fsids:{}, err_no:{}".format(fsids, err_no))
         return jsonrs.get('list', [])
     return []
 
@@ -244,8 +250,9 @@ def get_dlink_by_sync_file(access_token, fs_id, need_thumbs=False):
         rs = requests.get(url, params=params, headers=headers, verify=False)
         jsonrs = rs.json()
         # print(jsonrs)
-
         if jsonrs:
+            err_no = jsonrs.get("errno", None)
+            logger.info("restapi get_dlink_by_sync_file fs_id:{}, err_no:{}".format(fs_id, err_no))
             sync_list = jsonrs.get('list', [])
             for sync_item in sync_list:
                 if fs_id == sync_item['fs_id']:
@@ -275,6 +282,7 @@ def share_folder(access_token, fs_id, pwd, period=1):
     rs = requests.post(url, data=params, headers=headers, verify=False)
     jsonrs = rs.json()
     err_no = jsonrs["errno"]
+    logger.info("restapi share_folder fs_id:{}, err_no:{}".format(fs_id, err_no))
     if err_no:
         err_msg = jsonrs.get("err_msg", "")
         if not err_msg:
@@ -294,6 +302,7 @@ def get_share_randsk(share_id, pwd, surl):
     jsonrs = rs.json()
     # print(jsonrs)
     err_no = jsonrs["errno"]
+    logger.info("restapi get_share_randsk share_id:{}, err_no:{}".format(share_id, err_no))
     if err_no:
         err_msg = jsonrs.get("err_msg", "")
         if not err_msg:
@@ -310,6 +319,7 @@ def get_share_list(share_id, short_url, randsk):
     rs = requests.get(url, params=params, headers=headers, verify=False)
     jsonrs = rs.json()
     err_no = jsonrs["errno"]
+    logger.info("restapi get_share_list share_id:{}, err_no:{}".format(share_id, err_no))
     if err_no:
         err_msg = jsonrs.get("err_msg", "")
         if not err_msg:
@@ -328,6 +338,7 @@ def get_share_info(share_id, special_short_url, randsk):
     rs = requests.get(url, params=params, headers=headers, verify=False)
     jsonrs = rs.json()
     err_no = jsonrs["errno"]
+    logger.info("restapi get_share_info share_id:{}, err_no:{}".format(share_id, err_no))
     if err_no:
         jsonrs["errno"] = 0
     logger.info("get_share_info:{}".format(jsonrs))
