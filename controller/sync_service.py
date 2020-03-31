@@ -210,7 +210,7 @@ class SyncPanService(BaseService):
                     if transfer_logs:
                         for tl in transfer_logs:
                             CommunityDao.del_transfer_log_by_id(tl.id)
-
+                log.info("deep clear delete data item:{}, filename:{}".format(di.id, di.filename))
                 _es_dao_item.delete(di.id)
                 DataDao.del_data_item_by_id(di.id)
 
@@ -230,6 +230,8 @@ class SyncPanService(BaseService):
                 return {"state": -1, "errmsg": errmsg}
             else:
                 return {"state": 0}
+        else:
+            log.info("deep clear , can not find root item:{}".format(item_id))
         return {"state": 0}
         # DataDao.del_data_item_by_id(root_di.id)
 
