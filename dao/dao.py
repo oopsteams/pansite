@@ -73,7 +73,7 @@ class DataDao(object):
             _pan_account_list = PanAccounts.select().where(PanAccounts.user_id == account_id).order_by(PanAccounts.pin.desc()).order_by(PanAccounts.use_count).offset(0).limit(cnt)
         else:
             _pan_account_list = PanAccounts.select().order_by(PanAccounts.pin.desc()).order_by(PanAccounts.use_count).offset(0).limit(cnt)
-        logger.info("pan_account_list:", _pan_account_list)
+        logger.info("pan_account_list:{}".format(_pan_account_list))
         # for acc in _pan_account_list:
         #     if transfer_to_dict:
         #         pan_acc_list.append(PanAccounts.to_dict(acc))
