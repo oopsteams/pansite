@@ -196,11 +196,12 @@ class PanAccounts(BaseModel):
     expires_at = DateTimeField(null=True)
     use_count = IntegerField(null=False, default=0)
     pin = IntegerField(null=False, default=0)
+    bd_uid = BigIntegerField(null=False, default=0)
 
     @classmethod
     def field_names(cls):
         return BASE_FIELDS + ["id", "user_id", "name", "password", "client_id", "client_secret", "access_token",
-                              "token_updated_at", "pin", "refresh_token", "expires_at", "use_count"]
+                              "token_updated_at", "pin", "refresh_token", "expires_at", "use_count", "bd_uid"]
 
     @classmethod
     def to_dict(cls, instance):

@@ -5,7 +5,8 @@ Created by susy at 2019/11/2
 import requests
 from dao.dao import DataDao
 from dao.client_data_dao import ClientDataDao
-from dao.models import Accounts, PanAccounts, ShareLogs, DataItem, TransferLogs, CommunityDataItem, ClientDataItem
+from dao.models import Accounts, PanAccounts, ShareLogs, DataItem, TransferLogs, CommunityDataItem, ClientDataItem, \
+    AccountExt
 from utils import singleton, log, make_token, obfuscate_id, get_now_datetime, random_password, get_now_ts, restapi, \
     guess_file_type, constant, split_filename
 from utils.utils_es import SearchParams, build_query_item_es_body
@@ -200,10 +201,15 @@ class PanService(BaseService):
             refresh_token = jsonrs["refresh_token"]
             expires_in = jsonrs["expires_in"]  # seconds
             expires_at = now.shift(seconds=+expires_in).datetime
+            account_ext: AccountExt = self.sync_pan_user_info(access_token, user_id)
             if pan_acc_not_exist:
                 # print("will new pan account")
+                account_ext_id = 0
+                if account_ext:
+                    account_ext_id = account_ext.user_id
                 pan_acc_id = DataDao.new_pan_account(user_id, pan_name, self.client_id, self.client_secret,
-                                                     access_token, refresh_token, expires_at, get_now_datetime())
+                                                     access_token, refresh_token, expires_at, get_now_datetime(), pin=1,
+                                                     bd_uid=account_ext_id)
             else:
                 # print("will update pan account")
                 DataDao.update_pan_account_by_pk(pan_acc_id, {"access_token": access_token, 'name': pan_name,
@@ -225,11 +231,11 @@ class PanService(BaseService):
             DataDao.update_pan_account_by_pk(pan_acc_id, {"access_token": access_token, "refresh_token": refresh_token,
                                                           "expires_at": expires_at,
                                                           "token_updated_at": get_now_datetime()})
-        self.sync_pan_user_info(access_token, user_id)
+            self.sync_pan_user_info(access_token, user_id)
         return access_token, pan_acc_id, None
 
     def sync_pan_user_info(self, access_token, account_id):
-        auth_service.sync_pan_user_info(access_token, account_id)
+        return auth_service.sync_pan_user_info(access_token, account_id)
 
     def fresh_token(self, pan_id):
         auth_service.fresh_token(pan_id)
