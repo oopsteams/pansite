@@ -315,7 +315,6 @@ class AuthService(BaseService):
         client_id = PAN_SERVICE['client_id']
         client_secret = PAN_SERVICE['client_secret']
         account_ext_ctx['account_id'] = account.id
-        account_ext_ctx['username'] = account.name
         log.info("will new account ext:{}".format(account_ext_ctx))
 
         acc_ext: AccountExt = DataDao.new_accounts_ext(**account_ext_ctx)
@@ -401,6 +400,7 @@ class AuthService(BaseService):
                                                                                                    education=education,
                                                                                                    trade=trade,
                                                                                                    job=job,
+                                                                                                   username=username,
                                                                                                    is_realname=is_realname,
                                                                                                    user_id=userid
                                                                                                    ))
