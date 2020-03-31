@@ -316,7 +316,9 @@ class AuthService(BaseService):
         client_secret = PAN_SERVICE['client_secret']
         account_ext_ctx['account_id'] = account.id
         account_ext_ctx['username'] = account.name
+        log.info("will new account ext:{}".format(account_ext_ctx))
         acc_ext: AccountExt = DataDao.new_accounts_ext(**account_ext_ctx)
+        log.info("new account ext ok acc_ext id:{}".format(acc_ext.id))
         pan_acc_id = DataDao.new_pan_account(account.id, account.name, client_id, client_secret,
                                              access_token, refresh_token, expires_at, get_now_datetime(), pin=1, bd_uid=acc_ext.user_id)
         auth_user_dict['_p'] = obfuscate_id(pan_acc_id)

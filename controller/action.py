@@ -75,11 +75,17 @@ class BaseHandler(RequestHandler):
         # return True
 
     def _handle_request_exception(self, e):
-        params = {"exc_info": sys.exc_info()}
-        self.write_error(404, **params)
+        logger.error("request err:{}".format(sys.exc_info()))
+        params = {"exc_info": sys.exc_info(), "state": -1, "err": "parameters error!"}
+        # self.write_error(404, **params)
+        # self.write(json.dumps(params))
+        self.to_write_json(params)
 
     def send_error(self, status_code=500, **kwargs) -> None:
-        self.write_error(404, **kwargs)
+        # self.write_error(404, **kwargs)
+        logger.error("service err", **kwargs)
+        params = {"exc_info": sys.exc_info(), "state": -1, "err": "service error!"}
+        self.to_write_json(params)
 
     # def send_error(self, stat, **kw):
     #     self.write_error(404, **kw)
