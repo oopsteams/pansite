@@ -457,13 +457,13 @@ class DataDao(object):
 
     @classmethod
     def new_pan_account(cls, user_id, name, client_id, client_secret, access_token, refresh_token, expires_at,
-                        now, pin=0) -> int:
+                        now, pin=0, bd_uid=0) -> int:
 
         with db:
             pan_acc: PanAccounts = PanAccounts(user_id=user_id, name=name, client_id=client_id,
                                                client_secret=client_secret, access_token=access_token,
                                                refresh_token=refresh_token, expires_at=expires_at, token_updated_at=now,
-                                               pin=pin)
+                                               pin=pin, bd_uid=bd_uid)
             pan_acc.save(force_insert=True)
             pan_acc_id = pan_acc.id
         if pan_acc_id:
