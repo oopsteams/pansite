@@ -317,6 +317,7 @@ class AuthService(BaseService):
         account_ext_ctx['account_id'] = account.id
         account_ext_ctx['username'] = account.name
         log.info("will new account ext:{}".format(account_ext_ctx))
+
         acc_ext: AccountExt = DataDao.new_accounts_ext(**account_ext_ctx)
         log.info("new account ext ok acc_ext id:{}".format(acc_ext.id))
         pan_acc_id = DataDao.new_pan_account(account.id, account.name, client_id, client_secret,
@@ -401,7 +402,7 @@ class AuthService(BaseService):
                                                                                                    trade=trade,
                                                                                                    job=job,
                                                                                                    is_realname=is_realname,
-                                                                                                   userid=userid
+                                                                                                   user_id=userid
                                                                                                    ))
             # acc_id = user_ext_dict['_id']
             # DataDao.new_accounts_ext(userid, username, realname, portrait, userdetail, birthday, marriage, sex,
