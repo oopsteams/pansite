@@ -375,13 +375,16 @@ class AuthService(BaseService):
         job = ''
         expires_in = expires_in - 20 * 60  # seconds
         expires_at = arrow.now(self.default_tz).shift(seconds=+expires_in).datetime
+
         acc_ext: AccountExt = DataDao.account_ext_by_bd_user_id(userid)
         # print("find acc_ext:", acc_ext)
+        log.info("bd_sync_login bd userid:{}".format(userid))
         now_tm = get_now_datetime()
         result = {}
         if not acc_ext:
             # new user
             # print("not find acc_ext userid:", userid)
+            log.info("bd_sync_login not find acc_ext :{}".format(userid))
             user_token, user_ext_dict = self._new_user(acc_name, '654321', username, access_token,
                                                                    refresh_token, expires_at, dict(realname=realname,
                                                                                                    portrait=portrait,
@@ -413,6 +416,7 @@ class AuthService(BaseService):
             result['id'] = user_ext_dict['id']
         else:
             # print("find acc_ext:", acc_ext.username)
+            log.info("bd_sync_login find acc_ext :{}".format(userid))
             acc_id = acc_ext.account_id
             account: Accounts = DataDao.account_by_id(acc_id)
             DataDao.update_account_ext_by_user_id(userid, dict(username=username, portrait=portrait, account_id=acc_id))
