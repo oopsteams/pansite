@@ -232,7 +232,7 @@ class SyncPanService(BaseService):
                 return {"state": 0}
         else:
             log.info("deep clear , can not find root item:{}".format(item_id))
-        return {"state": 0}
+            return {"state": -1, "errmsg": "[{}] not exists.".format(item_id)}
         # DataDao.del_data_item_by_id(root_di.id)
 
     def __clear_community_item(self, item_id):
