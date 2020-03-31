@@ -9,9 +9,11 @@ from dao.dao import DataDao
 from dao.man_dao import ManDao
 from utils.utils_es import SearchParams, build_query_item_es_body
 from dao.es_dao import es_dao_share, es_dao_local
-from dao.models import DataItem, UserRootCfg
+from dao.models import DataItem, UserRootCfg, PanAccounts
 from utils.constant import TOP_DIR_FILE_NAME, SHARE_ES_TOP_POS, PRODUCT_TAG, ES_TAG_MAP
 from utils import scale_size, split_filename
+from cfg import MASTER_ACCOUNT_ID
+
 import sys
 sys.setrecursionlimit(1000000)
 
@@ -19,15 +21,31 @@ sys.setrecursionlimit(1000000)
 class MPanService(BaseService):
 
     def fetch_root_item_by_user(self, user_id):
+        pan_acc_map = {}
+        if MASTER_ACCOUNT_ID == user_id:
+            _pan_acc_list = DataDao.pan_account_list(user_id, 100)
+            pa: PanAccounts = None
+            for pa in _pan_acc_list:
+                pan_acc_map[pa.id] = pa
         root_item_ms = DataDao.get_root_item_by_user_id(user_id)
         params = []
         for item in root_item_ms:
             _item_path = item.path
             pan = item.pan
+            if pan.id in pan_acc_map:
+                pan_acc_map.pop(pan.id)
             params.append({"id": obfuscate_id(item.id), "text": pan.name, "data": {
                 "path": _item_path, "_id": obfuscate_id(item.id), "server_ctime": item.server_ctime, "isdir": 1,
                 "source": 'local', "fn": "", "alias": "", "pos": 0
             }, "children": True, "icon": "folder"})
+        if pan_acc_map:
+            for pan_id in pan_acc_map:
+                _pan = pan_acc_map[pan_id]
+                _, root_item = DataDao.new_root_item(user_id, pan_id)
+                params.append({"id": obfuscate_id(root_item.id), "text": _pan.name, "data": {
+                    "path": root_item.path, "_id": obfuscate_id(root_item.id), "server_ctime": root_item.server_ctime, "isdir": 1,
+                    "source": 'local', "fn": "", "alias": "", "pos": 0
+                }, "children": True, "icon": "folder"})
         return params
 
     def parse_price(self, format_size, times):

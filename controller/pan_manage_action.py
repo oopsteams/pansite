@@ -11,6 +11,7 @@ from controller.mpan_service import mpan_service
 from controller.sync_service import sync_pan_service
 from controller.service import pan_service
 from dao.models import DataItem
+from cfg import MASTER_ACCOUNT_ID
 from utils.constant import USER_TYPE
 
 

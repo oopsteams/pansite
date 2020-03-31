@@ -5,7 +5,7 @@ Created by susy at 2019/10/17
 
 from dao.models import db, Accounts, DataItem, DataItemExt, PanAccounts, ShareLogs, TransferLogs, AccountExt, UserRootCfg, \
     query_wrap_db
-from utils import utils_es, get_now_datetime
+from utils import utils_es, get_now_datetime, log as logger
 from dao.es_dao import es_dao_local
 from typing import Callable, Tuple
 from peewee import fn, ModelSelect
@@ -73,7 +73,7 @@ class DataDao(object):
             _pan_account_list = PanAccounts.select().where(PanAccounts.user_id == account_id).order_by(PanAccounts.pin.desc()).order_by(PanAccounts.use_count).offset(0).limit(cnt)
         else:
             _pan_account_list = PanAccounts.select().order_by(PanAccounts.pin.desc()).order_by(PanAccounts.use_count).offset(0).limit(cnt)
-        print("pan_account_list:", _pan_account_list)
+        logger.info("pan_account_list:", _pan_account_list)
         # for acc in _pan_account_list:
         #     if transfer_to_dict:
         #         pan_acc_list.append(PanAccounts.to_dict(acc))
@@ -557,4 +557,4 @@ class DataDao(object):
                              )
         with db:
             data_item.save(force_insert=True)
-            return data_item.id
+            return data_item.id, data_item

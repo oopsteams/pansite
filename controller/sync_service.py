@@ -323,7 +323,8 @@ class SyncPanService(BaseService):
         return None
 
     def new_root_item(self, user_id, pan_id):
-        return DataDao.new_root_item(user_id, pan_id)
+        root_item_id, root_item = DataDao.new_root_item(user_id, pan_id)
+        return root_item_id
 
 
 sync_pan_service = SyncPanService()
