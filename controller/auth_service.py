@@ -310,17 +310,22 @@ class AuthService(BaseService):
         refresh_token = params.get('refresh_token')
         expires_at = params.get('expires_at')
 
+        account_ext_ctx = params.get('accext', {})
+
         client_id = PAN_SERVICE['client_id']
         client_secret = PAN_SERVICE['client_secret']
+        account_ext_ctx['account_id'] = account.id
+        account_ext_ctx['username'] = account.name
+        acc_ext: AccountExt = DataDao.new_accounts_ext(**account_ext_ctx)
         pan_acc_id = DataDao.new_pan_account(account.id, account.name, client_id, client_secret,
-                                             access_token, refresh_token, expires_at, get_now_datetime(), pin=1)
+                                             access_token, refresh_token, expires_at, get_now_datetime(), pin=1, bd_uid=acc_ext.user_id)
         auth_user_dict['_p'] = obfuscate_id(pan_acc_id)
         # print("auth_user_dict:", auth_user_dict)
         tk = make_account_token(auth_user_dict)
         # print('make_account_token:', tk)
         return tk, auth_user_dict
 
-    def _new_user(self, name, password, nickname, access_token, refresh_token, expires_at):
+    def _new_user(self, name, password, nickname, access_token, refresh_token, expires_at, context):
         mobile_no = ''
         origin_name = name
         exists_user = AuthDao.check_user_only_by_name(name)
@@ -341,7 +346,8 @@ class AuthService(BaseService):
                                                         self._default_new_user_build_user_payload(account, ctx), {
                                                             "access_token": access_token,
                                                             "refresh_token": refresh_token,
-                                                            "expires_at": expires_at
+                                                            "expires_at": expires_at,
+                                                            "accext": context
                                                         })
 
         return user_token, user_ext_dict
@@ -377,11 +383,25 @@ class AuthService(BaseService):
             # new user
             # print("not find acc_ext userid:", userid)
             user_token, user_ext_dict = self._new_user(acc_name, '654321', username, access_token,
-                                                                   refresh_token, expires_at)
-            acc_id = user_ext_dict['_id']
-            DataDao.new_accounts_ext(userid, username, realname, portrait, userdetail, birthday, marriage, sex,
-                                     blood, figure, constellation, education, trade, job, is_realname,
-                                     account_id=acc_id)
+                                                                   refresh_token, expires_at, dict(realname=realname,
+                                                                                                   portrait=portrait,
+                                                                                                   userdetail=userdetail,
+                                                                                                   birthday=birthday,
+                                                                                                   marriage=marriage,
+                                                                                                   sex=sex,
+                                                                                                   blood=blood,
+                                                                                                   figure=figure,
+                                                                                                   constellation=constellation,
+                                                                                                   education=education,
+                                                                                                   trade=trade,
+                                                                                                   job=job,
+                                                                                                   is_realname=is_realname,
+                                                                                                   userid=userid
+                                                                                                   ))
+            # acc_id = user_ext_dict['_id']
+            # DataDao.new_accounts_ext(userid, username, realname, portrait, userdetail, birthday, marriage, sex,
+            #                          blood, figure, constellation, education, trade, job, is_realname,
+            #                          account_id=acc_id)
             login_updated_at = user_ext_dict['login_updated_at']
             lud = arrow.get(login_updated_at).replace(tzinfo=self.default_tz)
             result['token'] = user_token
@@ -396,7 +416,10 @@ class AuthService(BaseService):
             acc_id = acc_ext.account_id
             account: Accounts = DataDao.account_by_id(acc_id)
             DataDao.update_account_ext_by_user_id(userid, dict(username=username, portrait=portrait, account_id=acc_id))
-            pan_acc: PanAccounts = DataDao.pan_account_by_name(acc_id, acc_name)
+
+            pan_acc: PanAccounts = DataDao.pan_account_by_bd_uid(acc_id, acc_ext.user_id)
+            if not pan_acc:
+                pan_acc = DataDao.pan_account_by_name(acc_id, acc_name)
             if pan_acc:
                 if pan_acc.pin != 1:
                     n = DataDao.query_pan_acc_count_by_acc_id(acc_id)
@@ -409,7 +432,8 @@ class AuthService(BaseService):
                 client_id = PAN_SERVICE['client_id']
                 client_secret = PAN_SERVICE['client_secret']
                 pan_acc_id = DataDao.new_pan_account(acc_id, acc_name, client_id, client_secret,
-                                                     access_token, refresh_token, expires_at, get_now_datetime(), pin=1)
+                                                     access_token, refresh_token, expires_at, get_now_datetime(), pin=1,
+                                                     bd_uid=acc_ext.user_id)
 
                 pan_acc = self.get_pan_account(pan_acc_id, acc_id)
 
@@ -435,7 +459,7 @@ class AuthService(BaseService):
             job = jsonrs.get('job', '')
             is_realname = jsonrs.get('is_realname', '')
             if not DataDao.check_account_ext_exist(userid):
-                DataDao.new_accounts_ext(userid, username, realname, portrait, userdetail, birthday, marriage, sex,
+                return DataDao.new_accounts_ext(userid, username, realname, portrait, userdetail, birthday, marriage, sex,
                                          blood, figure, constellation, education, trade, job, is_realname,
                                          account_id=account_id)
             else:
@@ -446,6 +470,7 @@ class AuthService(BaseService):
                                                                    constellation=constellation, education=education,
                                                                    trade=trade, job=job, is_realname=is_realname,
                                                                    account_id=account_id))
+        return None
 
     def fresh_token(self, pan_id):
         def cb(pan_accounts):

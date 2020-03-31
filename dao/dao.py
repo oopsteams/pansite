@@ -90,6 +90,11 @@ class DataDao(object):
 
     @classmethod
     @query_wrap_db
+    def pan_account_by_bd_uid(cls, account_id, bd_uid) -> PanAccounts:
+        return PanAccounts.select().where(PanAccounts.user_id == account_id, PanAccounts.bd_uid == bd_uid).first()
+
+    @classmethod
+    @query_wrap_db
     def account_ext_by_acc_id(cls, account_id) -> AccountExt:
         return AccountExt.select().where(AccountExt.account_id == account_id).first()
 
