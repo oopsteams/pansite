@@ -96,7 +96,7 @@ class CommunityDao(object):
         task: LoopAdTask = LoopAdTask.select().where(LoopAdTask.started_at <= get_now_datetime(), (LoopAdTask.ended_at.is_null()) | (LoopAdTask.ended_at > get_now_datetime()), LoopAdTask.pin == 0).first()
         if task:
             rs = LoopAdTask.to_dict(task)
-            srcs = AdSource.select().where(AdSource.task_id == task.id).order_by(AdSource.idx)
+            srcs = AdSource.select().where(AdSource.task_id == task.id, AdSource.pin == 0).order_by(AdSource.idx)
             if srcs:
                 rs['sources'] = []
                 for s in srcs:
