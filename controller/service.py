@@ -10,7 +10,7 @@ from dao.models import Accounts, PanAccounts, ShareLogs, DataItem, TransferLogs,
 from utils import singleton, log, make_token, obfuscate_id, get_now_datetime, random_password, get_now_ts, restapi, \
     guess_file_type, constant, split_filename
 from utils.utils_es import SearchParams, build_query_item_es_body
-from utils import get_payload_from_token, is_video_media, is_image_media, scale_size, log as logger
+from utils import get_payload_from_token, is_video_media, is_image_media, is_plain_media, scale_size, log as logger
 from dao.es_dao import es_dao_share, es_dao_local
 import arrow
 from cfg import PAN_SERVICE, get_bd_auth_uri, PAN_ROOT_DIR
@@ -37,6 +37,8 @@ class PanService(BaseService):
 
     def check_data_item_media_type(self, category, filename):
         media_type = ""
+        if is_plain_media(filename):
+            media_type = "plain"
         if category == 1 and is_video_media(filename):
             media_type = "video"
         if is_image_media(filename):
@@ -373,7 +375,7 @@ class PanService(BaseService):
         es_result = es_dao_share().es_search_exec(es_body)
         hits_rs = es_result["hits"]
         total = hits_rs["total"]
-        print("files es total:", total)
+        logger.info("files es total:{}".format(total))
         for _s in hits_rs["hits"]:
             params.append({"id": _s["_source"]["fs_id"], "text": _s["_source"]["filename"],
                            "data": {"path": _s["_source"]["path"],
@@ -397,18 +399,18 @@ class PanService(BaseService):
                                                                       "category": item.category, "source": "local",
                                                                       "isdir": item.isdir},
                            "children": True, "icon": "folder"})
-        print("dirs total:", len(params))
+        # print("dirs total:", len(params))
 
         sp: SearchParams = SearchParams.build_params(0, 1000)
         # sp.add_must(is_match=False, field="path", value=parent_path)
         sp.add_must(is_match=False, field="parent", value=parent_item_id)
         sp.add_must(is_match=False, field="isdir", value=0)
         es_body = build_query_item_es_body(sp)
-        print("es_body:", es_body)
+        # logger.info("es_body:{}".format(es_body))
         es_result = es_dao_local().es_search_exec(es_body)
         hits_rs = es_result["hits"]
         total = hits_rs["total"]
-        print("files es total:", total)
+        logger.info("files es total:{}".format(total))
         for _s in hits_rs["hits"]:
             icon_val = "file"
             fn_name = _s["_source"]["filename"]
@@ -450,7 +452,7 @@ class PanService(BaseService):
             hours=+DLINK_TIMEOUT).datetime
         if share_log:
             jsonrs = restapi.get_share_info(share_log.share_id, share_log.special_short_url(), share_log.randsk)
-            print('"shareid" in jsonrs and "uk" in jsonrs ? ', "shareid" in jsonrs and "uk" in jsonrs)
+            # print('"shareid" in jsonrs and "uk" in jsonrs ? ', "shareid" in jsonrs and "uk" in jsonrs)
 
             if jsonrs and "shareid" in jsonrs and "uk" in jsonrs:
                 if data_item.dlink and not share_log.dlink:
@@ -464,7 +466,7 @@ class PanService(BaseService):
                 return dict_obj, share_log, data_item
             else:
                 DataDao.del_share_log_by_pk(share_log.id)
-        print("need_create_share_file:", need_create_share_file, ",fs_id:", fs_id)
+        logger.info("need_create_share_file:{}, fs_id:{}".format(need_create_share_file, fs_id))
         if need_create_share_file:
             pwd = random_password(4)
             period = 1
@@ -473,10 +475,10 @@ class PanService(BaseService):
             if data_item.dlink:
                 dlink = "%s&access_token=%s" % (data_item.dlink, pan_acc.access_token)
             share_log_id, share_log = DataDao.new_share_log(fs_id, data_item.filename, data_item.md5_val, dlink, pwd, period, data_item.account_id, pan_acc.id)
-            print("share_log_id:", share_log_id, ", fs_id:", fs_id, ",pan_acc:", pan_acc.id)
+            logger.info("share_log_id:{}, fs_id:{}, pan_acc_id:{}".format(share_log_id, fs_id, pan_acc.id))
             if share_log_id:
                 jsonrs = restapi.share_folder(pan_acc.access_token, fs_id, pwd, period)
-                print("share_folder jsonrs:", jsonrs, ",fs_id:", fs_id)
+                logger.info("share_folder jsonrs:{}, fs_id:{}".format(jsonrs, fs_id))
                 if restapi.is_black_list_error(jsonrs):
                     share_log.is_black = 1
                     err_msg = jsonrs.get('err_msg', '')
@@ -505,7 +507,7 @@ class PanService(BaseService):
                         params = {"share_id": share_log.share_id, "link": share_log.link, "shorturl": share_log.shorturl, "pin": share_log.pin}
                         DataDao.update_share_log_by_pk(share_log_id, params)
                         jsonrs = restapi.get_share_randsk(share_log.share_id, share_log.password, share_log.common_short_url())
-                        print("get_share_randsk jsonrs:", jsonrs, ",fs_id:", fs_id)
+                        logger.info("get_share_randsk jsonrs:{}, fs_id:{}".format(jsonrs, fs_id))
                         if "randsk" in jsonrs:
                             share_log.randsk = jsonrs["randsk"]
                             jsonrs = restapi.get_share_info(share_log.share_id, share_log.special_short_url(), share_log.randsk)
@@ -521,26 +523,26 @@ class PanService(BaseService):
         return {}, None, data_item
 
     def recheck_transfer_d_link(self, transfer_log_id):
-        print("recheck_transfer_d_link transfer_log_id:", transfer_log_id)
+        # print("recheck_transfer_d_link transfer_log_id:", transfer_log_id)
         tl: TransferLogs = DataDao.query_transfer_logs_by_pk_id(transfer_log_id)
 
         if tl:
-            print("expired_at:", arrow.get(tl.expired_at).replace(tzinfo=self.default_tz), ",now:", arrow.now())
+            # print("expired_at:", arrow.get(tl.expired_at).replace(tzinfo=self.default_tz), ",now:", arrow.now())
             if arrow.get(tl.expired_at).replace(tzinfo=self.default_tz) < arrow.now():
                 __pan_acc = self.get_pan_account(tl.pan_account_id, tl.account_id)
                 sync_dlink, thumbs = restapi.get_dlink_by_sync_file(__pan_acc.access_token, int(tl.fs_id))
-                print("sync_dlink:", sync_dlink)
+                # print("sync_dlink:", sync_dlink)
                 if sync_dlink:
                     # tl.dlink = sync_dlink
                     tl.dlink = "%s&access_token=%s" % (sync_dlink, __pan_acc.access_token)
                     tl.expired_at = arrow.now(self.default_tz).shift(hours=+DLINK_TIMEOUT).datetime
-                    print("new expired_at:", tl.expired_at)
+                    # print("new expired_at:", tl.expired_at)
                     DataDao.update_transfer_log_by_pk(tl.id, {"dlink": tl.dlink, "expired_at": tl.expired_at})
                     return TransferLogs.to_dict(tl)
             else:
                 return TransferLogs.to_dict(tl)
         else:
-            print("[transfer_log:%s] not exists!" % transfer_log_id)
+            logger.info("[transfer_log:%s] not exists!" % transfer_log_id)
         return None
 
     def recheck_shared_d_link(self, shared_log_id):
@@ -548,7 +550,7 @@ class PanService(BaseService):
         if share_log:
             data_item: DataItem = DataDao.get_data_item_by_fs_id(share_log.fs_id)
             need_sync = False
-            print("query_file dlink:", data_item.dlink)
+            # print("query_file dlink:", data_item.dlink)
             if not data_item.dlink_updated_at or not data_item.dlink:
                 need_sync = True
             elif data_item.dlink_updated_at:
@@ -624,12 +626,12 @@ class PanService(BaseService):
                     if arrow.get(tl.expired_at).replace(tzinfo=self.default_tz) < arrow.now():
                         __pan_acc = self.get_pan_account(tl.pan_account_id, tl.account_id)
                         sync_dlink, thumbs = restapi.get_dlink_by_sync_file(__pan_acc.access_token, int(tl.fs_id))
-                        print("sync_dlink:", sync_dlink)
+                        # print("sync_dlink:", sync_dlink)
                         if sync_dlink:
                             # tl.dlink = sync_dlink
                             tl.dlink = "%s&access_token=%s" % (sync_dlink, __pan_acc.access_token)
                             tl.expired_at = arrow.now(self.default_tz).shift(hours=+DLINK_TIMEOUT).datetime
-                            print("new expired_at:", tl.expired_at)
+                            # print("new expired_at:", tl.expired_at)
                             DataDao.update_transfer_log_by_pk(tl.id, {"dlink": tl.dlink, "expired_at": tl.expired_at})
                     # tl.dlink = restapi.query_file_head(tl.dlink)
                     result.append(TransferLogs.to_dict(tl))

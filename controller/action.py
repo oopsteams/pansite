@@ -62,13 +62,13 @@ class BaseHandler(RequestHandler):
                 # print('payload:', self.user_payload, ctm, ctm - tm, LOGIN_TOKEN_TIMEOUT)
                 if ctm - tm > LOGIN_TOKEN_TIMEOUT:
                     self.set_cookie('pan_site_force', str(1))
-                    print('token expired!!!')
+                    logger.info('token expired!!!')
                     return False
                 setattr(self.request, 'user_id', self.user_payload['user_id'])
                 return True
 
         if self.is_web:
-            print('set is_web is 1, path:', self.request.path)
+            logger.info('set is_web is 1, path:{}'.format(self.request.path))
             self.set_cookie('pan_site_is_web', str(1))
             self.set_cookie('pan_site_ref', self.request.path)
         return False
@@ -135,7 +135,7 @@ class PanHandler(BaseHandler):
     @authenticated
     def get(self):
         path = self.request.path
-        print(path)
+        # print(path)
         if path.endswith("/list"):
             parent = self.get_argument("parent", default='55')
             item_list = DataDao.query_data_item_by_parent(int(parent), True)
@@ -150,7 +150,7 @@ class PanHandler(BaseHandler):
             # parent_path = self.get_argument("path")
             # if not parent_path.endswith("/"):
             #     parent_path = "%s/" % parent_path
-            print("fload node_id:", node_id, ",source:", source)
+            logger.info("fload node_id:{},source:{}".format(node_id, source))
             # parent_id = 55
             params = []
             if not '#' == node_id:
