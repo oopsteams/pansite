@@ -178,12 +178,22 @@ def random_password(bit_count=4):
     return "".join(password_list)
 
 
+__DOC_EXT_NAMES = ['.pdf', '.as', '.c', '.htm', '.html', '.xml', '.cpp', '.cs', '.sql', '.xls', '.h', '.php', '.text',
+                   '.txt', '.md', '.log', '.htaccess', '.js', '.css']
 __IMAGE_EXT_NAMES = ['.jpg', '.jpeg', '.png', '.gif', '.bmp']
 __VIDEO_EXT_NAMES = ['.mp4', '.flv', '.ts', '.avi', '.mkv', '.mov']
 __EXT_NAMES = ['.pdf', '.as', '.c', '.iso', '.htm', '.html', '.xml', '.xsl', '.cf', '.cpp', '.cs', '.sql', '.xls',
                'xlsx', '.h', '.crt', '.pem', '.cer', '.php', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.ppt', '.pptx',
                '.rb', '.text', '.txt', '.md', '.log', '.htaccess', '.doc', '.docx', '.zip', '.gz', '.tar', '.rar',
                '.js', '.css', '.fla', '.mp3', '.srt', '.dmg', '.apk', '.swf'] + __VIDEO_EXT_NAMES
+
+
+def is_plain_media(file_name):
+    _file_name = file_name.lower()
+    for suffix in __DOC_EXT_NAMES:
+        if _file_name.endswith(suffix):
+            return True
+    return False
 
 
 def is_video_media(file_name):
