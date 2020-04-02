@@ -29,7 +29,7 @@ class CheckLogin(MiddleWare):
         if not token:
             token = handler.get_argument('tk', None, True)
             handler.is_web = True
-        logger.info("Middle CheckLogin in token:{}".format(token))
+        # logger.info("Middle CheckLogin in token:{}".format(token))
         if "undefined" == token:
             token = None
         if "login" != token and token:
