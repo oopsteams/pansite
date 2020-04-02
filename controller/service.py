@@ -245,7 +245,7 @@ class PanService(BaseService):
     def query_file(self, item_id):
         data_item: DataItem = DataDao.get_data_item_by_id(item_id)
         need_sync = False
-        print("query_file dlink:", data_item.dlink)
+        logger.info("query_file dlink:{}".format(data_item.dlink))
         if not data_item.dlink_updated_at or not data_item.dlink:
             need_sync = True
         elif data_item.dlink_updated_at:
@@ -270,7 +270,10 @@ class PanService(BaseService):
                 data_item.dlink_updated_at = get_now_datetime()
                 data_item_params = {"dlink": data_item.dlink, "dlink_updated_at": data_item.dlink_updated_at}
                 if need_thumbs:
-                    if "url2" in thumbs:
+                    if "url3" in thumbs:
+                        data_item_params["thumb"] = thumbs["url3"]
+                        data_item.thumb = data_item_params["thumb"]
+                    elif "url2" in thumbs:
                         data_item_params["thumb"] = thumbs["url2"]
                         data_item.thumb = data_item_params["thumb"]
                     elif "url1" in thumbs:
