@@ -233,6 +233,7 @@ class ProductService(BaseService):
                 name = client_item.aliasname
             rs['filename'] = name
             rs['fs_id'] = client_item.fs_id
+            rs['source'] = client_item.source_fs_id
         return rs
 
     def check_file_by_key_search(self, key, parent_dir, parent_id, _md5_val, fs_id, user_ref_id, pan_acc: PanAccounts):
