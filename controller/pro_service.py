@@ -276,6 +276,9 @@ class ProductService(BaseService):
         if not top_dir_item:
             return -3, None  # 无法创建顶级目录
         pan_acc: PanAccounts = auth_service.get_pan_account(default_pan_id, user_id)
+        if not pan_acc:
+            logger.error("PanAccount not exists![{}],user_id:{}".format(default_pan_id, user_id))
+            return -3, None
         pan_acc = auth_service.check_pan_token_validation(pan_acc)
         # 目录结构构建
         async_service.update_state(key_prefix, user_id, {"state": 0, "pos": 2})
