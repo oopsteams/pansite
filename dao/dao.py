@@ -36,12 +36,8 @@ class DataDao(object):
 
     @classmethod
     @query_wrap_db
-    def account_by_id(cls, id):
-        try:
-            return Accounts.get(id=id)
-        except Exception:
-            pass
-        return None
+    def account_by_id(cls, pk_id):
+        return Accounts.select().where(Accounts.id == pk_id).first()
 
     @classmethod
     @query_wrap_db
@@ -58,13 +54,8 @@ class DataDao(object):
 
     @classmethod
     @query_wrap_db
-    def pan_account_by_id(cls, id):
-        try:
-            return PanAccounts.get(id=id)
-        except Exception:
-            traceback.print_exc()
-            pass
-        return None
+    def pan_account_by_id(cls, pk_id):
+        return PanAccounts.select().where(PanAccounts.id == pk_id).first()
 
     @classmethod
     @query_wrap_db
@@ -124,11 +115,7 @@ class DataDao(object):
     @classmethod
     @query_wrap_db
     def get_data_item_by_fs_id(cls, fs_id):
-        try:
-            return DataItem.get(fs_id=fs_id)
-        except Exception:
-            pass
-        return None
+        return DataItem.select().where(DataItem.fs_id == fs_id).first()
 
     @classmethod
     def query_data_item_by_fs_id(cls, fs_id):
