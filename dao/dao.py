@@ -307,6 +307,7 @@ class DataDao(object):
             # print("update data item:", old_data_item)
             es_up_params = es_dao_local().filter_update_params(_params)
             if es_up_params:
+                logger.info("will update es item es_up_params:{}".format(es_up_params))
                 es_dao_local().update_fields(pk_id, **es_up_params)
 
     @classmethod
