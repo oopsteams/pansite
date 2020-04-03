@@ -42,8 +42,8 @@ class AsyncService(BaseService):
             if action:
                 try:
                     rs = action(key, rs_key)
-                except Exception as e:
-                    logger.error("exe action failed.", e)
+                except Exception:
+                    logger.error("exe action failed.", exc_info=True)
                     pass
             self.__thread = None
             cache_service.rm(key)

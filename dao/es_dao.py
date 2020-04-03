@@ -73,7 +73,7 @@ class EsConnections(object):
                 try:
                     self.get_es().indices.create(index=index_name, body=index_body)
                 except Exception as e:
-                    logger.error("put mapping err!", e, exc_info=True)
+                    logger.error("put mapping err!", exc_info=True)
             self.index_doc_cache[key] = EsDao(self.get_es(), index_name, doc_type, props)
 
     def get_es(self):

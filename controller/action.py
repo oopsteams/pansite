@@ -83,7 +83,7 @@ class BaseHandler(RequestHandler):
 
     def send_error(self, status_code=500, **kwargs) -> None:
         # self.write_error(404, **kwargs)
-        logger.error("service err", **kwargs)
+        logger.error("service err", exc_info=True)
         params = {"exc_info": sys.exc_info(), "state": -1, "err": "service error!"}
         self.to_write_json(params)
 
@@ -95,7 +95,7 @@ class BaseHandler(RequestHandler):
         if kw:
             error_trace_list = traceback.format_exception(*kw.get("exc_info"))
         if stat == 500:
-            logger.error("server err:", error_trace_list)
+            logger.error("server err:{}".format(error_trace_list))
         elif stat == 403:
             logger.error("request forbidden!")
         else:

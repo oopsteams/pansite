@@ -204,13 +204,14 @@ class ProductService(BaseService):
                 "source_fs_id": source_fs_id,
                 "panacc": pan_acc_id
             }
-            thumbs = finfo["thumbs"]
-            if "url2" in thumbs:
-                client_item_params["thumb"] = thumbs["url2"]
-            elif "url1" in thumbs:
-                client_item_params["thumb"] = thumbs["url1"]
-            elif "icon" in thumbs:
-                client_item_params["thumb"] = thumbs["icon"]
+            thumbs = finfo.get("thumbs", None)
+            if thumbs:
+                if "url2" in thumbs:
+                    client_item_params["thumb"] = thumbs["url2"]
+                elif "url1" in thumbs:
+                    client_item_params["thumb"] = thumbs["url1"]
+                elif "icon" in thumbs:
+                    client_item_params["thumb"] = thumbs["icon"]
         return client_item_params
 
     def parse_query_key(self, file_path):

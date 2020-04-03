@@ -505,7 +505,7 @@ class AuthService(BaseService):
                         log.info("sync pan user[{},{}] info to db!".format(access_token, pan.user_id))
                         self.sync_pan_user_info(access_token, pan.user_id)
                     except Exception as e:
-                        log.error("sync_pan_user_info err:", e)
+                        log.error("sync_pan_user_info err:", exc_info=True)
                     need_sleep = True
             return pan
 
