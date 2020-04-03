@@ -239,6 +239,7 @@ class ProductService(BaseService):
     def check_file_by_key_search(self, key, parent_dir, parent_id, _md5_val, fs_id, user_ref_id, pan_acc: PanAccounts):
         jsonrs = restapi.file_search(pan_acc.access_token, key=key, parent_dir=parent_dir)
         for finfo in jsonrs:
+            logger.info("check_file_by_key_search finfo:{}, target md5:{}".format(finfo, _md5_val))
             if "fs_id" in finfo:
                 md5_val = finfo["md5"]
                 if md5_val == _md5_val:
