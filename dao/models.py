@@ -855,7 +855,7 @@ class ShareApp(Model):
 
 class AppCfg(BaseModel):
     id = AutoField()
-    key = CharField(null=False, max_length=20, unique=True)
+    key = CharField(null=False, max_length=20, index=True)
     name = CharField(null=True, max_length=64)
     val = CharField(null=True, max_length=2014)
     type = CharField(null=True, max_length=10)
