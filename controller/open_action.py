@@ -6,6 +6,7 @@ from controller.action import BaseHandler
 from dao.community_dao import CommunityDao
 from controller.open_service import open_service
 from cfg import DEFAULT_CONTACT_QR_URI, bd_auth_path, PAN_SERVICE
+from utils import log as logger
 
 
 class OpenHandler(BaseHandler):
@@ -49,7 +50,8 @@ class OpenHandler(BaseHandler):
             self.to_write_json(rs)
         elif path.endswith("/cfg"):
             platform = self.get_argument("platform", "win32")
-            if platform.find("darwin") < 0:
+            logger.info("cfg platform:{}".format(platform))
+            if platform.lower().find("darwin") < 0:
                 platform = "win32"
             self.release_db = False
             rs = open_service.checkout_app_cfg(platform)
