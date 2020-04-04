@@ -244,11 +244,11 @@ class OpenService(BaseService):
 
     def sync_tags(self):
         tag_list = CommunityDao.default_tags()
-        cache_service.replace('sys_cfg', tag_list)
+        cache_service.replace('sys_tags', tag_list)
         return tag_list
 
     def load_tags(self):
-        tag_list = cache_service.get('sys_cfg')
+        tag_list = cache_service.get('sys_tags')
         if not tag_list:
             tag_list = self.sync_tags()
         return tag_list
