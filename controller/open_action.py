@@ -49,6 +49,8 @@ class OpenHandler(BaseHandler):
             self.to_write_json(rs)
         elif path.endswith("/cfg"):
             platform = self.get_argument("platform", "win32")
+            if platform.find("darwin") < 0:
+                platform = "win32"
             self.release_db = False
             rs = open_service.checkout_app_cfg(platform)
             self.to_write_json(rs)
