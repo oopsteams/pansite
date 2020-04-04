@@ -253,13 +253,20 @@ class OpenService(BaseService):
             tag_list = self.sync_tags()
         return tag_list
 
-    def checkout_app_cfg(self):
+    def checkout_app_cfg(self, platform):
         rs_key = "sys_cfg"
         val = cache_service.get(rs_key)
         # print('val from cache:', val)
-        if not val:
-            val = []
-        return val
+        rs = []
+        if val:
+            for cfg in val:
+                _platform = cfg.get('platform', None)
+                if _platform:
+                    if platform.find(_platform) >= 0:
+                        rs.append(cfg)
+                else:
+                    rs.append(cfg)
+        return rs
 
 
 open_service = OpenService()
