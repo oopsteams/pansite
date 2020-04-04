@@ -859,11 +859,12 @@ class AppCfg(BaseModel):
     name = CharField(null=True, max_length=64)
     val = CharField(null=True, max_length=2014)
     type = CharField(null=True, max_length=10)
+    platform = CharField(null=True, max_length=32)
     pin = IntegerField(null=False, default=0)
 
     @classmethod
     def field_names(cls):
-        return ["key", "name", "val", "type"]
+        return ["key", "name", "val", "type", "platform"]
 
     @classmethod
     def to_dict(cls, instance, excludes=[]):

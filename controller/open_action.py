@@ -48,8 +48,9 @@ class OpenHandler(BaseHandler):
             rs = open_service.fetch_shared(fs_id)
             self.to_write_json(rs)
         elif path.endswith("/cfg"):
+            platform = self.get_argument("platform", "win32")
             self.release_db = False
-            rs = open_service.checkout_app_cfg()
+            rs = open_service.checkout_app_cfg(platform)
             self.to_write_json(rs)
         elif path.endswith("/update_cfg"):
             rs = open_service.sync_cfg()
