@@ -81,9 +81,9 @@ class SyncPanService(BaseService):
                         di: DataItem = DataDao.get_data_item_by_fs_id(item_map['fs_id'])
 
                         if di:
+                            item_map.pop('pin')
                             DataDao.update_data_item(di.id, item_map)
                             data_item: DataItem = DataDao.get_data_item_by_id(di.id)
-                            DataDao.sync_data_item_to_es(data_item)
                             # print("will update data item:", item_map)
                         else:
                             DataDao.save_data_item(fi['isdir'], item_map)
