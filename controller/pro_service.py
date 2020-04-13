@@ -595,5 +595,41 @@ class ProductService(BaseService):
 
         return result
 
+    def __rm_data_item(self, user_id, user_ref_id, default_pan_id, item_id):
+        if not default_pan_id:
+            pan_acc = auth_service.default_pan_account(user_id)
+            if pan_acc:
+                default_pan_id = pan_acc.id
+        if not default_pan_id:
+            return {"state": -2, "err": LOGIC_ERR_TXT['need_pann_acc']}
+
+        _client_data_item: ClientDataItem = ClientDataDao.get_data_item_by_id(item_id, user_ref_id)
+        if _client_data_item:
+            pan_acc: PanAccounts = auth_service.get_pan_account(default_pan_id, user_id)
+            if not pan_acc:
+                logger.error("PanAccount not exists![{}],user_id:{}".format(default_pan_id, user_id))
+                return {"state": -2, "err": LOGIC_ERR_TXT['need_pann_acc']}
+            jsonrs = restapi.del_file(pan_acc.access_token, _client_data_item.path)
+            if "errno" in jsonrs and jsonrs["errno"]:
+                errmsg = jsonrs.get("errmsg", "")
+                if not errmsg:
+                    errmsg = "clear failed!"
+                return {"state": -1, "errmsg": errmsg}
+            else:
+                ClientDataDao.del_data_item_by_id(_client_data_item.id)
+                return {"state": 0}
+        else:
+            return {"state": -3, "err": LOGIC_ERR_TXT['not_exists']}
+
+    def rm(self, user_id, user_ref_id, default_pan_id, item_id, source):
+        rs = {"state": 0}
+        if "self" == source:
+            rs = self.__rm_data_item( user_id, user_ref_id, default_pan_id, item_id)
+        else:
+            rs["state"] = -1
+            rs["errmsg"] = "parameters error!"
+
+        return rs
+
 
 product_service = ProductService()

@@ -57,6 +57,12 @@ class ClientDataDao(object):
         with db:
             ClientDataItem.update(**_params).where(ClientDataItem.id == pk_id).execute()
 
+    # DEL
+    @classmethod
+    def del_data_item_by_id(cls, pk_id):
+        with db:
+            ClientDataItem.delete().where(ClientDataItem.id == pk_id).execute()
+
     # new
     @classmethod
     def new_root_item(cls, ref_id, pan_id):
