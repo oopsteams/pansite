@@ -89,6 +89,13 @@ class ProductHandler(BaseHandler):
             itemid = int(decrypt_id(item_fuzzy_id))
             result = product_service.check_transfer_file(self.user_id, self.ref_id, self.default_pan_id, itemid, pids, tag)
             self.to_write_json(result)
+        elif path.endswith("/rm"):
+            item_fuzzy_id = self.get_argument("id", None)
+            item_id = int(decrypt_id(item_fuzzy_id))
+            # pan_id = int(self.get_argument("panid", "0"))
+            source = self.get_argument("source", "")
+            rs = product_service.rm(self.user_id, self.ref_id, self.default_pan_id, item_id, source)
+            self.to_write_json(rs)
         elif path.endswith("dlink"):
             item_fuzzy_id = self.get_argument("id")
             item_id = int(decrypt_id(item_fuzzy_id))
