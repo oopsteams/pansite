@@ -36,7 +36,7 @@ class DataDao(object):
 
     @classmethod
     @query_wrap_db
-    def account_by_id(cls, pk_id):
+    def account_by_id(cls, pk_id) -> Accounts:
         return Accounts.select().where(Accounts.id == pk_id).first()
 
     @classmethod

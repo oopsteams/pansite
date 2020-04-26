@@ -247,6 +247,9 @@ class OpenService(BaseService):
         cache_service.replace('sys_tags', tag_list)
         return tag_list
 
+    def guest_user(self):
+        return CommunityDao.default_guest_account()
+
     def load_tags(self):
         tag_list = cache_service.get('sys_tags')
         if not tag_list:

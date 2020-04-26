@@ -56,6 +56,16 @@ except Exception:
     db = RetryMySQLDatabase.db_instance()
 
 
+def new_guest_account(org_id, role_id, type, name="guest", mobile_no="0000000000", password="654321"):
+    acc: Accounts = Accounts(name=name, mobile_no=mobile_no, nickname=name, password=password)
+    acc.save(force_insert=True)
+    acc_id = acc.id
+    ur: UReference = UReference()
+    ur.save(force_insert=True)
+    au: AuthUser = AuthUser(acc_id=acc_id, org_id=org_id, role_id=role_id, ref_id=ur.id, type=type)
+    au.save(force_insert=True)
+
+
 def init_db():
     db.create_tables([Accounts, DataItem, WorkerLoadMap, ShareLogs, Tags, UserTags, PanAccounts, TransferLogs,
                       AccountExt, CommunityDataItem, UserRootCfg, ShareFr, LoopAdTask, AdSource, AuthUser, UReference,
@@ -100,6 +110,11 @@ def init_db():
             UReference.insert_many({"id": 1}).execute()
         if not AuthUser.select().where(AuthUser.acc_id == 1).exists():
             AuthUser.insert_many({"acc_id": 1, "org_id": 1, "role_id": 1, "type": 4}).execute()
+        if not Accounts.select().where(Accounts.name == 'guest').exists():
+            org_id = 5
+            role_id = 1
+            single = 1
+            new_guest_account(org_id, role_id, single)
 
     print("Init database ok")
 
@@ -151,6 +166,34 @@ class BaseModel(Model):
 
     created_at = DateTimeField(index=True, constraints=db_create_field_sql())
     updated_at = DateTimeField(default=datetime.datetime.now, constraints=db_update_field_sql())
+
+
+class AccountWxExt(BaseModel):
+    id = AutoField()
+    openid = CharField(null=False, max_length=48, unique=True)
+    nickname = CharField(null=True, max_length=64)
+    session_key = CharField(null=True, max_length=64)
+    avatar = CharField(null=True, max_length=1024)  # 用户的头像
+    birthday = CharField(null=True, max_length=64)  # 生日
+    marriage = CharField(null=True, max_length=16)  # 婚姻状况
+    gender = SmallIntegerField(null=True, default=0)  # 性别 0：未知、1：男、2：女
+    language = CharField(null=True, max_length=16)  # 语言
+    country = CharField(null=True, max_length=16)  # 国家
+    province = CharField(null=True, max_length=16)  # 省
+    city = CharField(null=True, max_length=16)  # 城市
+    job = CharField(null=True, max_length=16)  # 职位
+    unionid = CharField(null=True, max_length=128)  # wx跨服务唯一标识
+    is_realname = IntegerField(null=False, default=0)  # 是否实名制
+    account_id = IntegerField(null=False, default=0)
+
+    @classmethod
+    def field_names(cls):
+        return BASE_FIELDS + ["id", "openid", "nickname", "session_key", "avatar", "birthday", "marriage", "gender",
+                              "language", "country", "province", "city", "job", "is_realname", "account_id", "unionid"]
+
+    @classmethod
+    def to_dict(cls, instance):
+        return object_to_dict(instance, cls.field_names())
 
 
 class AccountExt(BaseModel):

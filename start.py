@@ -22,10 +22,15 @@ scheduler = TornadoScheduler()
 scheduler.start()
 
 
+guest_user = None
+context = dict(guest=None)
+
+
 def update_sys_cfg(release=True):
     try:
         open_service.sync_cfg()
         open_service.sync_tags()
+        context['guest'] = open_service.guest_user()
         if release:
             try_release_conn()
     except Exception:
@@ -77,20 +82,25 @@ if __name__ == "__main__":
     middle_list = get_middleware()
     application = Application([
         # (r"/source/list", PanHandler, {'basepath': base_dir}),
-        (r"/source/[^/]+", PanHandler, dict(middleware=middle_list)),
-        (r"/product/[^/]+", ProductHandler, dict(middleware=middle_list)),
-        (r"/man/[^/]+", ManageHandler, dict(middleware=middle_list)),
-        (r"/open/[^/]+", OpenHandler, dict(middleware=middle_list)),
-        (r"/async/[^/]+", AsyncHandler, dict(middleware=middle_list)),
-        (r"/user/[^/]+", UserHandler, dict(middleware=middle_list)),
-        (r"/login/", MainHandler, dict(middleware=middle_list)),
-        (r"/bdlogin/", MainHandler, dict(middleware=middle_list)),
-        (r"/register/", MainHandler, dict(middleware=middle_list)),
-        (r"/access_code/", MainHandler, dict(middleware=middle_list)),
-        (r"/ready_login/", MainHandler, dict(middleware=middle_list)),
-        (r"/authlogin/", MainHandler, dict(middleware=middle_list)),
-        (r"/fresh_token/", MainHandler, dict(middleware=middle_list)),
-        (r"/save/", MainHandler, dict(middleware=middle_list)),
+        (r"/source/[^/]+", PanHandler, dict(middleware=middle_list, context=context)),
+        (r"/product/[^/]+", ProductHandler, dict(middleware=middle_list, context=context)),
+        (r"/man/[^/]+", ManageHandler, dict(middleware=middle_list, context=context)),
+        (r"/open/[^/]+", OpenHandler, dict(middleware=middle_list, context=context)),
+        (r"/async/[^/]+", AsyncHandler, dict(middleware=middle_list, context=context)),
+        (r"/user/[^/]+", UserHandler, dict(middleware=middle_list, context=context)),
+        (r"/login/", MainHandler, dict(middleware=middle_list, context=context)),
+        (r"/bdlogin/", MainHandler, dict(middleware=middle_list, context=context)),
+        (r"/register/", MainHandler, dict(middleware=middle_list, context=context)),
+        (r"/access_code/", MainHandler, dict(middleware=middle_list, context=context)),
+        (r"/ready_login/", MainHandler, dict(middleware=middle_list, context=context)),
+        (r"/authlogin/", MainHandler, dict(middleware=middle_list, context=context)),
+        (r"/fresh_token/", MainHandler, dict(middleware=middle_list, context=context)),
+        (r"/save/", MainHandler, dict(middleware=middle_list, context=context)),
+
+        (r"/wx/put", WXAppPut, dict(middleware=middle_list, context=context)),
+        (r"/wx/get", WXAppGet, dict(middleware=middle_list, context=context)),
+        # (r"/wx/push", WXAppPush),
+
         (r"/.*\.html", MainHandler, dict(middleware=middle_list)),
         (r"/(.*\.txt)", StaticFileHandler, dict(url=settings['source'])),
         # (r"/(apple-touch-icon\.png)",StaticFileHandler,dict(path=settings['static_path'])),
