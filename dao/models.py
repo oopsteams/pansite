@@ -71,7 +71,7 @@ def init_db():
                       AccountExt, CommunityDataItem, UserRootCfg, ShareFr, LoopAdTask, AdSource, AuthUser, UReference,
                       Fun, Role, RoleExtend, Org, OrgOrg, UserRefExtend, UserRoleExtend, UserOrgExtend, Product, Order,
                       OrderItem, Assets, LocalVisible, CommunityVisible, ShareApp, DataItemExt, ClientDataItem,
-                      AppCfg], safe=True)
+                      AppCfg, AccountWxExt], safe=True)
 
     with db:
         if not Org.select().where(Org.id == 1).exists():
