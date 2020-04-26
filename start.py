@@ -17,6 +17,8 @@ from controller.pro_action import ProductHandler
 from controller.middle_ware import get_middleware
 from controller.async_action import AsyncHandler
 from controller.main_action import MainHandler
+from controller.wx.wxget import WXAppGet
+from controller.wx.wxput import WXAppPut
 from utils import log as logger
 scheduler = TornadoScheduler()
 scheduler.start()
