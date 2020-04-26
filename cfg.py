@@ -5,6 +5,7 @@ Created by susy at 2019/10/17
 import logging
 import os
 import sys
+
 env = os.getenv('env', None)
 if not env and len(sys.argv) > 1:
     env = sys.argv[-1]
@@ -27,9 +28,9 @@ mysql_worker_config = {
 }
 
 service = {
-        # "port": 443,
-        "port": 8080,
-    }
+    # "port": 443,
+    "port": 8080,
+}
 JWT_SECRET_KEY = '\x0f\n\x88}4\xbf\xbb)2\xd9\xdd\x96"\x06t\xea\x8aG\x14S\xe1W\x85\xac\xfd,\x91\\ZmCe'
 JWT_TOKEN_EXPIRATION_DAYS = 7
 # Password generation
@@ -43,6 +44,12 @@ MASTER_ACCOUNT_ID = 1
 
 DEFAULT_CONTACT_QR_URI = '/static/img/contact/contact.jpeg'
 
+WX_API = dict(appid='wx86242b978be4eb84',
+              appsecret='687e701c47b40c027dac1de39af8fcba',
+              token='20170919',
+              aeskey='0wxappchinacloudappcn1wxappchinacloudappcn2',
+              point='https://api.weixin.qq.com'
+              )
 PAN_SERVICE = {
     "protocol": "https",
     "domain": "pan.baidu.com/rest/2.0/xpan",
@@ -87,7 +94,7 @@ def bd_auth_path(redirect_uri='oob', display='pad', skip_login=False):
                    "qrcode=0".format(client_id, redirect_uri, display)
     else:
         pan_auth = "authorize?response_type=code&client_id={}&redirect_uri={}&scope=basic,netdisk&display={}&" \
-               "qrcode=0&force_login={}".format(client_id, redirect_uri, display, force_login)
+                   "qrcode=0&force_login={}".format(client_id, redirect_uri, display, force_login)
     return pan_auth
 
 

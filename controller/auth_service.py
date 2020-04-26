@@ -227,7 +227,13 @@ class AuthService(BaseService):
                                 get_now_datetime(), lambda account: self.build_user_payload(account))
         return True
 
-    def login_check_user(self, acc: Accounts):
+    def __patch_acc_ext(self, acc: Accounts, result, source):
+        if source == "BD":
+            account_ext = DataDao.account_ext_by_acc_id(acc.id)
+            result['username'] = account_ext.username
+            result['portrait'] = account_ext.portrait
+
+    def login_check_user(self, acc: Accounts, need_update_login_time=True, source="BD"):
         need_renew_pan_acc = []
         if acc:
             pan_acc_list = DataDao.pan_account_list(acc.id)
@@ -259,7 +265,7 @@ class AuthService(BaseService):
             lud = arrow.get(acc.login_updated_at).replace(tzinfo=self.default_tz)
             diff = arrow.now(self.default_tz) - lud
             params = {}
-            if diff.total_seconds() > LOGIN_TOKEN_TIMEOUT or not acc.login_token:
+            if (need_update_login_time and diff.total_seconds() > LOGIN_TOKEN_TIMEOUT) or not acc.login_token:
                 if not acc.fuzzy_id:
                     acc.fuzzy_id = obfuscate_id(acc.id)
                     params["fuzzy_id"] = acc.fuzzy_id
@@ -291,9 +297,10 @@ class AuthService(BaseService):
             result['login_at'] = int(arrow.get(lud).timestamp * 1000)
             # print('login_at:', result['login_at'])
             result['pan_acc_list'] = need_renew_pan_acc
-            account_ext = DataDao.account_ext_by_acc_id(acc.id)
-            result['username'] = account_ext.username
-            result['portrait'] = account_ext.portrait
+            self.__patch_acc_ext(acc, result, source)
+            # account_ext = DataDao.account_ext_by_acc_id(acc.id)
+            # result['username'] = account_ext.username
+            # result['portrait'] = account_ext.portrait
             result['id'] = acc.fuzzy_id
             return result
 

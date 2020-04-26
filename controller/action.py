@@ -9,7 +9,7 @@ from utils import CJsonEncoder, get_payload_from_token, decrypt_user_id, get_now
 from typing import Optional, Awaitable, Any
 from dao.dao import DataDao
 from dao.product_dao import ProductDao
-from dao.models import DataItem, try_release_conn
+from dao.models import DataItem, try_release_conn, Accounts
 from dao.es_dao import es_dao_share, es_dao_local
 from tornado.web import RequestHandler, authenticated
 from utils.utils_es import SearchParams, build_query_item_es_body
@@ -40,10 +40,17 @@ class BaseHandler(RequestHandler):
         self.is_web = False
         self.query_path = ''
         self.token = None
+        self.context = {}
+        self.guest: Accounts = None
         super(BaseHandler, self).__init__(application, request, **kwargs)
 
-    def initialize(self, middleware) -> None:
+    def initialize(self, middleware, context=None) -> None:
         self.middleware = middleware
+        if context:
+            self.context = context
+            _guest = context.get('guest', None)
+            if _guest:
+                self.guest = _guest
 
     def prepare(self):
         for middleware in self.middleware:
