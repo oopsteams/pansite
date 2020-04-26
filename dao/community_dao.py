@@ -93,7 +93,6 @@ class CommunityDao(object):
     @query_wrap_db
     def default_guest_account(cls):
         guest: Accounts = Accounts.select().where(Accounts.name == "guest").first()
-
         if guest:
             if not guest.fuzzy_id:
                 fuzzy_id = obfuscate_id(guest.id)

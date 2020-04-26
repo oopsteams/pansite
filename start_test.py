@@ -35,7 +35,8 @@ def update_sys_cfg(release=True):
         context['guest'] = open_service.guest_user()
         if release:
             try_release_conn()
-    except Exception:
+    except Exception as e:
+        print("err:", e)
         pass
 
 
@@ -110,10 +111,15 @@ if __name__ == "__main__":
 
     port = service['port']
 
-    # server = HTTPServer(application, ssl_options=ssl_ctx)
-    server = HTTPServer(application)
-    server.listen(port)
+    import ssl
+
+    ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    ssl_ctx.load_cert_chain(os.path.join(base_dir, "ca/1_oopsteam.site_bundle.crt"),
+                            os.path.join(base_dir, "ca/2_oopsteam.site.key"))
+    server = HTTPServer(application, ssl_options=ssl_ctx)
+    # server = HTTPServer(application)
+    server.listen(443)
     # server.listen(port, '127.0.0.1')
     # application.listen(port)
-    logger.info("Listen HTTP @ %s" % port)
+    logger.info("Listen HTTP @ %s" % 443)
     IOLoop.instance().start()
