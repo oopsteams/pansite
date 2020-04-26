@@ -35,7 +35,8 @@ def update_sys_cfg(release=True):
         context['guest'] = open_service.guest_user()
         if release:
             try_release_conn()
-    except Exception:
+    except Exception as e:
+        print("err:", e)
         pass
 
 
