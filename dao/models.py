@@ -9,51 +9,72 @@ from playhouse.shortcuts import ReconnectMixin
 from cfg import mysql_worker_config as config
 from utils import object_to_dict, log
 from functools import wraps
+from dao.base import db, BaseModel, BASE_FIELDS, db_update_field_sql
 
-BATCH_DB_USER = config["user"]  # 'market'
-BATCH_DB_PASSWORD = config["password"]  # 'market'
-# BATCH_DB_HOST='172.31.140.249'
-BATCH_DB_HOST = config["host"]  # '127.0.0.1'
-BATCH_DB_PORT = config["port"]  # '3306'
-BATCH_DB_NAME = config["db"]  # 'liquidity'
+# BATCH_DB_USER = config["user"]  # 'market'
+# BATCH_DB_PASSWORD = config["password"]  # 'market'
+# # BATCH_DB_HOST='172.31.140.249'
+# BATCH_DB_HOST = config["host"]  # '127.0.0.1'
+# BATCH_DB_PORT = config["port"]  # '3306'
+# BATCH_DB_NAME = config["db"]  # 'liquidity'
+#
+# BATCH_DB_URL = 'mysql://%s:%s@%s:%s/%s' % (BATCH_DB_USER, BATCH_DB_PASSWORD, BATCH_DB_HOST, BATCH_DB_PORT, BATCH_DB_NAME)
+# BASE_FIELDS = ["created_at", "updated_at"]
+#
+#
+# def db_connect(url):
+#     print("Use database : %s" % (url))
+#     from playhouse.db_url import connect
+#     db = connect(url, False, **{"sql_mode": "traditional"})
+#     return db
+#
+#
+# class RetryMySQLDatabase(ReconnectMixin, PooledMySQLDatabase):
+#     _instance = None
+#
+#     @staticmethod
+#     def db_instance():
+#         if not RetryMySQLDatabase._instance:
+#             RetryMySQLDatabase._instance = RetryMySQLDatabase(
+#                 BATCH_DB_NAME, max_connections=5, stale_timeout=300, host=BATCH_DB_HOST, user=BATCH_DB_USER,
+#                 password=BATCH_DB_PASSWORD, port=BATCH_DB_PORT
+#             )
+#         return RetryMySQLDatabase._instance
+#         pass
+#
+#     def sequence_exists(self, seq):
+#         pass
+#
+#
+# try:
+#     db_exist = 'db' in locals() or 'db' in globals()
+#     if not db_exist:
+#         # db = db_connect(BATCH_DB_URL)
+#         db = RetryMySQLDatabase.db_instance()
+#         print("db not exist.")
+# except Exception:
+#     # db = db_connect(BATCH_DB_URL)
+#     db = RetryMySQLDatabase.db_instance()
 
-BATCH_DB_URL = 'mysql://%s:%s@%s:%s/%s' % (BATCH_DB_USER, BATCH_DB_PASSWORD, BATCH_DB_HOST, BATCH_DB_PORT, BATCH_DB_NAME)
-BASE_FIELDS = ["created_at", "updated_at"]
+
+def try_release_conn():
+    if not db.is_closed():
+        try:
+            db.manual_close()
+            # db._close(db.connection())
+        except Exception:
+            log.error("exe action failed.", exc_info=True)
+    else:
+        print("db is closed!")
 
 
-def db_connect(url):
-    print("Use database : %s" % (url))
-    from playhouse.db_url import connect
-    db = connect(url, False, **{"sql_mode": "traditional"})
-    return db
-
-
-class RetryMySQLDatabase(ReconnectMixin, PooledMySQLDatabase):
-    _instance = None
-
-    @staticmethod
-    def db_instance():
-        if not RetryMySQLDatabase._instance:
-            RetryMySQLDatabase._instance = RetryMySQLDatabase(
-                BATCH_DB_NAME, max_connections=5, stale_timeout=300, host=BATCH_DB_HOST, user=BATCH_DB_USER,
-                password=BATCH_DB_PASSWORD, port=BATCH_DB_PORT
-            )
-        return RetryMySQLDatabase._instance
-        pass
-
-    def sequence_exists(self, seq):
-        pass
-
-
-try:
-    db_exist = 'db' in locals() or 'db' in globals()
-    if not db_exist:
-        # db = db_connect(BATCH_DB_URL)
-        db = RetryMySQLDatabase.db_instance()
-        print("db not exist.")
-except Exception:
-    # db = db_connect(BATCH_DB_URL)
-    db = RetryMySQLDatabase.db_instance()
+def query_wrap_db(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if db.is_closed():
+            db.connect()
+        return func(*args, **kwargs)
+    return wrapper
 
 
 def new_guest_account(org_id, role_id, type, name="guest", mobile_no="0000000000", password="654321"):
@@ -117,57 +138,6 @@ def init_db():
             new_guest_account(org_id, role_id, single)
 
     print("Init database ok")
-
-
-def try_release_conn():
-    if not db.is_closed():
-        try:
-            db.manual_close()
-            # db._close(db.connection())
-        except Exception:
-            log.error("exe action failed.", exc_info=True)
-    else:
-        print("db is closed!")
-
-
-def query_wrap_db(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if db.is_closed():
-            db.connect()
-        return func(*args, **kwargs)
-        # conn = db._connect()
-        # try:
-        #     return func(*args, **kwargs)
-        # finally:
-        #     db._close(conn)
-        # with db.connection_context():
-        #     # print("will to close db")
-        #     return func(*args, **kwargs)
-    return wrapper
-
-
-def db_create_field_sql():
-    if BATCH_DB_URL.find("mysql")>=0:
-        return [SQL("DEFAULT current_timestamp")]
-    else:
-        return [SQL("DEFAULT (datetime('now'))")]
-
-
-def db_update_field_sql():
-    if BATCH_DB_URL.find("mysql") >= 0:
-        return [SQL("DEFAULT current_timestamp ON UPDATE CURRENT_TIMESTAMP")]
-    else:
-        return [SQL("DEFAULT (datetime('now'))")]
-
-
-class BaseModel(Model):
-    class Meta:
-        # print("db=%s" % db)
-        database = db
-
-    created_at = DateTimeField(index=True, constraints=db_create_field_sql())
-    updated_at = DateTimeField(default=datetime.datetime.now, constraints=db_update_field_sql())
 
 
 class AccountWxExt(BaseModel):
