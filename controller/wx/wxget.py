@@ -51,9 +51,9 @@ class WXAppGet(BaseHandler):
     def parseCMD(self, **params):
         cmd = u'' + params.get("cmd", "")
         print("cmd:", cmd)
-        header = self.request.headers
+        # header = self.request.headers
         rs = {"status": 0}
-        print("header", header)
+        # print("header", header)
         if u"ip" == cmd:
             rip = self.getRemoteIp()
             rs['ip'] = rip

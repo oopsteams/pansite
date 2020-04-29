@@ -7,7 +7,7 @@ from peewee import *
 from playhouse.pool import PooledMySQLDatabase
 from playhouse.shortcuts import ReconnectMixin
 from cfg import mysql_worker_config as config
-from utils import object_to_dict
+from utils import object_to_dict, log
 from functools import wraps
 
 BATCH_DB_USER = config["user"]  # 'market'
@@ -125,7 +125,9 @@ def try_release_conn():
             db.manual_close()
             # db._close(db.connection())
         except Exception:
-            pass
+            log.error("exe action failed.", exc_info=True)
+    else:
+        print("db is closed!")
 
 
 def query_wrap_db(func):

@@ -83,7 +83,8 @@ class BaseHandler(RequestHandler):
 
     def _handle_request_exception(self, e):
         logger.error("request err:{}".format(sys.exc_info()))
-        params = {"exc_info": sys.exc_info(), "state": -1, "err": "parameters error!"}
+        t, v, tb = sys.exc_info()
+        params = {"exc_info":  "[{}]{}".format(t, v), "state": -1, "err": "parameters error!"}
         # self.write_error(404, **params)
         # self.write(json.dumps(params))
         self.to_write_json(params)
@@ -91,7 +92,8 @@ class BaseHandler(RequestHandler):
     def send_error(self, status_code=500, **kwargs) -> None:
         # self.write_error(404, **kwargs)
         logger.error("service err", exc_info=True)
-        params = {"exc_info": sys.exc_info(), "state": -1, "err": "service error!"}
+        t, v, tb = sys.exc_info()
+        params = {"exc_info": "[{}]{}".format(t, v), "state": -1, "err": "service error!"}
         self.to_write_json(params)
 
     # def send_error(self, stat, **kw):
@@ -116,11 +118,7 @@ class BaseHandler(RequestHandler):
 
     def on_finish(self):
         # print("on_response request finish.")
-        if self.release_db:
-            logger.info('need to release conn!')
-            try_release_conn()
-        else:
-            logger.info('not need to release conn!')
+        self.try_release_db_conn()
 
     def getRemoteIp(self):
         header = self.request.headers
@@ -131,6 +129,13 @@ class BaseHandler(RequestHandler):
 
     def data_received(self, chunk: bytes) -> Optional[Awaitable[None]]:
         pass
+
+    def try_release_db_conn(self):
+        if self.release_db:
+            logger.info('need to release conn!')
+            try_release_conn()
+        else:
+            logger.info('not need to release conn!')
 
     def to_write_json(self, result):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
