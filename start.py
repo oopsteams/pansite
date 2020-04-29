@@ -33,10 +33,12 @@ def update_sys_cfg(release=True):
         open_service.sync_cfg()
         open_service.sync_tags()
         context['guest'] = open_service.guest_user()
+    except Exception as e:
+        print("update_sys_cfg err:", e)
+        pass
+    finally:
         if release:
             try_release_conn()
-    except Exception:
-        pass
 
 
 # @scheduler.scheduled_job('cron',hour=16,minute=9,second=20)
@@ -44,9 +46,11 @@ def scheduler_clear_all_expired_share_log():
     try:
         sync_pan_service.clear_all_expired_share_log()
         update_sys_cfg(False)
-        try_release_conn()
-    except Exception:
+    except Exception as e:
+        print("scheduler_clear_all_expired_share_log err:", e)
         pass
+    finally:
+        try_release_conn()
 
 
 def update_access_token():
@@ -57,10 +61,12 @@ def update_access_token():
         for pan_acc in pan_acc_list:
             logger.info("will validation pan acc id:{}, name:{}".format(pan_acc.id, pan_acc.name))
             auth_service.check_pan_token_validation(pan_acc)
-
-        try_release_conn()
-    except Exception:
+    except Exception as e:
+        traceback.print_exc()
+        print("update_access_token err:", e)
         pass
+    finally:
+        try_release_conn()
 
 
 scheduler.add_job(scheduler_clear_all_expired_share_log, 'interval', minutes=120,

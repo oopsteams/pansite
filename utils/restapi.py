@@ -25,23 +25,23 @@ def access_token_code(code):
     return jsonrs
 
 
-def refresh_token(refresh_token, recursion):
+def refresh_token(refresh_tk, recursion):
     auth_point = "{}://{}".format(PAN_SERVICE['protocol'], PAN_SERVICE['auth_domain'])
     path = "token"
-    params = {"grant_type": 'refresh_token', "refresh_token": refresh_token, "client_id": PAN_SERVICE["client_id"],
+    params = {"grant_type": 'refresh_token', "refresh_token": refresh_tk, "client_id": PAN_SERVICE["client_id"],
               "client_secret": PAN_SERVICE["client_secret"]}
     headers = {"User-Agent": "pan.baidu.com"}
     rs = requests.get("%s%s" % (auth_point, path), params=params, headers=headers)
     # logger.info("refresh_token request state:{}".format(rs.status_code))
     # print("content:", rs.content)
-    logger.info("restapi refresh_token:{}, status_code:{}".format(refresh_token, rs.status_code))
+    logger.info("restapi refresh_token:{}, status_code:{}".format(refresh_tk, rs.status_code))
     if rs.status_code == 200:
         jsonrs = rs.json()
         return jsonrs
     else:
         if recursion:
             time.sleep(1)
-            return refresh_token(refresh_token)
+            return refresh_token(refresh_tk)
         else:
             return {}
 
