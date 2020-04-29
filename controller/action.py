@@ -18,6 +18,7 @@ from controller.service import pan_service
 from controller.open_service import open_service
 from controller.sync_service import sync_pan_service
 from controller.auth_service import auth_service
+import traceback
 from cfg import get_bd_auth_uri
 
 LOGIN_TOKEN_KEY = "Suri-Token"
@@ -82,7 +83,7 @@ class BaseHandler(RequestHandler):
         # return True
 
     def _handle_request_exception(self, e):
-        logger.error("request err:{}".format(sys.exc_info()))
+        logger.error("request err:{}".format(traceback.format_exception(*sys.exc_info())))
         t, v, tb = sys.exc_info()
         params = {"exc_info":  "[{}]{}".format(t, v), "state": -1, "err": "parameters error!"}
         # self.write_error(404, **params)

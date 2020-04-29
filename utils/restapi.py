@@ -39,6 +39,7 @@ def refresh_token(refresh_tk, recursion=True):
         jsonrs = rs.json()
         return jsonrs
     else:
+        logger.warn(rs.content)
         if recursion:
             time.sleep(1)
             return refresh_token(refresh_tk, False)
