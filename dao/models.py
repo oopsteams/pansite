@@ -156,7 +156,7 @@ class AccountWxExt(BaseModel):
     job = CharField(null=True, max_length=16)  # 职位
     unionid = CharField(null=True, max_length=128)  # wx跨服务唯一标识
     is_realname = IntegerField(null=False, default=0)  # 是否实名制
-    account_id = IntegerField(null=False, default=0)
+    account_id = IntegerField(null=False, default=0, index=True)
 
     @classmethod
     def field_names(cls):
@@ -185,7 +185,7 @@ class AccountExt(BaseModel):
     trade = CharField(null=True, max_length=16)  # 当前职业
     job = CharField(null=True, max_length=16)  # 职位
     is_realname = IntegerField(null=False, default=0)  # 是否实名制
-    account_id = IntegerField(null=False, default=0)
+    account_id = IntegerField(null=False, default=0, index=True)
 
     @classmethod
     def field_names(cls):
