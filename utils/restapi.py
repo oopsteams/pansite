@@ -25,7 +25,7 @@ def access_token_code(code):
     return jsonrs
 
 
-def refresh_token(refresh_tk, recursion):
+def refresh_token(refresh_tk, recursion=True):
     auth_point = "{}://{}".format(PAN_SERVICE['protocol'], PAN_SERVICE['auth_domain'])
     path = "token"
     params = {"grant_type": 'refresh_token', "refresh_token": refresh_tk, "client_id": PAN_SERVICE["client_id"],
@@ -41,13 +41,13 @@ def refresh_token(refresh_tk, recursion):
     else:
         if recursion:
             time.sleep(1)
-            return refresh_token(refresh_tk)
+            return refresh_token(refresh_tk, False)
         else:
             return {}
 
 
 # pan accounts
-def sync_user_info(access_token, recursion):
+def sync_user_info(access_token, recursion=True):
     auth_point = "{}://{}".format(PAN_SERVICE['protocol'], "openapi.baidu.com/rest/2.0/passport/users/getInfo")
     params = {"access_token": access_token}
     headers = {"User-Agent": "pan.baidu.com"}
@@ -62,7 +62,7 @@ def sync_user_info(access_token, recursion):
     else:
         if recursion:
             time.sleep(1)
-            return refresh_token(refresh_token)
+            return refresh_token(refresh_token, False)
         else:
             return {}
 
