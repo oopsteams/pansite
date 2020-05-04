@@ -19,13 +19,15 @@ from controller.async_action import AsyncHandler
 from controller.main_action import MainHandler
 from controller.wx.wxget import WXAppGet
 from controller.wx.wxput import WXAppPut
+from controller.wx.wxupload import WXAppUpload
 from utils import log as logger
 scheduler = TornadoScheduler()
 scheduler.start()
 
 
 guest_user = None
-context = dict(guest=None)
+base_dir = os.path.dirname(__file__)
+context = dict(guest=None, basepath=base_dir)
 
 
 def update_sys_cfg(release=True):
@@ -77,7 +79,6 @@ update_sys_cfg()
 
 
 if __name__ == "__main__":
-    base_dir = os.path.dirname(__file__)
     settings = {
         "static_path": os.path.join(base_dir, "static"),
         "static_url_prefix": r"/static/",
@@ -107,6 +108,7 @@ if __name__ == "__main__":
 
         (r"/wx/put", WXAppPut, dict(middleware=middle_list, context=context)),
         (r"/wx/get", WXAppGet, dict(middleware=middle_list, context=context)),
+        (r"/wx/upload", WXAppUpload, dict(middleware=middle_list, context=context)),
         # (r"/wx/push", WXAppPush),
 
         (r"/.*\.html", MainHandler, dict(middleware=middle_list)),

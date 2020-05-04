@@ -405,7 +405,7 @@ def split_file_content(size, cnt, fs_id):
 
 if __name__ == '__main__':
     from controller.service import pan_service
-    from dao.dao import DataDao
+    from dao.mdao import DataDao
     # at = pan_service.pan_acc.access_token
     # print(file_list(at, "/"))
     fs_id = '214812092436210'

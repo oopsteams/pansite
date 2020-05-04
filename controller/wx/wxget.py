@@ -6,7 +6,8 @@ from controller.action import BaseHandler
 from controller.auth_service import auth_service
 from utils.constant import USER_TYPE
 from controller.wx.wx_service import wx_service
-from utils import wxapi
+from controller.wx.goods_service import goods_service
+from utils import wxapi, decrypt_id
 
 import json
 
@@ -89,28 +90,78 @@ class WXAppGet(BaseHandler):
         elif "profile" == cmd:
             uid = params.get('uid', None)
             if not uid:
-                uid = 1
-            if uid:
-                ub = wx_service.fetch_wx_account(uid)
-                if ub:
-                    rexclude = ""
-                    if ub.setting.rexclude:
-                        rexclude = ub.setting.rexclude
-                    rs['user'] = {'uid': uid, 'sync': 0, 'pin': ub.pin, 'ri': ub.setting.rinclude, 're': rexclude,
-                                  'name': ub.user.rname}
-                    rs['openid'] = ub.externid
-                    if hasattr(ub, 'orgprofile'):
-                        rs['user']['op'] = {'tips': ub.orgprofile.tips, 'ops': ub.orgprofile.ops}
-                    # if hasattr(ub,'user') and ub.user.code:
-                    #     rs['user']['code']=ub.user.code
-                    if hasattr(ub, 'user') and ub.user.deptid:
-                        rs['user']['deptid'] = ub.user.deptid
-                    if hasattr(ub, 'orgid') and hasattr(ub, 'org'):
-                        rs['user']['orgid'] = ub.orgid
-                        rs['user']['orgname'] = ub.org.alias
+                uid = 0
+            rs = wx_service.profile(uid, self.guest)
+            # if uid:
+            #     ub = wx_service.fetch_wx_account(uid)
+            #     if ub:
+            #         rexclude = ""
+            #         if ub.setting.rexclude:
+            #             rexclude = ub.setting.rexclude
+            #         rs['user'] = {'uid': uid, 'sync': 0, 'pin': ub.pin, 'ri': ub.setting.rinclude, 're': rexclude,
+            #                       'name': ub.user.rname}
+            #         rs['openid'] = ub.externid
+            #         if hasattr(ub, 'orgprofile'):
+            #             rs['user']['op'] = {'tips': ub.orgprofile.tips, 'ops': ub.orgprofile.ops}
+            #         # if hasattr(ub,'user') and ub.user.code:
+            #         #     rs['user']['code']=ub.user.code
+            #         if hasattr(ub, 'user') and ub.user.deptid:
+            #             rs['user']['deptid'] = ub.user.deptid
+            #         if hasattr(ub, 'orgid') and hasattr(ub, 'org'):
+            #             rs['user']['orgid'] = ub.orgid
+            #             rs['user']['orgname'] = ub.org.alias
 
             return rs
+        elif "querygoods" == cmd:
+            gid = int(params.get('gid', '0'))
+            goods = goods_service.query_goods_by_gid(gid)
+            rs['goods'] = goods
+        elif "querygoodslist" == cmd:
+            ordmapstr = params.get('ordmap', '')
+            offset = int(params.get('offset', '0'))
+            n = 5
+            rs['size'] = n
+            rs['offset'] = offset
+            ordmap = {}
+            if ordmapstr:
+                ordmap = json.loads(ordmapstr)
+            org_id = self.guest.auth_user.org_id
+            goodslist = goods_service.query_goods_by_org(org_id, ordmap, offset, n)
+            rs['goodslist'] = goodslist
+        elif "queryproduct" == cmd:
+            size = 100
+            pid = int(params.get('pid', '0'))
+            page = int(params.get('page', '1'))
+            pin = int(params.get('pin', '-1'))
+            products = []
+            cp_dict = goods_service.query_product_dict(pid)
+            if cp_dict:
+                products.append(cp_dict)
+            rs['products'] = products
+            spus = []
+            if products:
+                spus = goods_service.query_spu_by_pid(pid, products[0]['tpcid'])
+                rs['goods'] = goods_service.query_goods_by_pid(pid)
+            rs['spus'] = spus
+            rs['page'] = page
+            rs['size'] = size
+            rs['cates'] = goods_service.query_category()
+        elif "querysubcates" == cmd:
+            cid = int(params.get('cid', '0'))
+            lvl = int(params.get('lvl', '0'))
+            cates = goods_service.query_sub_category(cid, lvl)
+            rs['cates'] = cates
+        elif "queryspu" == cmd:
+            cid = int(params.get('cid', '0'))
+            structs = goods_service.query_spu(cid)
+            rs['structs'] = structs
+        elif "queryimgs" == cmd:
+            fuzzy_pid = params.get('pid')
 
+            pid = int(decrypt_id(fuzzy_pid))
+
+            imgs = goods_service.query_imgs(pid)
+            rs['imgs'] = imgs
         return rs
 
     def get(self):

@@ -9,7 +9,7 @@ from controller.async_service import async_service
 from utils import singleton, log, guess_file_type
 from dao.client_data_dao import ClientDataDao
 from dao.product_dao import ProductDao
-from dao.dao import DataDao
+from dao.mdao import DataDao
 from dao.auth_dao import AuthDao
 from utils import restapi, obfuscate_id, is_image_media, get_now_datetime, log as logger
 from utils.utils_es import SearchParams, build_query_item_es_body

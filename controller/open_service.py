@@ -3,17 +3,20 @@
 Created by susy at 2019/12/18
 """
 from controller.base_service import BaseService
-from utils import singleton, log as logger, compare_dt_by_now, get_now_datetime_format, scale_size, split_filename
-from dao.models import CommunityDataItem, DataItem, ShareLogs, ShareFr, ShareApp, AppCfg
+from utils import singleton, log as logger, compare_dt_by_now, get_now_datetime_format, scale_size, split_filename, \
+    obfuscate_id
+from dao.models import Accounts, DataItem, ShareLogs, ShareFr, ShareApp, AppCfg, AuthUser
 from utils.utils_es import SearchParams, build_query_item_es_body
 from dao.es_dao import es_dao_share, es_dao_local
 from dao.community_dao import CommunityDao
-from dao.dao import DataDao
+from dao.mdao import DataDao
+from dao.auth_dao import AuthDao
 from utils.caches import cache_data, cache_service
 from utils.constant import shared_format, SHARED_FR_MINUTES_CNT, SHARED_FR_HOURS_CNT, SHARED_FR_DAYS_CNT, \
     SHARED_FR_DAYS_ERR, SHARED_FR_HOURS_ERR, SHARED_FR_MINUTES_ERR, MAX_RESULT_WINDOW, SHARED_BAN_ERR
 from controller.sync_service import sync_pan_service
 from controller.service import pan_service
+from controller.auth_service import auth_service
 import time
 import json
 
@@ -248,7 +251,18 @@ class OpenService(BaseService):
         return tag_list
 
     def guest_user(self):
-        return CommunityDao.default_guest_account()
+        guest: Accounts = CommunityDao.default_guest_account()
+        if guest:
+            if not guest.fuzzy_id or not guest.login_token:
+                fuzzy_id = obfuscate_id(guest.id)
+                guest.fuzzy_id = fuzzy_id
+                login_token, _ = auth_service.build_user_payload(guest)
+                guest.login_token = login_token
+                DataDao.update_account_by_pk(guest.id, {"fuzzy_id": fuzzy_id, "login_token": login_token})
+            au: AuthUser = AuthDao.query_account_auth(guest.id)
+            guest.auth_user = au
+
+        return guest
 
     def load_tags(self):
         tag_list = cache_service.get('sys_tags')

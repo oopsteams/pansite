@@ -5,7 +5,7 @@ Created by susy at 2020/1/6
 from controller.base_service import BaseService
 from utils import singleton, log, guess_file_type, obfuscate_id
 from dao.community_dao import CommunityDao
-from dao.dao import DataDao
+from dao.mdao import DataDao
 from dao.man_dao import ManDao
 from utils.utils_es import SearchParams, build_query_item_es_body
 from dao.es_dao import es_dao_share, es_dao_local

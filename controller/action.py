@@ -7,7 +7,7 @@ import json
 import traceback
 from utils import CJsonEncoder, get_payload_from_token, decrypt_user_id, get_now_ts, decrypt_id, log as logger
 from typing import Optional, Awaitable, Any
-from dao.dao import DataDao
+from dao.mdao import DataDao
 from dao.product_dao import ProductDao
 from dao.models import DataItem, try_release_conn, Accounts
 from dao.es_dao import es_dao_share, es_dao_local

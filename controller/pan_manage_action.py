@@ -4,7 +4,7 @@ Created by susy at 2019/12/24
 """
 from controller.action import BaseHandler
 from dao.community_dao import CommunityDao
-from dao.dao import DataDao
+from dao.mdao import DataDao
 from tornado.web import authenticated
 from utils import compare_dt_by_now, decrypt_id, log as logger
 from controller.mpan_service import mpan_service

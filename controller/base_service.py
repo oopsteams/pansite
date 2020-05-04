@@ -2,7 +2,7 @@
 """
 Created by susy at 2019/11/8
 """
-from dao.dao import DataDao
+from dao.mdao import DataDao
 import pytz
 from dao.models import PanAccounts
 from cfg import PAN_SERVICE, MASTER_ACCOUNT_ID

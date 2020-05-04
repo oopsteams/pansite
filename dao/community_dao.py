@@ -2,7 +2,7 @@
 """
 Created by susy at 2019/12/17
 """
-from dao.models import db, Accounts, DataItem, PanAccounts, AccountExt, CommunityDataItem, UserTags, Tags, ShareLogs, \
+from dao.models import db, Accounts, DataItem, PanAccounts, AuthUser, CommunityDataItem, UserTags, Tags, ShareLogs, \
     TransferLogs, query_wrap_db, ShareFr, LoopAdTask, AdSource, CommunityVisible, LocalVisible, ShareApp
 from utils import utils_es, get_now_datetime, obfuscate_id
 from dao.es_dao import es_dao_share
@@ -93,12 +93,6 @@ class CommunityDao(object):
     @query_wrap_db
     def default_guest_account(cls):
         guest: Accounts = Accounts.select().where(Accounts.name == "guest").first()
-        if guest:
-            if not guest.fuzzy_id:
-                fuzzy_id = obfuscate_id(guest.id)
-                guest.fuzzy_id = fuzzy_id
-                with db:
-                    Accounts.update(fuzzy_id=fuzzy_id).where(Accounts.id == guest.id).execute()
         return guest
 
     @classmethod

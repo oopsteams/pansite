@@ -19,6 +19,7 @@ from controller.async_action import AsyncHandler
 from controller.main_action import MainHandler
 from controller.wx.wxget import WXAppGet
 from controller.wx.wxput import WXAppPut
+from controller.wx.wxupload import WXAppUpload
 from utils import log as logger
 import traceback
 scheduler = TornadoScheduler()
@@ -26,7 +27,8 @@ scheduler.start()
 
 
 guest_user = None
-context = dict(guest=None)
+base_dir = os.path.dirname(__file__)
+context = dict(guest=None, basepath=base_dir)
 
 
 def update_sys_cfg(release=True):
@@ -45,7 +47,7 @@ def update_sys_cfg(release=True):
 # @scheduler.scheduled_job('cron',hour=16,minute=9,second=20)
 def scheduler_clear_all_expired_share_log():
     try:
-        sync_pan_service.clear_all_expired_share_log()
+        # sync_pan_service.clear_all_expired_share_log()
         update_sys_cfg(False)
     except Exception as e:
         print("scheduler_clear_all_expired_share_log err:", e)
@@ -61,7 +63,8 @@ def update_access_token():
         pan_acc_list = PanAccounts.select().where(PanAccounts.user_id == 1)
         for pan_acc in pan_acc_list:
             logger.info("will validation pan acc id:{}, name:{}".format(pan_acc.id, pan_acc.name))
-            auth_service.check_pan_token_validation(pan_acc)
+            # auth_service.check_pan_token_validation(pan_acc)
+            pass
     except Exception as e:
         traceback.print_exc()
         print("update_access_token err:", e)
@@ -78,7 +81,6 @@ update_sys_cfg()
 
 
 if __name__ == "__main__":
-    base_dir = os.path.dirname(__file__)
     settings = {
         "static_path": os.path.join(base_dir, "static"),
         "static_url_prefix": r"/static/",
@@ -108,6 +110,7 @@ if __name__ == "__main__":
 
         (r"/wx/put", WXAppPut, dict(middleware=middle_list, context=context)),
         (r"/wx/get", WXAppGet, dict(middleware=middle_list, context=context)),
+        (r"/wx/upload", WXAppUpload, dict(middleware=middle_list, context=context)),
         # (r"/wx/push", WXAppPush),
 
         (r"/.*\.html", MainHandler, dict(middleware=middle_list)),

@@ -4,13 +4,13 @@ Created by susy at 2019/10/17
 """
 import datetime
 from peewee import *
-from playhouse.pool import PooledMySQLDatabase
-from playhouse.shortcuts import ReconnectMixin
-from cfg import mysql_worker_config as config
+# from playhouse.pool import PooledMySQLDatabase
+# from playhouse.shortcuts import ReconnectMixin
+# from cfg import mysql_worker_config as config
 from utils import object_to_dict, log
 from functools import wraps
 from dao.base import db, BaseModel, BASE_FIELDS, db_update_field_sql
-
+from dao.goods_models import *
 # BATCH_DB_USER = config["user"]  # 'market'
 # BATCH_DB_PASSWORD = config["password"]  # 'market'
 # # BATCH_DB_HOST='172.31.140.249'
@@ -92,7 +92,8 @@ def init_db():
                       AccountExt, CommunityDataItem, UserRootCfg, ShareFr, LoopAdTask, AdSource, AuthUser, UReference,
                       Fun, Role, RoleExtend, Org, OrgOrg, UserRefExtend, UserRoleExtend, UserOrgExtend, Product, Order,
                       OrderItem, Assets, LocalVisible, CommunityVisible, ShareApp, DataItemExt, ClientDataItem,
-                      AppCfg, AccountWxExt], safe=True)
+                      AppCfg, AccountWxExt, Category, CateCate, SPUStruct, Brand, NetWeight, SweetNess, Pack,
+                      CourseProduct, ProductSpu, ProductImg, Goods], safe=True)
 
     with db:
         if not Org.select().where(Org.id == 1).exists():
@@ -136,6 +137,8 @@ def init_db():
             role_id = 1
             single = 1
             new_guest_account(org_id, role_id, single)
+        if not Category.select().where(Category.name == '亲子教育').exists():
+            Category.insert_many({"name": "亲子教育", "pin": 2}).execute()
 
     print("Init database ok")
 
@@ -613,8 +616,8 @@ class AdSource(BaseModel):
 # 权限部分
 class AuthUser(BaseModel):
     acc_id = IntegerField(null=False, default=0)
-    org_id = IntegerField(null=False, default=0)
-    ref_id = IntegerField(null=False, default=0)
+    org_id = IntegerField(null=False, default=0, index=True)
+    ref_id = IntegerField(null=False, default=0, index=True)
     role_id = IntegerField(null=False, default=0)
     type = IntegerField(null=False, default=0)
 
@@ -887,4 +890,7 @@ class AppCfg(BaseModel):
 
 
 if '__main__' == __name__:
+    import sys
+    import os
+    sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "../")))
     init_db()

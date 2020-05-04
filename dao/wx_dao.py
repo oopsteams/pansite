@@ -3,7 +3,7 @@
 Created by susy at 2020/4/26
 """
 from dao.models import db, query_wrap_db, Accounts, AccountExt, AccountWxExt
-from dao.dao import DataDao
+from dao.mdao import DataDao
 from utils import utils_es, get_now_datetime, obfuscate_id
 
 

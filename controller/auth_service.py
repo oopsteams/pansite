@@ -6,7 +6,7 @@ from controller.base_service import BaseService
 from utils import singleton, make_account_token, obfuscate_id, decrypt_user_id, get_now_datetime
 from dao.models import Accounts, Role, Org, BASE_FIELDS, PanAccounts, AccountExt
 from dao.auth_dao import AuthDao
-from dao.dao import DataDao
+from dao.mdao import DataDao
 from utils.constant import FUN_TYPE, USER_TYPE, PAN_ACCESS_TOKEN_TIMEOUT, LOGIN_TOKEN_TIMEOUT
 from utils.caches import cache_data
 from utils import compare_dt_by_now, log, restapi, get_now_ts, get_payload_from_token
