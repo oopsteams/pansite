@@ -48,6 +48,7 @@ class CheckLogin(MiddleWare):
                 if 'au' in handler.user_payload:
                     au = handler.user_payload['au']
                     handler.ref_id = au['rfid']
+                    handler.org_id = au['oid']
 
         pass
 

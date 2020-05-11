@@ -3,7 +3,7 @@
 Created by susy at 2020/4/29
 """
 from dao.models import db, query_wrap_db, Goods, CourseProduct, ProductImg, Org, AuthUser, Category, \
-    CateCate, SPUStruct, ProductSpu
+    CateCate, SPUStruct, ProductSpu, OrgOrg
 from utils import obfuscate_id
 from peewee import fn, ModelSelect, SQL
 import json
@@ -15,7 +15,10 @@ class GoodsDao(object):
     @classmethod
     @query_wrap_db
     def query_goods_by_org(cls, orgid, order_map, offset, n) -> list:
-        field_map = {'goods.': 'Goods.', 'product.': 'CourseProduct.', 'category.': 'Category.'}
+        g = Goods.alias('g')
+        cp = CourseProduct.alias('cp')
+        cg = Category.alias('cg')
+        field_map = {'goods.': 'g.', 'product.': 'cp.', 'category.': 'cg.'}
         _order_fs = {}
         if order_map:
             for f in order_map.keys():
@@ -26,32 +29,35 @@ class GoodsDao(object):
                         break
                 _order_fs[nf] = order_map[f]
 
-        ms: ModelSelect = Goods.select(Goods, CourseProduct, Category).join(
-            CourseProduct, on=(CourseProduct.pid == Goods.pid), attr="product").join(
-            AuthUser, on=(Goods.ref_id == AuthUser.ref_id)).join(
-            Category, on=(Category.cid == CourseProduct.cid), attr="category").where(
-            AuthUser.org_id == orgid, Goods.pin == 0
-        ).order_by(Category.cid.asc()).offset(offset).limit(n)
+        ms: ModelSelect = g.select(g, cp, cg).join(
+            cp, on=(cp.pid == g.pid), attr="product").join(
+            cg, on=(cg.cid == cp.cid), attr="category").join(
+            AuthUser, on=(g.ref_id == AuthUser.ref_id)).where(
+            AuthUser.org_id == orgid, g.pin == 0
+        )
+        print("_order_fs:", _order_fs)
+        order_vals = [cg.cid.asc()]
         for nf in _order_fs:
             if _order_fs[nf].lower() == "asc":
-                ms.order_by(SQL(nf).asc())
+                order_vals.append(SQL(nf).asc())
             else:
-                ms.order_by(SQL(nf).desc())
-        ms.offset(offset).limit(n)
+                order_vals.append(SQL(nf).desc())
+        ms = ms.order_by(*order_vals).offset(offset).limit(n)
         print("queryGoodsByOrg sql:", ms)
         pids = []
         res = []
         catemap = {}
         pidmap = {}
         for goods in ms:
-            res.append(Goods.to_dict(goods))
+            # goods_dict = Goods.to_dict(goods)
+            # res.append(goods_dict)
             fuzzy_pid = obfuscate_id(goods.pid)
             fuzzy_ref_id = obfuscate_id(goods.ref_id)
             fuzzy_gid = obfuscate_id(goods.gid)
-            cname = goods.category.name
-            item = {'gid': fuzzy_gid, 'refid': fuzzy_ref_id, 'pid': fuzzy_pid, 'price': goods.price,
+            cname = goods.product.category.name
+            item = {'gid': fuzzy_gid, 'uid': fuzzy_ref_id, 'pid': fuzzy_pid, 'price': goods.price,
                     'name': goods.product.name}
-            pids.append(str(goods.pid))
+            pids.append(goods.pid)
             pidmap[fuzzy_pid] = item
             if cname in catemap:
                 catemap[cname]['goods'].append(item)
@@ -61,10 +67,11 @@ class GoodsDao(object):
         if pids:
             pi_ms: ModelSelect = ProductImg.select().where(ProductImg.pid.in_(pids), ProductImg.pin == 1)
             # pi: ProductImg = None
+            print("pi_ms:", pi_ms)
             for pi in pi_ms:
                 fuzzy_pid = obfuscate_id(pi.pid)
                 item = pidmap[fuzzy_pid]
-                item['imgurl']=pi.imgurl
+                item['imgurl'] = pi.imgurl
                 item['simgurl'] = pi.simgurl
         return res
 
@@ -77,21 +84,24 @@ class GoodsDao(object):
             Goods.gid == gid, Goods.pin == 0
         ).first()
         if goods:
-            goods_dict = Goods.to_dict(goods, ['gid'])
+            goods_dict = Goods.to_dict(goods, ['gid', 'ref_id', 'pid'])
             goods_dict['gid'] = obfuscate_id(goods.gid)
+            goods_dict['uid'] = obfuscate_id(goods.ref_id)
+            goods_dict['pid'] = obfuscate_id(goods.pid)
             goods_dict['name'] = goods.product.name
             goods_dict['netweight'] = goods.product.netweight
-            goods_dict['sugar'] = goods.product.sugar
-            goods_dict['cname'] = goods.category.name
+            # goods_dict['sugar'] = goods.product.sugar
+            goods_dict['cname'] = goods.product.category.name
             goods_dict['imgurls'] = []
             goods_dict['simgurls'] = []
             goods_dict['uids'] = []
             if goods.pid:
                 imgs = cls.query_imgs(goods.pid)
-                for pid,imgurl,simgurl,ref_id in imgs:
-                    goods_dict['imgurls'].append(imgurl)
-                    goods_dict['simgurls'].append(simgurl)
-                    goods_dict['uids'].append(obfuscate_id(ref_id))
+                for pi_dict in imgs:
+                    fuzzy_uid = pi_dict['uid']
+                    goods_dict['imgurls'].append(pi_dict['imgurl'])
+                    goods_dict['simgurls'].append(pi_dict['simgurl'])
+                    goods_dict['uids'].append(fuzzy_uid)
             return goods_dict
         return {}
 
@@ -102,13 +112,43 @@ class GoodsDao(object):
 
     @classmethod
     @query_wrap_db
+    def query_product_dict_list(cls, ref_id, org_id, pin, offset, size, is_single=True):
+        cp_ms: ModelSelect = CourseProduct.select(CourseProduct, Category).join(
+            Category, on=(Category.cid == CourseProduct.cid), attr="category")
+
+        if is_single:
+            cp_ms = cp_ms.where(CourseProduct.ref_id == ref_id)
+        else:
+            oo = OrgOrg.alias()
+            au = AuthUser.alias()
+            org_arr: ModelSelect = oo.select(oo.org_id).join(
+                au, on=(oo.parent == au.org_id)
+            ).where(au.ref_id == ref_id).alias("org_arr")
+            cp_ms = cp_ms.join(AuthUser, on=(CourseProduct.ref_id == AuthUser.ref_id)).where(
+                (AuthUser.org_id == org_id) | (AuthUser.org_id.in_(org_arr)))
+        if pin is not None:
+            cp_ms = cp_ms.where(CourseProduct.pin == pin)
+        cp_ms = cp_ms.offset(offset).limit(size)
+        print("query_product_dict_list cp_ms:", cp_ms)
+        res = []
+        for cp in cp_ms:
+            cp_dict = CourseProduct.to_dict(cp, ['pid', 'ref_id'])
+            cp_dict['pid'] = obfuscate_id(cp.pid)
+            cp_dict['ref_id'] = obfuscate_id(cp.ref_id)
+            cp_dict['cname'] = cp.category.name
+            res.append(cp_dict)
+        return res
+
+    @classmethod
+    @query_wrap_db
     def query_product_dict(cls, pid):
         cp_dict = None
         cp: CourseProduct = CourseProduct.select(CourseProduct, Category).join(
             Category, on=(Category.cid == CourseProduct.cid), attr="category").where(CourseProduct.pid == pid).first()
         if cp:
-            cp_dict = CourseProduct.to_dict(cp, ['pid'])
+            cp_dict = CourseProduct.to_dict(cp, ['pid', 'ref_id'])
             cp_dict['pid'] = obfuscate_id(cp.pid)
+            cp_dict['ref_id'] = obfuscate_id(cp.ref_id)
             cp_dict['cname'] = cp.category.name
             cc_ms: ModelSelect = CateCate.select().where(CateCate.cid == cp.cid).order_by(CateCate.lvl.asc())
             pcids = []
@@ -122,7 +162,6 @@ class GoodsDao(object):
     @query_wrap_db
     def query_product_by_name(cls, name):
         return CourseProduct.select().where(CourseProduct.name == name).first()
-
 
     @classmethod
     @query_wrap_db
@@ -141,19 +180,28 @@ class GoodsDao(object):
                     spu.field = ""
                 if not spu.desc:
                     spu.desc = ""
-                ProductSpu.select(ProductSpu).join()
+                # ProductSpu.select(ProductSpu).join()
                 if sql:
-                    sql="%s%s%s"%(sql,"""
-                    union
-                    ""","select a.spuid,a.structid,b.name,'%s','%s' from product_spu a,%s b where a.spuid=b.id and a.pid=%s"%(spu.desc,spu.field,spu.name,pid))
+                    suffix = "select a.spuid,a.structid,b.name,'{desc}','{field}' from productspu a,{table} b where a.spuid=b.id and a.pid={pid}".format(
+                        desc=spu.desc, field=spu.field, table=spu.name, pid=pid
+                    )
+                    sql = "{sql}{op}{suffix}".format(sql=sql, op=" union ", suffix=suffix)
+                    # sql = "%s%s%s" % (sql, """
+                    # union
+                    # ""","select a.spuid,a.structid,b.name,'%s','%s' from productspu a,%s b where a.spuid=b.id and a.pid=%s" % (
+                    #                   spu.desc, spu.field, spu.name, pid))
                 else:
-                    sql= "select a.spuid,a.structid,b.name,'%s','%s' from product_spu a,%s b where a.spuid=b.id and a.pid=%s"%(spu.desc,spu.field,spu.name,pid)
+                    sql = "select a.spuid,a.structid,b.name,'{desc}','{field}' from productspu a,{table} b where a.spuid=b.id and a.pid={pid}".format(
+                        desc=spu.desc, field=spu.field, table=spu.name, pid=pid
+                    )
             items = []
             if sql:
+                print("sql:", sql)
                 result_set = db.execute_sql(sql)
                 print("result_set:", result_set)
-                for spuid,structid,name,structname,field in result_set:
-                    item = {'spuid': spuid, 'name': name, 'structid': structid, 'structname': structname, 'field': field}
+                for spuid, structid, name, structname, field in result_set:
+                    item = {'spuid': spuid, 'name': name, 'structid': structid, 'structname': structname,
+                            'field': field}
                     print("result set item:", item)
                     items.append(item)
                     # items.append(
@@ -172,6 +220,7 @@ class GoodsDao(object):
     @query_wrap_db
     def query_spu(cls, cid):
         spu_ms: ModelSelect = SPUStruct.select().where(SPUStruct.cid == cid)
+
         spu_rs = []
         spu: SPUStruct = None
         for spu in spu_ms:
@@ -180,12 +229,12 @@ class GoodsDao(object):
                 _rs = db.execute_sql("select id,name,min,mmax from {field} order by weight desc".format(field=spu.name))
                 for id, name, min, mmax in _rs:
                     items.append([id, name, min, mmax])
-                spu_rs.append({"key": spu.desc,"structid":spu.structid,"spu":items,"field":spu.field})
+                spu_rs.append({"key": spu.desc, "structid": spu.structid, "spu": items, "field": spu.field})
             else:
                 _rs = db.execute_sql("select id,name from {field} order by weight desc".format(field=spu.name))
-                for id,name in _rs:
-                    items.append([id,name])
-                spu_rs.append({"key":spu.desc,"structid":spu.structid,"spu":items})
+                for id, name in _rs:
+                    items.append([id, name])
+                spu_rs.append({"key": spu.desc, "structid": spu.structid, "spu": items})
         return spu_rs
 
     @classmethod
@@ -194,8 +243,9 @@ class GoodsDao(object):
         pi_ms: ModelSelect = ProductImg.select().where(ProductImg.pid == pid).order_by(ProductImg.idx.asc())
         imgs = []
         for pi in pi_ms:
-            pi_dict = ProductImg.to_dict(pi)
+            pi_dict = ProductImg.to_dict(pi, 'ref_id')
             pi_dict['istop'] = pi.pin
+            pi_dict['uid'] = obfuscate_id(pi.ref_id)
             imgs.append(pi_dict)
         return imgs
 
@@ -275,5 +325,5 @@ class GoodsDao(object):
         _params = {p: params[p] for p in params if p in ProductImg.field_names()}
         pi: ProductImg = ProductImg(**_params)
         with db:
-            ProductImg.save(force_insert=True)
+            pi.save(force_insert=True)
             return pi

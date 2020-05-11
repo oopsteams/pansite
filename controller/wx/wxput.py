@@ -52,12 +52,15 @@ class WXAppPut(BaseHandler):
         elif "updateimg" == cmd:
             fuzzy_pid = params.get("pid", None)
             url = params.get("url", "")
+            fuzzy_uid = params.get("uid", None)
             tag = params.get("tag", "")
             if url and fuzzy_pid:
                 pid = decrypt_id(fuzzy_pid)
+                p_ref_id = decrypt_id(fuzzy_uid)
                 basepath = self.context['basepath']
                 istop = int(params.get("top", "0"))
-                goods_service.update_img(pid, url, istop, cmd, self.ref_id, basepath)
+                goods_service.update_img(pid, url, istop, cmd, p_ref_id, basepath)
+                rs['istop'] = istop
             else:
                 rs['status'] = -1
                 rs['error'] = "Product[{}] not exists!".format(fuzzy_pid)

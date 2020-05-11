@@ -56,56 +56,10 @@ class SPUStruct(BaseModel):
         return object_to_dict(instance, cls.field_names())
 
 
-class Brand(BaseModel):
+class SPUModel(Model):
     id = AutoField()
     name = CharField(null=True, max_length=64)
-    weight = IntegerField(null=False, default=0)
-
-    @classmethod
-    def field_names(cls):
-        return BASE_FIELDS + ["id", "name", "weight"]
-
-    @classmethod
-    def to_dict(cls, instance):
-        return object_to_dict(instance, cls.field_names())
-
-
-class NetWeight(BaseModel):
-    id = AutoField()
-    name = CharField(null=True, max_length=64)
-    min = IntegerField(null=False, default=0)
-    mmax = IntegerField(null=False, default=0)
-    weight = IntegerField(null=False, default=0)
-
-    @classmethod
-    def field_names(cls):
-        return BASE_FIELDS + ["id", "name", "min", "mmax", "weight"]
-
-    @classmethod
-    def to_dict(cls, instance):
-        return object_to_dict(instance, cls.field_names())
-
-
-class SweetNess(BaseModel):
-    id = AutoField()
-    name = CharField(null=True, max_length=64)
-    min = FloatField(null=False, default=0)
-    mmax = FloatField(null=False, default=0)
     weight = FloatField(null=False, default=0)
-
-    @classmethod
-    def field_names(cls):
-        return BASE_FIELDS + ["id", "name", "min", "mmax", "weight"]
-
-    @classmethod
-    def to_dict(cls, instance, excludes=[]):
-        return object_to_dict(instance, cls.field_names(), excludes)
-
-
-class Pack(Model):
-    id = IntegerField(null=False, default=0)
-    name = CharField(null=True, max_length=64)
-    weight = IntegerField(null=False, default=0)
 
     @classmethod
     def field_names(cls):
@@ -115,9 +69,43 @@ class Pack(Model):
     def to_dict(cls, instance, excludes=[]):
         return object_to_dict(instance, cls.field_names(), excludes)
 
-    class Meta:
-        database = db
-        primary_key = CompositeKey('id')
+
+class Brand(SPUModel):
+    pass
+
+
+class NetWeight(SPUModel):
+    min = IntegerField(null=False, default=0)
+    mmax = IntegerField(null=False, default=0)
+
+    @classmethod
+    def field_names(cls):
+        return SPUModel.field_names() + ["min", "mmax"]
+
+    @classmethod
+    def to_dict(cls, instance, excludes=[]):
+        return object_to_dict(instance, cls.field_names(), excludes)
+
+
+class SweetNess(SPUModel):
+    min = FloatField(null=False, default=0)
+    mmax = FloatField(null=False, default=0)
+
+    @classmethod
+    def field_names(cls):
+        return SPUModel.field_names() + ["min", "mmax"]
+
+    @classmethod
+    def to_dict(cls, instance, excludes=[]):
+        return object_to_dict(instance, cls.field_names(), excludes)
+
+
+class Subjects(SPUModel):
+    pass
+
+
+class Pack(SPUModel):
+    pass
 
 
 class CourseProduct(BaseModel):

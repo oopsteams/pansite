@@ -113,8 +113,11 @@ class WXAppGet(BaseHandler):
 
             return rs
         elif "querygoods" == cmd:
-            gid = int(params.get('gid', '0'))
-            goods = goods_service.query_goods_by_gid(gid)
+            fuzzy_gid = params.get('gid', None)
+            goods = []
+            if fuzzy_gid:
+                gid = decrypt_id(fuzzy_gid)
+                goods = goods_service.query_goods_by_gid(gid)
             rs['goods'] = goods
         elif "querygoodslist" == cmd:
             ordmapstr = params.get('ordmap', '')
@@ -128,20 +131,36 @@ class WXAppGet(BaseHandler):
             org_id = self.guest.auth_user.org_id
             goodslist = goods_service.query_goods_by_org(org_id, ordmap, offset, n)
             rs['goodslist'] = goodslist
+        elif "queryproductlist" == cmd:
+            size = 100
+            page = int(params.get('page', '1'))
+            pin = params.get('pin', None)
+            if pin:
+                pin = int(pin)
+            print("user_payload:", self.user_payload)
+            rs['list'] = goods_service.query_product_list_by_ref(self.ref_id, self.org_id, pin, page, size, False)
+            rs['page'] = page
+            rs['size'] = size
         elif "queryproduct" == cmd:
             size = 100
-            pid = int(params.get('pid', '0'))
+            fuzzy_pid = params.get('pid', None)
             page = int(params.get('page', '1'))
-            pin = int(params.get('pin', '-1'))
+            # pin = int(params.get('pin', '-1'))
             products = []
-            cp_dict = goods_service.query_product_dict(pid)
-            if cp_dict:
-                products.append(cp_dict)
-            rs['products'] = products
             spus = []
-            if products:
-                spus = goods_service.query_spu_by_pid(pid, products[0]['tpcid'])
-                rs['goods'] = goods_service.query_goods_by_pid(pid)
+            print("queryproduct fuzzy_pid:", fuzzy_pid)
+            if fuzzy_pid:
+                pid = int(decrypt_id(fuzzy_pid))
+                cp_dict = goods_service.query_product(pid)
+                if cp_dict:
+                    products.append(cp_dict)
+                rs['products'] = products
+                if cp_dict:
+                    spus = goods_service.query_spu_by_pid(pid, cp_dict['tpcid'])
+                    goods_dict = goods_service.query_goods_by_pid(pid)
+                    if goods_dict:
+                        goods_dict['price'] = goods_dict['price'] / float(100)
+                    rs['goods'] = goods_dict
             rs['spus'] = spus
             rs['page'] = page
             rs['size'] = size
@@ -157,9 +176,7 @@ class WXAppGet(BaseHandler):
             rs['structs'] = structs
         elif "queryimgs" == cmd:
             fuzzy_pid = params.get('pid')
-
             pid = int(decrypt_id(fuzzy_pid))
-
             imgs = goods_service.query_imgs(pid)
             rs['imgs'] = imgs
         return rs

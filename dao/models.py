@@ -87,13 +87,27 @@ def new_guest_account(org_id, role_id, type, name="guest", mobile_no="0000000000
     au.save(force_insert=True)
 
 
+def new_sub_category(pc: Category):
+    if pc:
+        if not Category.select().where(Category.name == '好芳法').exists():
+            sc: Category = Category(**{"name": "好芳法"})
+            sc.save(force_insert=True)
+            CateCate.insert_many({"cid": sc.cid, "pcid": pc.cid, "lvl": 1}).execute()
+            CateCate.insert_many({"cid": sc.cid, "pcid": sc.cid, "lvl": 2}).execute()
+        if not Category.select().where(Category.name == '诸葛学堂').exists():
+            sc: Category = Category(**{"name": "诸葛学堂"})
+            sc.save(force_insert=True)
+            CateCate.insert_many({"cid": sc.cid, "pcid": pc.cid, "lvl": 1}).execute()
+            CateCate.insert_many({"cid": sc.cid, "pcid": sc.cid, "lvl": 2}).execute()
+
+
 def init_db():
     db.create_tables([Accounts, DataItem, WorkerLoadMap, ShareLogs, Tags, UserTags, PanAccounts, TransferLogs,
                       AccountExt, CommunityDataItem, UserRootCfg, ShareFr, LoopAdTask, AdSource, AuthUser, UReference,
                       Fun, Role, RoleExtend, Org, OrgOrg, UserRefExtend, UserRoleExtend, UserOrgExtend, Product, Order,
                       OrderItem, Assets, LocalVisible, CommunityVisible, ShareApp, DataItemExt, ClientDataItem,
                       AppCfg, AccountWxExt, Category, CateCate, SPUStruct, Brand, NetWeight, SweetNess, Pack,
-                      CourseProduct, ProductSpu, ProductImg, Goods], safe=True)
+                      CourseProduct, ProductSpu, ProductImg, Goods, Subjects], safe=True)
 
     with db:
         if not Org.select().where(Org.id == 1).exists():
@@ -137,8 +151,11 @@ def init_db():
             role_id = 1
             single = 1
             new_guest_account(org_id, role_id, single)
-        if not Category.select().where(Category.name == '亲子教育').exists():
-            Category.insert_many({"name": "亲子教育", "pin": 2}).execute()
+        if not Category.select().where(Category.name == '教育平台').exists():
+            Category.insert_many({"name": "教育平台", "pin": 2}).execute()
+        c: Category = Category.select().where(Category.name == '教育平台').first()
+        if c:
+            new_sub_category(c)
 
     print("Init database ok")
 

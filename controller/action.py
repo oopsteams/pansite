@@ -37,6 +37,7 @@ class BaseHandler(RequestHandler):
         self.user_type = USER_TYPE['SINGLE']
         self.user_id = 0
         self.ref_id = 0
+        self.org_id = 0
         self.default_pan_id = 0
         self.is_web = False
         self.query_path = ''

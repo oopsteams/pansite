@@ -26,9 +26,13 @@ class GoodsService(BaseService):
                 goods = GoodsDao.query_goods_by_pid_pin(pid, 1)
             if goods:
                 g_dict = Goods.to_dict(goods, ['gid'])
-                g_dict['id'] = obfuscate_id(goods.gid)
+                g_dict['gid'] = obfuscate_id(goods.gid)
                 return g_dict
         return {}
+
+    def query_product_list_by_ref(self, ref_id, org_id, pin, page, size, is_single):
+        offset = (page - 1) * size
+        return GoodsDao.query_product_dict_list(ref_id, org_id, pin, offset, size, is_single)
 
     def query_product(self, pid):
         return GoodsDao.query_product_dict(pid)
@@ -68,6 +72,7 @@ class GoodsService(BaseService):
 
     def update_img(self, pid, url, istop, cmd, ref_id, basepath):
         old_pi = GoodsDao.query_product_img_by_pid_url(pid, url)
+        print("update_img pid:", pid, ",url:", url)
         if "del" == cmd:
             upload_path = os.path.join(basepath, 'static', 'files', str(ref_id), str(pid))  # 文件的暂存路径
             upload_thumb_path = os.path.join(upload_path, 's')
@@ -85,7 +90,7 @@ class GoodsService(BaseService):
                 if os.path.exists(thumb_file_path):
                     os.remove(thumb_file_path)
         else:
-            if old_pi.pid != istop:
+            if old_pi and old_pi.pin != istop:
                 GoodsDao.update_product_img(pid, url, {'pin': istop})
 
     def offgoods(self, gid):
