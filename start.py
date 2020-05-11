@@ -62,7 +62,7 @@ def update_access_token():
         pan_acc_list = PanAccounts.select().where(PanAccounts.user_id == 1)
         for pan_acc in pan_acc_list:
             logger.info("will validation pan acc id:{}, name:{}".format(pan_acc.id, pan_acc.name))
-            auth_service.check_pan_token_validation(pan_acc)
+            # auth_service.check_pan_token_validation(pan_acc)
     except Exception as e:
         traceback.print_exc()
         print("update_access_token err:", e)
