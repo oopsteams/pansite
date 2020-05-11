@@ -71,7 +71,14 @@ class SPUModel(Model):
 
 
 class Brand(SPUModel):
-    pass
+
+    @classmethod
+    def field_names(cls):
+        return SPUModel.field_names()
+
+    @classmethod
+    def to_dict(cls, instance, excludes=[]):
+        return object_to_dict(instance, cls.field_names(), excludes)
 
 
 class NetWeight(SPUModel):
