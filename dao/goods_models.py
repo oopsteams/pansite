@@ -3,7 +3,7 @@
 Created by susy at 2020/4/29
 """
 from peewee import *
-from dao.base import db, BaseModel, BASE_FIELDS
+from dao.base import db, BaseModel, BASE_FIELDS, db_create_field_sql
 from utils import object_to_dict
 
 
@@ -57,12 +57,18 @@ class SPUStruct(BaseModel):
 
 
 class SPUModel(Model):
+
+    class Meta:
+        database = db
+
+    id = AutoField()
+    created_at = DateTimeField(index=True, constraints=db_create_field_sql())
     name = CharField(null=True, max_length=64)
     weight = FloatField(null=False, default=0)
 
     @classmethod
     def field_names(cls):
-        return ["id", "name", "weight"]
+        return ["id", "created_at", "name", "weight"]
 
     @classmethod
     def to_dict(cls, instance, excludes=[]):
@@ -70,11 +76,10 @@ class SPUModel(Model):
 
 
 class Brand(SPUModel):
-    id = AutoField()
+    pass
 
 
 class NetWeight(SPUModel):
-    id = AutoField()
     min = IntegerField(null=False, default=0)
     mmax = IntegerField(null=False, default=0)
 
@@ -88,7 +93,6 @@ class NetWeight(SPUModel):
 
 
 class SweetNess(SPUModel):
-    id = AutoField()
     min = FloatField(null=False, default=0)
     mmax = FloatField(null=False, default=0)
 
@@ -102,11 +106,11 @@ class SweetNess(SPUModel):
 
 
 class Subjects(SPUModel):
-    id = AutoField()
+    pass
 
 
 class Pack(SPUModel):
-    id = AutoField()
+    pass
 
 
 class CourseProduct(BaseModel):
