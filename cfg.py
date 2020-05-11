@@ -67,7 +67,7 @@ PAN_ROOT_DIR = {
     "alias": "分享盘"
 }
 ES = {
-    "hosts": [{"host": "127.0.0.1"}],
+    "hosts": [{"host": "es.oopsteam.site", "port": 9088}],
 
     "share": {
         "index_name": "share",
