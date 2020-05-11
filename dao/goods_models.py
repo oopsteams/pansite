@@ -57,7 +57,6 @@ class SPUStruct(BaseModel):
 
 
 class SPUModel(Model):
-    id = AutoField()
     name = CharField(null=True, max_length=64)
     weight = FloatField(null=False, default=0)
 
@@ -71,17 +70,11 @@ class SPUModel(Model):
 
 
 class Brand(SPUModel):
-
-    @classmethod
-    def field_names(cls):
-        return SPUModel.field_names()
-
-    @classmethod
-    def to_dict(cls, instance, excludes=[]):
-        return object_to_dict(instance, cls.field_names(), excludes)
+    id = AutoField()
 
 
 class NetWeight(SPUModel):
+    id = AutoField()
     min = IntegerField(null=False, default=0)
     mmax = IntegerField(null=False, default=0)
 
@@ -95,6 +88,7 @@ class NetWeight(SPUModel):
 
 
 class SweetNess(SPUModel):
+    id = AutoField()
     min = FloatField(null=False, default=0)
     mmax = FloatField(null=False, default=0)
 
@@ -108,11 +102,11 @@ class SweetNess(SPUModel):
 
 
 class Subjects(SPUModel):
-    pass
+    id = AutoField()
 
 
 class Pack(SPUModel):
-    pass
+    id = AutoField()
 
 
 class CourseProduct(BaseModel):
