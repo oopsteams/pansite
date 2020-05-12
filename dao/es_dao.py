@@ -20,6 +20,7 @@ class EsConnections(object):
         self.index_doc_cache = {}
         if not hosts:
             hosts = ES["hosts"]
+        print("elastic search hosts:", hosts)
         self.es = Elasticsearch(hosts, sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60,
                                 sniff_timeout=10, retry_on_timeout=True)
         logger.info("EsConnections es init hosts=%s" % hosts)
