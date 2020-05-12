@@ -6,6 +6,7 @@ from dao.models import db, Accounts, DataItem, PanAccounts, AuthUser, CommunityD
     TransferLogs, query_wrap_db, ShareFr, LoopAdTask, AdSource, CommunityVisible, LocalVisible, ShareApp
 from utils import utils_es, get_now_datetime, obfuscate_id
 from dao.es_dao import es_dao_share
+from cfg import CDN
 
 
 class CommunityDao(object):
@@ -98,7 +99,7 @@ class CommunityDao(object):
     @classmethod
     @query_wrap_db
     def loop_ad_tasks(cls):
-        rs = {}
+        rs = {"hosts": CDN["hosts"]}
         task: LoopAdTask = LoopAdTask.select().where(LoopAdTask.started_at <= get_now_datetime(), (LoopAdTask.ended_at.is_null()) | (LoopAdTask.ended_at > get_now_datetime()), LoopAdTask.pin == 0).first()
         if task:
             rs = LoopAdTask.to_dict(task)
