@@ -23,7 +23,7 @@ class EsConnections(object):
         # print("elastic search hosts:", hosts)
         # self.es = Elasticsearch(hosts, sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60,
         #                         sniff_timeout=10, retry_on_timeout=True)
-        self.es = Elasticsearch(hosts, sniff_on_start=False, sniff_on_connection_fail=False, sniffer_timeout=60,
+        self.es = Elasticsearch(hosts, sniff_on_start=False, sniff_on_connection_fail=False, sniffer_timeout=None,
                                 sniff_timeout=10, retry_on_timeout=True)
         logger.info("EsConnections es init hosts=%s" % hosts)
         # print("elastic search es:", self.es)
