@@ -24,6 +24,7 @@ class EsConnections(object):
         self.es = Elasticsearch(hosts, sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60,
                                 sniff_timeout=10, retry_on_timeout=True)
         logger.info("EsConnections es init hosts=%s" % hosts)
+        print("elastic search es:", self.es)
 
         props = {
             "id": {"type": "long"},
