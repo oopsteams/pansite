@@ -99,7 +99,7 @@ class CommunityDao(object):
     @classmethod
     @query_wrap_db
     def loop_ad_tasks(cls):
-        rs = {"hosts": CDN["hosts"]}
+        rs = {}
         task: LoopAdTask = LoopAdTask.select().where(LoopAdTask.started_at <= get_now_datetime(), (LoopAdTask.ended_at.is_null()) | (LoopAdTask.ended_at > get_now_datetime()), LoopAdTask.pin == 0).first()
         if task:
             rs = LoopAdTask.to_dict(task)
@@ -109,6 +109,7 @@ class CommunityDao(object):
                 for s in srcs:
                     s_dict = AdSource.to_dict(s)
                     rs['sources'].append(s_dict)
+        rs["hosts"] = CDN["hosts"]
         return rs
 
     @classmethod
