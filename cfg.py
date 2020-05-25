@@ -67,7 +67,7 @@ PAN_ROOT_DIR = {
     "alias": "分享盘"
 }
 CDN = dict(
-    hosts=["https://static.oopsteam.site"]
+    hosts=["http://static.oopsteam.site"]
 )
 ES = {
     "hosts": [{"host": "111.229.193.232", "port": 9200}],
