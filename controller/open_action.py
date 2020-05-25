@@ -36,13 +36,14 @@ class OpenHandler(BaseHandler):
             self.to_write_json(rs)
         elif path.endswith("/se"):
             kw = self.get_argument("kw")
+            pid = self.get_argument("pid", None)
             tag = self.get_argument("tag", None)
             path_tag = self.get_argument("path_tag", None)
             source = self.get_argument("source", "")
             page = self.get_argument("page", "0")
             # print("kw:", kw)
             # print("source:", source)
-            rs = open_service.search(path_tag, tag, kw, source, page)
+            rs = open_service.search(path_tag, tag, kw, source, pid, page)
             self.to_write_json(rs)
         elif path.endswith("/shared"):
             fs_id = self.get_argument("fs_id")
