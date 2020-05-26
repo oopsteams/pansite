@@ -188,6 +188,8 @@ class OpenService(BaseService):
                 else:
                     if not path_tag:
                         sp.add_must(field='pos', value=2)
+                    else:
+                        _sort_fields = [{"pos": {"order": "asc"}}]
                 es_dao_fun = es_dao_share
         # if tag and "local" != source:
         #     sp.add_must(field='all', value=tag)
@@ -196,8 +198,6 @@ class OpenService(BaseService):
             sp.add_must(False, field='query_string', value="%s" % tag)
         if path_tag:
             sp.add_must(field='path', value="%s" % path_tag)
-
-
 
         es_body = build_query_item_es_body(sp, sort_fields=_sort_fields)
         logger.info("es_body:{}".format(es_body))
