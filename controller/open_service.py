@@ -185,6 +185,7 @@ class OpenService(BaseService):
                 # sp.add_must(field='pin', value=1)
                 if pid:
                     sp.add_must(field='parent', value=pid)
+                    _sort_fields = [{"filename": {"order": "asc"}}]
                 else:
                     if not path_tag:
                         sp.add_must(field='pos', value=2)
