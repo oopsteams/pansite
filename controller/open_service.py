@@ -188,7 +188,7 @@ class OpenService(BaseService):
                 else:
                     if not path_tag:
                         sp.add_must(field='pos', value=2)
-                        _sort_fields = [{"path": {"order": "asc"}}]
+                        _sort_fields = [{"parent": {"order": "asc"}}]
                     else:
                         _sort_fields = [{"pos": {"order": "asc"}}, {"filename": {"order": "asc"}}]
                 es_dao_fun = es_dao_share
