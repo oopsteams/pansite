@@ -164,7 +164,7 @@ class OpenService(BaseService):
             new_keyword = keyword
         kw = new_keyword
         # print("kw:", kw)
-        size = 15
+        size = 50
         offset = int(page) * size
         if offset > MAX_RESULT_WINDOW - size:
             offset = MAX_RESULT_WINDOW - size
