@@ -188,9 +188,9 @@ class OpenService(BaseService):
                 else:
                     if not path_tag:
                         sp.add_must(field='pos', value=2)
-                        _sort_fields = [{"filename": {"order": "asc"}}]
+                        _sort_fields = [{"path": {"order": "asc"}}]
                     else:
-                        _sort_fields = [{"pos": {"order": "asc"}}]
+                        _sort_fields = [{"pos": {"order": "asc"}}, {"filename": {"order": "asc"}}]
                 es_dao_fun = es_dao_share
         # if tag and "local" != source:
         #     sp.add_must(field='all', value=tag)
