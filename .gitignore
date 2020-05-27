@@ -134,3 +134,4 @@ logs
 .idea
 *.apk
 /static/ext
+/static/files
