@@ -9,7 +9,7 @@ from dao.mdao import DataDao
 from dao.man_dao import ManDao
 from utils.utils_es import SearchParams, build_query_item_es_body
 from dao.es_dao import es_dao_share, es_dao_local
-from dao.models import DataItem, UserRootCfg, PanAccounts
+from dao.models import DataItem, UserRootCfg, PanAccounts, CommunityDataItem
 from utils.constant import TOP_DIR_FILE_NAME, SHARE_ES_TOP_POS, PRODUCT_TAG, ES_TAG_MAP
 from utils import scale_size, split_filename
 from cfg import MASTER_ACCOUNT_ID
@@ -240,6 +240,20 @@ class MPanService(BaseService):
         if doc_id:
             CommunityDao.new_community_visible(doc_id, params['pin'])
             es_dao_share().update_fields(doc_id, **params)
+
+    def update_item_fields(self, source, fs_id, params):
+        rs = {"state": 0}
+        if "local" == source:
+            di: DataItem = DataDao.query_data_item_by_fs_id(fs_id)
+            if di:
+                DataDao.update_data_item(di.id, params)
+        elif "shared" == source:
+            cdi: CommunityDataItem = CommunityDao.get_community_item_by_fs_id(fs_id)
+            if cdi:
+                CommunityDao.update_data_item(cdi.id, params)
+        else:
+            rs["err"] = "not found fs_id:{}".format(fs_id)
+        return rs
 
     def update_shared_sub_dir(self, parent_id, params):
         if parent_id:

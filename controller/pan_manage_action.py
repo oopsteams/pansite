@@ -11,8 +11,6 @@ from controller.mpan_service import mpan_service
 from controller.sync_service import sync_pan_service
 from controller.service import pan_service
 from dao.models import DataItem
-from cfg import MASTER_ACCOUNT_ID
-from utils.constant import USER_TYPE
 
 
 class ManageHandler(BaseHandler):
@@ -191,8 +189,15 @@ class ManageHandler(BaseHandler):
         elif path.endswith("/batchupdate"):
             pan_id = self.get_argument("panid", "0")
             pan_acc = pan_service.get_pan_account(pan_id, self.user_id)
-            cls = [fn for fn in DataItem.field_names() if fn not in ["id", "created_at", "updated_at", "pan_acc", "account_id"]]
-            params = {"pan_id": int(pan_id), "name": pan_acc.name, "columns": cls}
+            # "server_ctime",
+            #                                              "account_id", "panacc", "sized", "synced", "thumb"
+            cls = [fn for fn in DataItem.field_names() if fn not in ["id", "created_at",
+                                                                     "updated_at", "pan_acc",
+                                                                     "account_id", "dlink_updated_at",
+                                                                     "server_ctime", "account_id",
+                                                                     "panacc"]]
+            params = {"pan_id": int(pan_id), "name": pan_acc.name, "columns": cls, "tablename": ""}
+
             self.render('batchupdate.html', **params)
         elif path.endswith("/batchupdatedo"):
             pan_id = self.get_argument("panid", "0")
@@ -211,6 +216,15 @@ class ManageHandler(BaseHandler):
             rs = {"state": 0, "cnt": cnt, "lines_cnt": len(lines), "cname": cname}
             # print("kv:", kv)
             # print("cnt:", cnt, ",lines cnt:", len(lines), "cname:", cname, "pan_id:", pan_id)
+            self.to_write_json(rs)
+        elif path.endswith("/updateitem"):
+            fs_id = self.get_argument("fs_id", "")
+            source = self.get_argument("source", "")
+            cname = self.get_argument("cname")
+            value = self.get_argument("value")
+            _params = {cname: value}
+            rs = {"params": _params, "source": source, "fs_id": fs_id}
+            # rs = mpan_service.update_item_fields(source, fs_id, _params)
             self.to_write_json(rs)
         else:
             self.to_write_json({})

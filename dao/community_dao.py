@@ -41,6 +41,11 @@ class CommunityDao(object):
 
     @classmethod
     @query_wrap_db
+    def get_community_item_by_fs_id(cls, fs_id):
+        return CommunityDataItem.select().where(CommunityDataItem.fs_id == fs_id).first()
+
+    @classmethod
+    @query_wrap_db
     def query_community_item_by_parent_all(cls, parent_id, offset=0, limit=100):
         return CommunityDataItem.select().where(CommunityDataItem.parent == parent_id).limit(limit).offset(offset)
 
@@ -207,6 +212,15 @@ class CommunityDao(object):
                         CommunityDataItem.id == data_item.id).execute()
                 cls.update_es_by_community_item(data_item.id, {'parent': params.get('parent', ''),
                                                                'size': params.get('size', 0)})
+
+    @classmethod
+    def update_data_item(cls, pk_id, params):
+        _params = {p: params[p] for p in params if p in CommunityDataItem.field_names()}
+        with db:
+            CommunityDataItem.update(**_params).where(CommunityDataItem.id == pk_id).execute()
+            es_up_params = es_dao_share().filter_update_params(_params)
+            if es_up_params:
+                es_dao_share().update_fields(pk_id, **es_up_params)
 
     @classmethod
     def sync_community_item_to_es(cls, data_item: CommunityDataItem, source):
