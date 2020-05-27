@@ -223,8 +223,10 @@ class ManageHandler(BaseHandler):
             cname = self.get_argument("cname")
             value = self.get_argument("value")
             _params = {cname: value}
-            rs = {"params": _params, "source": source, "fs_id": fs_id}
-            # rs = mpan_service.update_item_fields(source, fs_id, _params)
+            rs = mpan_service.update_item_fields(source, fs_id, _params)
+            rs["params"] = _params
+            rs["source"] = source
+            rs["fs_id"] = fs_id
             self.to_write_json(rs)
         else:
             self.to_write_json({})
