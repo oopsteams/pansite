@@ -10,28 +10,28 @@
     <script src="/static/js/base.js"></script>
 </head>
 <body>
+<fieldset>
+    <legend>批量更新</legend>
     <form id="batch_update_form" onsubmit="return false">
         <dl>
             <dt>更新列名(Pan:{{name}})</dt>
             <dd>
                 <select name="cname">
                     {% for cl in columns %}
-                        <option value="{{cl}}">{{cl}}</option>
+                    <option value="{{cl}}">{{cl}}</option>
                     {% end %}
                 </select>
             </dd>
             <dt><label for="datas">更新内容</label></dt>
-            <dd><textarea id="datas" rows="10" cols="10" name="datas" style="width:800px;height:400px;">0001	塞尔达传说 旷野之息</textarea></dd>
+            <dd><textarea id="datas" rows="10" cols="10" name="datas"
+                          style="width:800px;height:400px;">0001	塞尔达传说 旷野之息</textarea></dd>
         </dl>
         <input name="pan_id" type="hidden" value="{{pan_id}}"/>
         <input type="submit" tabindex="-1" onclick="update_items()"/>
     </form>
-    <fieldset>
-	    <legend>批量更新</legend>
-        <div class="toolbar">
-            <button id="partial">文件临时节点</button>
-        </div>
-    </fieldset>
+</fieldset>
+<fieldset>
+    <legend>根据fs_id更新</legend>
     <form id="update_item_form" onsubmit="return false">
         <dl>
             <dt>更新源(Pan:{{name}})</dt>
@@ -42,43 +42,45 @@
                 </select>
             </dd>
             <dt><label for="fs_id">更新内容fs_id</label></dt>
-            <dd><input id="fs_id" name="fs_id" /></dd>
+            <dd><input id="fs_id" name="fs_id"/></dd>
             <dt>更新列名(Pan:{{name}})</dt>
             <dd>
                 <select name="cname">
                     {% for cl in columns %}
-                        <option value="{{cl}}">{{cl}}</option>
+                    <option value="{{cl}}">{{cl}}</option>
                     {% end %}
                 </select>
             </dd>
             <dt><label for="value">更新内容</label></dt>
-            <dd><input id="value" name="value" /></dd>
+            <dd><input id="value" name="value"/></dd>
         </dl>
         <input name="pan_id" type="hidden" value="{{pan_id}}"/>
         <input type="submit" tabindex="-1" onclick="update_item()"/>
     </form>
+</fieldset>
+
 </body>
 <script>
     let panid = "{{pan_id}}";
-    let update_items = function(){
-            let data = $('#batch_update_form').serializeArray();
-            let jsonObj={"pan_id": panid};
-            $(data).each(function(){
-                jsonObj[this.name]=this.value;
-            });
-            console.log('dist_product:', jsonObj);
-            call_service('/man/batchupdatedo?tk='+GetQueryString('tk'), jsonObj, function (res) {
-                console.log('res result:', res);
+    let update_items = function () {
+        let data = $('#batch_update_form').serializeArray();
+        let jsonObj = {"pan_id": panid};
+        $(data).each(function () {
+            jsonObj[this.name] = this.value;
+        });
+        console.log('dist_product:', jsonObj);
+        call_service('/man/batchupdatedo?tk=' + GetQueryString('tk'), jsonObj, function (res) {
+            console.log('res result:', res);
 
-            });
-        };
+        });
+    };
     let update_item = function () {
         let data = $('#update_item_form').serializeArray();
-        let jsonObj={"pan_id": panid};
-        $(data).each(function(){
-            jsonObj[this.name]=this.value;
+        let jsonObj = {"pan_id": panid};
+        $(data).each(function () {
+            jsonObj[this.name] = this.value;
         });
-        call_service('/man/updateitem?tk='+GetQueryString('tk'), jsonObj, function (res) {
+        call_service('/man/updateitem?tk=' + GetQueryString('tk'), jsonObj, function (res) {
             console.log('res result:', res);
 
         });
