@@ -132,7 +132,7 @@ class OpenService(BaseService):
 
         return None
 
-    def search(self, path_tag, tag, keyword, source, pid, page):
+    def search(self, path_tag, tag, keyword, source, pid, page, size=50):
         _app_map_cache = {}
         if not source:
             source = 'shared'
@@ -164,7 +164,7 @@ class OpenService(BaseService):
             new_keyword = keyword
         kw = new_keyword
         # print("kw:", kw)
-        size = 50
+        # size = 50
         offset = int(page) * size
         if offset > MAX_RESULT_WINDOW - size:
             offset = MAX_RESULT_WINDOW - size
