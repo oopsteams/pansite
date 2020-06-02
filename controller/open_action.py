@@ -6,7 +6,7 @@ from controller.action import BaseHandler
 from dao.community_dao import CommunityDao
 from controller.open_service import open_service
 from cfg import DEFAULT_CONTACT_QR_URI, bd_auth_path, PAN_SERVICE
-from utils import log as logger
+from utils import log as logger, url_decode
 
 
 class OpenHandler(BaseHandler):
@@ -38,6 +38,7 @@ class OpenHandler(BaseHandler):
             kw = self.get_argument("kw")
             pid = self.get_argument("pid", None)
             tag = self.get_argument("tag", None)
+            tag = url_decode(tag)
             path_tag = self.get_argument("path_tag", None)
             source = self.get_argument("source", "")
             page = self.get_argument("page", "0")
