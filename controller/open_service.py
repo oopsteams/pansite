@@ -132,7 +132,7 @@ class OpenService(BaseService):
 
         return None
 
-    def search(self, path_tag, tag, keyword, source, pid, page, size=50):
+    def search(self, path_tag, tag, keyword, source, pid, page, size=50, pos=2):
         _app_map_cache = {}
         if not source:
             source = 'shared'
@@ -188,8 +188,9 @@ class OpenService(BaseService):
                     _sort_fields = [{"filename": {"order": "asc"}}]
                 else:
                     if not path_tag and not kw:
-                        sp.add_must(field='pos', value=2)
-                        _sort_fields = [{"parent": {"order": "desc"}}]
+                        if pos and pos > 0:
+                            sp.add_must(field='pos', value=pos)
+                        _sort_fields = [{"parent": {"order": "desc"}}, {"filename": {"order": "asc"}}]
                     else:
                         _sort_fields = [{"pos": {"order": "asc"}}, {"filename": {"order": "asc"}}]
                 es_dao_fun = es_dao_share
