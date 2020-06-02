@@ -81,7 +81,7 @@ class ManageHandler(BaseHandler):
         elif path.endswith("/show"):
             source = self.get_argument("source", "")
             parent = self.get_argument("parent", "")
-            node_id = self.get_argument("id")
+            node_id = int(self.get_argument("id"))
             logger.info("source:{},parent:{},node_id:{}".format(source, parent, node_id))
             if "local" == source:
                 if parent:
@@ -97,8 +97,9 @@ class ManageHandler(BaseHandler):
         elif path.endswith("/hide"):
             source = self.get_argument("source", "")
             parent = self.get_argument("parent", "")
-            node_fuzzy_id = self.get_argument("id")
-            node_id = decrypt_id(node_fuzzy_id)
+            # node_fuzzy_id = self.get_argument("id")
+            # node_id = decrypt_id(node_fuzzy_id)
+            node_id = int(self.get_argument("id"))
             logger.info("hide source:{},parent:{},node_id:{}".format(source, parent, node_id))
             if "local" == source:
                 if parent:
