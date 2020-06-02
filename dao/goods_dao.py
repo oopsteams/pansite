@@ -56,7 +56,7 @@ class GoodsDao(object):
             fuzzy_gid = obfuscate_id(goods.gid)
             cname = goods.product.category.name
             item = {'gid': fuzzy_gid, 'uid': fuzzy_ref_id, 'pid': fuzzy_pid, 'price': goods.price,
-                    'name': goods.product.name}
+                    'name': goods.product.name, 'ip_rule': goods.product.ip_rule}
             pids.append(goods.pid)
             pidmap[fuzzy_pid] = item
             if cname in catemap:
@@ -89,6 +89,7 @@ class GoodsDao(object):
             goods_dict['uid'] = obfuscate_id(goods.ref_id)
             goods_dict['pid'] = obfuscate_id(goods.pid)
             goods_dict['name'] = goods.product.name
+            goods_dict['ip_rule'] = goods.product.ip_rule
             goods_dict['netweight'] = goods.product.netweight
             # goods_dict['sugar'] = goods.product.sugar
             goods_dict['cname'] = goods.product.category.name
