@@ -23,6 +23,7 @@ class WXAppPut(BaseHandler):
             cid = int(params.get("cid", '0'))
             tpcid = params.get("tpcid", '0')
             pname = params.get("name", "")
+            ip_rule = params.get("ip_rule", "")
             netweight = float(params.get("netweight", '0'))
             # sugarweight = float(params.get("sugar", '0'))
             desc = params.get("desc", "")
@@ -30,7 +31,7 @@ class WXAppPut(BaseHandler):
             spustructids = params.get("spustructids", "")
             print("newproduct params:", params)
             if pname:
-                p: CourseProduct = goods_service.new_product(pname, netweight, tpcid, cid, desc, self.ref_id, spuids, spustructids)
+                p: CourseProduct = goods_service.new_product(pname, netweight, tpcid, cid, desc, self.ref_id, spuids, spustructids, ip_rule)
                 rs['pid'] = obfuscate_id(p.pid)
 
         elif "newgoods" == cmd:

@@ -112,14 +112,15 @@ class GoodsService(BaseService):
         return _params
 
     # new
-    def new_product(self, name, net_weight, tp_cid, cid, desc, ref_id, spuids, spustructids):
+    def new_product(self, name, net_weight, tp_cid, cid, desc, ref_id, spuids, spustructids, ip_rule):
         params = dict(
             name=name,
             netweight=net_weight,
             tpcid=tp_cid,
             cid=cid,
             desc=desc,
-            ref_id=ref_id
+            ref_id=ref_id,
+            ip_rule=ip_rule
         )
 
         old_cp: CourseProduct = GoodsDao.query_product_by_name(name)

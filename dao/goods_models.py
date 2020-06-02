@@ -120,12 +120,13 @@ class CourseProduct(BaseModel):
     cid = IntegerField(null=False, default=0)
     tpcid = IntegerField(null=False, default=0)
     desc = CharField(null=True, max_length=256)
+    ip_rule = CharField(null=True, max_length=256)
     ref_id = IntegerField(null=False, default=0)
     pin = SmallIntegerField(null=False, default=0)
 
     @classmethod
     def field_names(cls):
-        return BASE_FIELDS + ["name", "pid", "netweight", "cid", "tpcid", "desc", "ref_id", "pin"]
+        return BASE_FIELDS + ["name", "pid", "netweight", "cid", "tpcid", "desc", "ref_id", "pin", "ip_rule"]
 
     @classmethod
     def to_dict(cls, instance, excludes=[]):
