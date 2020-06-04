@@ -34,23 +34,22 @@ class WxService(BaseService):
         acc: Accounts = self.get_acc_by_wx_acc(wx_acc, guest)
         rs['user'] = self.build_user_result(acc, wx_acc)
         rs['user']['sync'] = 1
+        rs["state"] = {
+            "signed": False,
+            "counter": -1
+        }
         if wx_acc:
             # {'uid': uid, 'sync': 0, 'pin': ub.pin, 'ri': ub.setting.rinclude, 're': rexclude,
             #               'name': ub.user.rname}
             rs['openid'] = wx_acc.openid
-            if guest.id == wx_acc.account_id:
-                rs["state"] = {
-                    "signed": False,
-                    "counter": -1
-                }
-
-            else:
+            if guest.id != wx_acc.account_id:
                 au = auth_service.get_auth_user_by_account_id(wx_acc.account_id)
                 if au:
                     signed_rs = payment_service.check_signed(au.ref_id)
-                    rs["state"] = signed_rs
-                    if signed_rs["signed"]:
-                        rs['user']['sync'] = 0
+                    if signed_rs:
+                        rs["state"] = signed_rs
+        if signed_rs["signed"]:
+            rs['user']['sync'] = 0
 
         return rs
 
