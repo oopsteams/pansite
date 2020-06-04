@@ -143,7 +143,7 @@ class WxService(BaseService):
         decodeData = base64.b64decode(encryptedData)
         iv = base64.b64decode(iv)
         cipher = AES.new(aeskey, AES.MODE_CBC, iv)
-        codes = cipher.decrypt(encryptedData)
+        codes = cipher.decrypt(decodeData)
         _codes = self._unpad(codes)
         decrypted = json.loads(_codes)
         if decrypted['watermark']['appid'] != self.appId:
