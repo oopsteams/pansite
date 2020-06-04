@@ -87,6 +87,9 @@ class AuthService(BaseService):
         auth_user_dict['fuzzy_id'] = fuzzy_id
         return auth_user_dict
 
+    def get_auth_user_by_account_id(self, account_id):
+        return AuthDao.query_auth_user_by_account_id(account_id)
+
     def check_fun(self, account: Accounts):
         pass
 

@@ -113,19 +113,14 @@ class WXAppGet(BaseHandler):
                 rs = payment_service.query_credit_balance(self.user_id)
 
         elif "profile" == cmd:
-            uid = params.get('uid', None)
-            if not uid:
-                uid = 0
+            fuzzy_wx_id = params.get('uid', None)
+            if not fuzzy_wx_id:
+                wx_id = 0
             else:
-                if self.guest.id == self.user_id:
-                    rs["signed"] = {
-                        "signed": False,
-                        "counter": -1
-                    }
-                else:
-                    signed_rs = payment_service.check_signed(self.ref_id)
-                    rs["signed"] = signed_rs
-            rs = wx_service.profile(uid, self.guest)
+                wx_id = decrypt_id(fuzzy_wx_id)
+
+            rs = wx_service.profile(wx_id, self.guest)
+
             # if uid:
             #     ub = wx_service.fetch_wx_account(uid)
             #     if ub:

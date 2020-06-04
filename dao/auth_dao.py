@@ -187,6 +187,11 @@ class AuthDao(object):
 
     @classmethod
     @query_wrap_db
+    def query_auth_user_by_account_id(cls, account_id) -> AuthUser:
+        return AuthUser.select().where(AuthUser.acc_id == account_id).first()
+
+    @classmethod
+    @query_wrap_db
     def auth_user_org_detail(cls, account_id) -> dict:
         acc: Accounts = Accounts.select(Accounts).where(Accounts.id == account_id).first()
         rs = AuthUser.select().where(AuthUser.acc_id == account_id)

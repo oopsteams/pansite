@@ -4,6 +4,7 @@ Created by susy at 2020/4/26
 """
 from controller.base_service import BaseService
 from controller.auth_service import auth_service
+from controller.payment.payment_service import payment_service
 from dao.wx_dao import WxDao
 from dao.models import AccountWxExt, Accounts
 import base64
@@ -23,17 +24,33 @@ class WxService(BaseService):
 
     def profile(self, wx_user_id, guest):
         rs = {}
-        wx_acc: AccountWxExt = self.fetch_wx_account(wx_user_id)
+        wx_acc: AccountWxExt = None
+        if wx_user_id:
+            wx_acc = self.fetch_wx_account(wx_user_id)
         # wx_acc: AccountWxExt = AccountWxExt(openid="oGZUI0egBJY1zhBYw2KhdUfwVJJE",
         #                                     nickname="Band",
         #                                     id=0,
         #                                     account_id=guest.id)
         acc: Accounts = self.get_acc_by_wx_acc(wx_acc, guest)
         rs['user'] = self.build_user_result(acc, wx_acc)
+        rs['user']['sync'] = 1
         if wx_acc:
             # {'uid': uid, 'sync': 0, 'pin': ub.pin, 'ri': ub.setting.rinclude, 're': rexclude,
             #               'name': ub.user.rname}
             rs['openid'] = wx_acc.openid
+            if guest.id == wx_acc.account_id:
+                rs["state"] = {
+                    "signed": False,
+                    "counter": -1
+                }
+
+            else:
+                au = auth_service.get_auth_user_by_account_id(wx_acc.account_id)
+                if au:
+                    signed_rs = payment_service.check_signed(au.ref_id)
+                    rs["state"] = signed_rs
+                    if signed_rs["signed"]:
+                        rs['user']['sync'] = 0
 
         return rs
 
