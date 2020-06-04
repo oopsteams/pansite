@@ -145,6 +145,7 @@ class WxService(BaseService):
         cipher = AES.new(aeskey, AES.MODE_CBC, iv)
         codes = cipher.decrypt(decodeData)
         _codes = self._unpad(codes)
+        print("extractUserInfo _codes:", _codes)
         decrypted = json.loads(_codes)
         if decrypted['watermark']['appid'] != self.appId:
             raise Exception('Invalid Buffer')
