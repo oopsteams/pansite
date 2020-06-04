@@ -105,6 +105,7 @@ class WxService(BaseService):
             if not wx_acc:
                 wx_acc = WxDao.new_wx_account_ext(openid, session_key, guest)
             else:
+                WxDao.update_wx_account({"session_key": session_key}, wx_acc.id)
                 if wx_acc.account_id != guest.id:
                     sync = 0
             # rs = auth_service.login_check_user(acc, False, 'WX')
@@ -145,6 +146,7 @@ class WxService(BaseService):
         cipher = AES.new(aeskey, AES.MODE_CBC, iv)
         codes = cipher.decrypt(decodeData)
         _codes = self._unpad(codes)
+        print("extractUserInfo sk:", sk)
         print("extractUserInfo _codes:", _codes)
         decrypted = json.loads(_codes)
         if decrypted['watermark']['appid'] != self.appId:
