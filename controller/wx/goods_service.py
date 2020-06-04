@@ -175,5 +175,6 @@ class GoodsService(BaseService):
     def update_product_img(self, pid, url, params):
         GoodsDao.update_product_img(pid, url, params)
 
+
 goods_service = GoodsService()
 

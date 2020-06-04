@@ -134,6 +134,13 @@ def get_now_datetime(offset=0):
     return arrow_now.datetime
 
 
+def get_today_zero_datetime(days=0):
+    arrow_now = arrow.now(default_tz).replace(hour=0, minute=0, second=0, microsecond=0)
+    if days:
+        arrow_now = arrow_now.shift(days=days)
+    return arrow_now.datetime
+
+
 def get_now_datetime_format(fmt="YYYY-MM-DD HH:mm:ssZZ"):
     return arrow.now(default_tz).format(fmt=fmt)
 

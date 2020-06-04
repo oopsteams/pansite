@@ -4,9 +4,10 @@ Created by susy at 2020/1/27
 """
 from controller.base_service import BaseService
 from utils import singleton, make_account_token, obfuscate_id, decrypt_user_id, get_now_datetime
-from dao.models import Accounts, Role, Org, BASE_FIELDS, PanAccounts, AccountExt
+from dao.models import Accounts, Role, Org, BASE_FIELDS, PanAccounts, AccountExt, AccountWxExt
 from dao.auth_dao import AuthDao
 from dao.mdao import DataDao
+from dao.wx_dao import WxDao
 from utils.constant import FUN_TYPE, USER_TYPE, PAN_ACCESS_TOKEN_TIMEOUT, LOGIN_TOKEN_TIMEOUT
 from utils.caches import cache_data
 from utils import compare_dt_by_now, log, restapi, get_now_ts, get_payload_from_token
@@ -334,6 +335,48 @@ class AuthService(BaseService):
         # print('make_account_token:', tk)
         return tk, auth_user_dict
 
+    def _default_new_user_build_user_payload_for_wx(self, account: Accounts, params):
+        auth_user_dict = AuthDao.auth_user(account.id)
+        fuzzy_id = obfuscate_id(account.id)
+        auth_user_dict['id'] = fuzzy_id
+        # auth_user_dict['_id'] = account.id
+        auth_user_dict['login_updated_at'] = account.login_updated_at
+        context = params["context"]
+        log.info("build_user_payload_for_wx context:{}".format(context))
+        tk = make_account_token(auth_user_dict)
+        # print('make_account_token:', tk)
+        return tk, auth_user_dict
+
+    def _new_user_for_wx(self, name, password, nickname, context):
+        mobile_no = ''
+        # origin_name = name
+        exists_user = AuthDao.check_user_only_by_name(name)
+        if exists_user:
+            acc: Accounts = DataDao.account_by_name(name)
+            if acc:
+                if acc.login_token:
+                    auth_user_dict = AuthDao.auth_user(acc.id)
+                    fuzzy_id = obfuscate_id(acc.id)
+                    auth_user_dict['id'] = fuzzy_id
+                    return acc.login_token, auth_user_dict
+                else:
+                    acc.login_updated_at = get_now_datetime()
+                    user_token, user_ext_dict = self._default_new_user_build_user_payload_for_wx(acc, {"context": context})
+                    DataDao.update_account_by_pk(acc.id, {"login_token": user_token, "login_updated_at": acc.login_updated_at})
+        org_id = NEW_USER_DEFAULT['org_id']
+        role_id = NEW_USER_DEFAULT['role_id']
+        extroles = []
+        extorgs = []
+        type = USER_TYPE['SINGLE']
+        user_token, user_ext_dict = AuthDao.new_account(name, nickname, mobile_no, password, org_id, role_id, type,
+                                                        extorgs, extroles, get_now_datetime(),
+                                                        lambda account, ctx:
+                                                        self._default_new_user_build_user_payload_for_wx(account, ctx), {
+                                                            "context": context
+                                                        })
+
+        return user_token, user_ext_dict
+
     def _new_user(self, name, password, nickname, access_token, refresh_token, expires_at, context):
         mobile_no = ''
         origin_name = name
@@ -360,6 +403,28 @@ class AuthService(BaseService):
                                                         })
 
         return user_token, user_ext_dict
+
+    def wx_sync_login(self, wx_acc: AccountWxExt):
+        username = wx_acc.nickname
+        acc_name = obfuscate_id(wx_acc.id)
+        result = {}
+        user_token, user_ext_dict = self._new_user_for_wx(acc_name, '654321', username, dict(wx_id=wx_acc.id))
+        login_updated_at = user_ext_dict['login_updated_at']
+        lud = arrow.get(login_updated_at).replace(tzinfo=self.default_tz)
+        result['token'] = user_token
+        result['login_at'] = int(arrow.get(lud).timestamp * 1000)
+        # print('login_at:', result['login_at'])
+        result['pan_acc_list'] = []
+        result['username'] = username
+        result['portrait'] = wx_acc.avatar
+        result['id'] = user_ext_dict['id']
+        result['ref_id'] = user_ext_dict['au']['rfid']
+        acc_id = decrypt_user_id(user_ext_dict['id'])
+        if acc_id:
+            wx_acc.account_id = acc_id
+            WxDao.update_wx_account({"account_id": acc_id}, wx_acc.id)
+
+        return result
 
     def bd_sync_login(self, params):
         acc_name = params.get('acc_name')

@@ -26,7 +26,6 @@ sys.setrecursionlimit(1000000)
 
 @singleton
 class ProductService(BaseService):
-    pass
 
     def tag_product(self, ref_id, itemid, layer, p_price) -> Product:
         es_rs = es_dao_local().es_get(itemid, {"_source": ",".join(['isdir', 'fs_id', 'size', 'account', 'tags',

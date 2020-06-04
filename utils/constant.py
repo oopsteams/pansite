@@ -77,7 +77,22 @@ PAN_TREE_TXT = dict(
     self_root="已获取目录",
     empty_root="到底了",
 )
-
+PAYMENT_ACC_SOURCE = dict(
+    CREDIT="credit"
+)
+CREDIT_SOURCE = dict(
+    LOGIN="login",
+    LOGIN_EXTRA="login_extra",
+    INVITE="invite",
+    SHARE_PLAN="share_plan",
+)
+CREDIT_SIGNED_REWARD = 1
+CREDIT_SIGNED_LEVEL = [
+    [3, 0],
+    [5, 1],
+    [6, 2],
+    [7, -1]
+]
 
 def shared_format(link, code):
     return """链接: {} 提取码: {} 复制这段内容后打开百度网盘手机App，操作更方便哦""".format(link, code)

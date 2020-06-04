@@ -23,11 +23,11 @@ class WxService(BaseService):
 
     def profile(self, wx_user_id, guest):
         rs = {}
-        # wx_acc: AccountWxExt = self.fetch_wx_account(wx_user_id)
-        wx_acc: AccountWxExt = AccountWxExt(openid="oGZUI0egBJY1zhBYw2KhdUfwVJJE",
-                                            nickname="Band",
-                                            id=0,
-                                            account_id=guest.id)
+        wx_acc: AccountWxExt = self.fetch_wx_account(wx_user_id)
+        # wx_acc: AccountWxExt = AccountWxExt(openid="oGZUI0egBJY1zhBYw2KhdUfwVJJE",
+        #                                     nickname="Band",
+        #                                     id=0,
+        #                                     account_id=guest.id)
         acc: Accounts = self.get_acc_by_wx_acc(wx_acc, guest)
         rs['user'] = self.build_user_result(acc, wx_acc)
         if wx_acc:
@@ -69,18 +69,32 @@ class WxService(BaseService):
         else:
             return guest
 
-    def wx_sync_login(self, openid, session_key, guest):
+    # def check_openid(self, guest):
+    #     rs = dict()
+    #     rs['user'] = dict(
+    #         uid=obfuscate_id(guest.id),
+    #         pin=0,
+    #         sync=1,
+    #         ri=[],
+    #         re=[]
+    #     )
+    #     return rs
+
+    def wx_sync_login(self, openid, session_key, guest, wx_user):
         if openid:
             wx_acc = WxDao.wx_account(openid)
             acc = self.get_acc_by_wx_acc(wx_acc, guest)
+            sync = 0
             if not wx_acc:
                 wx_acc = WxDao.new_wx_account_ext(openid, session_key, guest)
+                sync = 1
             # rs = auth_service.login_check_user(acc, False, 'WX')
             rs = dict()
             rs['user'] = self.build_user_result(acc, wx_acc)
-            rs['uid'] = obfuscate_id(wx_acc.id)
+            # rs['uid'] = obfuscate_id(wx_acc.id)
             rs['openid'] = wx_acc.openid
             rs['name'] = wx_acc.nickname
+            rs['user']['sync'] = sync
             return rs
         return {}
 

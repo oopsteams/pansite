@@ -7,6 +7,7 @@ from controller.auth_service import auth_service
 from utils.constant import USER_TYPE
 from controller.wx.wx_service import wx_service
 from controller.wx.goods_service import goods_service
+from controller.payment.payment_service import payment_service
 from utils import wxapi, decrypt_id
 
 import json
@@ -51,6 +52,7 @@ class WXAppGet(BaseHandler):
 
     def parseCMD(self, **params):
         cmd = u'' + params.get("cmd", "")
+        wx_user = params.get("user", {})
         print("cmd:", cmd)
         # header = self.request.headers
         rs = {"status": 0}
@@ -71,26 +73,58 @@ class WXAppGet(BaseHandler):
                 if openid:
                     rs['openid'] = openid
                     user_dict = wx_service.wx_sync_login(openid, session_key, self.guest)
-                    # rs['user'] = {'uid': uid, 'sync': 0, 'pin': Mission.GUEST(), 'ri': rinclude, 're': '',
+                    # rs['user'] = {'uid': self.guest, 'sync': 0, 'pin': Mission.GUEST(), 'ri': rinclude, 're': '',
                     #               'orgid': orgid, 'deptid': deptid}
                     rs['user'] = user_dict
+                    # rs['user'] = wx_service.check_openid(self.guest)
             return rs
 
         elif "userrawdata" == cmd:
+            rs["signed"] = {
+                "signed": False,
+                "counter": -1
+            }
             raw = params['raw']
-            uid = params['uid']
+            fuzzy_uid = params['uid']
+            wx_id = decrypt_id(fuzzy_uid)
             iv = params['iv']
-            print("raw,uid:", raw, uid)
-
-            u = wx_service.fetch_wx_account(uid)
+            print("raw:", raw, ",wx_id:", wx_id)
+            u = wx_service.fetch_wx_account(wx_id)
             if u:
                 info = wx_service.extractUserInfo(u.session_key, raw, iv)
                 if info:
                     wx_service.update_wx_account(info, u.id)
+                    if u.account_id == self.guest.id:
+                        result = auth_service.wx_sync_login(u)
+                        if result:
+                            ref_id = result['ref_id']
+                            signed_rs = payment_service.check_signed(ref_id)
+                            rs["signed"] = signed_rs
+            rs = wx_service.profile(wx_id, self.guest)
+        elif "signed" == cmd:
+            if self.guest.id == self.user_id:
+                rs = {
+                    "balance": 0,
+                    "amount": 0,
+                    "frozen_amount": 0
+                }
+            else:
+                payment_service.reward_credit_by_signed(self.user_id, self.ref_id)
+                rs = payment_service.query_credit_balance(self.user_id)
+
         elif "profile" == cmd:
             uid = params.get('uid', None)
             if not uid:
                 uid = 0
+            else:
+                if self.guest.id == self.user_id:
+                    rs["signed"] = {
+                        "signed": False,
+                        "counter": -1
+                    }
+                else:
+                    signed_rs = payment_service.check_signed(self.ref_id)
+                    rs["signed"] = signed_rs
             rs = wx_service.profile(uid, self.guest)
             # if uid:
             #     ub = wx_service.fetch_wx_account(uid)

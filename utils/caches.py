@@ -91,6 +91,7 @@ def get_from_cache(key):
 
 
 def _put_to_cache(key, val, timeout_seconds=0):
+
     data_obj = {'data': val, 'tm': get_now_ts(), 'to': timeout_seconds, 'key': key}
     print("_put_to_cache key:", key)
     DATA_CACHES[key] = data_obj
@@ -114,7 +115,8 @@ def clear_cache(key):
         DATA_CACHES.pop(key)
 
 
-def cache_data(cache_key, timeout_seconds=0, verify_key=None):
+def cache_data(cache_key, timeout_seconds, verify_key=None):
+
     def cache_decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -138,7 +140,15 @@ def cache_data(cache_key, timeout_seconds=0, verify_key=None):
             result = func(*args, **kwargs)
             if not result:
                 return result
-            _put_to_cache(key, result, timeout_seconds)
+            if callable(timeout_seconds):
+                to = timeout_seconds(*args, result)
+            elif isinstance(timeout_seconds, str):
+                to = int(timeout_seconds)
+            elif timeout_seconds:
+                to = timeout_seconds
+            else:
+                to = 0
+            _put_to_cache(key, result, to)
             return result
         return wrapper
     return cache_decorator
