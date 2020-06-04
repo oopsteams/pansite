@@ -101,10 +101,12 @@ class WxService(BaseService):
         if openid:
             wx_acc = WxDao.wx_account(openid)
             acc = self.get_acc_by_wx_acc(wx_acc, guest)
-            sync = 0
+            sync = 1
             if not wx_acc:
                 wx_acc = WxDao.new_wx_account_ext(openid, session_key, guest)
-                sync = 1
+            else:
+                if wx_acc.account_id != guest.id:
+                    sync = 0
             # rs = auth_service.login_check_user(acc, False, 'WX')
             rs = dict()
             rs['user'] = self.build_user_result(acc, wx_acc)
