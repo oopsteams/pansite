@@ -71,12 +71,12 @@ class WXAppGet(BaseHandler):
                 print("session_key =========================:", session_key)
                 print("openid =========================:", openid)
                 if openid:
-                    rs['openid'] = openid
                     wx_user = params.get("user", {})
                     user_dict = wx_service.wx_sync_login(openid, session_key, self.guest, wx_user)
                     # rs['user'] = {'uid': self.guest, 'sync': 0, 'pin': Mission.GUEST(), 'ri': rinclude, 're': '',
                     #               'orgid': orgid, 'deptid': deptid}
-                    rs['user'] = user_dict
+                    rs = user_dict
+                    rs['openid'] = openid
                     # rs['user'] = wx_service.check_openid(self.guest)
             return rs
 
