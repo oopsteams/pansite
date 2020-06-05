@@ -15,7 +15,11 @@ class PaymentService(BaseService):
 
     @cache_data("pay_balance_{1}", timeout_seconds=lambda s, ref_id, rs: rs["to"])
     def query_credit_balance(self, account_id):
-        rs = None
+        rs = {
+                "balance": 0,
+                "amount": 0,
+                "frozen_amount": 0
+            }
         pa: PaymentAccount = PaymentDao.query_payment_account_by_account_id(account_id=account_id)
         if pa:
             rs = {

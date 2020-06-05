@@ -43,9 +43,12 @@ class WxService(BaseService):
             #               'name': ub.user.rname}
             rs['openid'] = wx_acc.openid
             if guest.id != wx_acc.account_id:
+                balance_rs = payment_service.query_credit_balance(wx_acc.account_id)
+                rs["balance"] = balance_rs
                 au = auth_service.get_auth_user_by_account_id(wx_acc.account_id)
                 if au:
                     signed_rs = payment_service.check_signed(au.ref_id)
+
                     if signed_rs:
                         rs["state"] = signed_rs
         if rs["state"]["signed"]:
