@@ -100,7 +100,7 @@ class WXAppGet(BaseHandler):
                         if result:
                             ref_id = result['ref_id']
                             signed_rs = payment_service.check_signed(ref_id)
-                            rs["signed"] = signed_rs
+                            rs["state"] = signed_rs
             rs = wx_service.profile(wx_id, self.guest)
         elif "signed" == cmd:
             if self.guest.id == self.user_id:

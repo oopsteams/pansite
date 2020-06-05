@@ -48,7 +48,7 @@ class WxService(BaseService):
                     signed_rs = payment_service.check_signed(au.ref_id)
                     if signed_rs:
                         rs["state"] = signed_rs
-        if signed_rs["signed"]:
+        if rs["state"]["signed"]:
             rs['user']['sync'] = 0
 
         return rs
