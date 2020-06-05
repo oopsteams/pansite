@@ -97,10 +97,10 @@ class WXAppGet(BaseHandler):
                     wx_service.update_wx_account(info, u.id)
                     if u.account_id == self.guest.id:
                         result = auth_service.wx_sync_login(u)
-                        if result:
-                            ref_id = result['ref_id']
-                            signed_rs = payment_service.check_signed(ref_id)
-                            rs["state"] = signed_rs
+                        # if result:
+                        #     ref_id = result['ref_id']
+                        #     signed_rs = payment_service.check_signed(ref_id)
+                        #     rs["state"] = signed_rs
             rs = wx_service.profile(wx_id, self.guest)
         elif "signed" == cmd:
             if self.guest.id == self.user_id:
@@ -119,7 +119,7 @@ class WXAppGet(BaseHandler):
                 wx_id = 0
             else:
                 wx_id = decrypt_id(fuzzy_wx_id)
-
+            print("user_id:", self.user_id, ",ref_id:", self.ref_id, ", guest id:", self.guest.id)
             rs = wx_service.profile(wx_id, self.guest)
 
             # if uid:
