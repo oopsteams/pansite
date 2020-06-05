@@ -25,7 +25,7 @@ class WxService(BaseService):
     def simple_profile(self, account_id, ref_id, wx_user_id, token):
         rs = dict()
         rs['user'] = self.build_simple_user_result(account_id, wx_user_id, token)
-        rs['user']['sync'] = 1
+        rs['user']['sync'] = 0
         rs["state"] = {
             "signed": False,
             "counter": -1
