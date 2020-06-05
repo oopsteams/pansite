@@ -13,7 +13,7 @@ PAY_SIGNED_CACHE_TIMEOUT = 24 * 60 * 60
 @singleton
 class PaymentService(BaseService):
 
-    @cache_data("pay_balance_{1}", timeout_seconds=lambda s, ref_id, rs: rs["to"])
+    @cache_data("pay_balance_{1}")
     def query_credit_balance(self, account_id):
         rs = {
                 "balance": 0,

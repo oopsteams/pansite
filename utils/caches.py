@@ -115,7 +115,7 @@ def clear_cache(key):
         DATA_CACHES.pop(key)
 
 
-def cache_data(cache_key, timeout_seconds, verify_key=None):
+def cache_data(cache_key, timeout_seconds=0, verify_key=None):
 
     def cache_decorator(func):
         @wraps(func)
