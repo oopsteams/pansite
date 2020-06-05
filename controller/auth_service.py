@@ -342,6 +342,7 @@ class AuthService(BaseService):
         auth_user_dict = AuthDao.auth_user(account.id)
         fuzzy_id = obfuscate_id(account.id)
         auth_user_dict['id'] = fuzzy_id
+        auth_user_dict['wxid'] = params["wx_id"]
         # auth_user_dict['_id'] = account.id
         auth_user_dict['login_updated_at'] = account.login_updated_at
         context = params["context"]
@@ -365,7 +366,9 @@ class AuthService(BaseService):
                 else:
                     acc.login_updated_at = get_now_datetime()
                     user_token, user_ext_dict = self._default_new_user_build_user_payload_for_wx(acc, {"context": context})
+                    acc.login_token = user_token
                     DataDao.update_account_by_pk(acc.id, {"login_token": user_token, "login_updated_at": acc.login_updated_at})
+                    return acc.login_token, user_ext_dict
         org_id = NEW_USER_DEFAULT['org_id']
         role_id = NEW_USER_DEFAULT['role_id']
         extroles = []

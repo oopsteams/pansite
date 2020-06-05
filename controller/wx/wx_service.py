@@ -22,6 +22,24 @@ class WxService(BaseService):
         super().__init__()
         self.appId = WX_API['appid']
 
+    def simple_profile(self, account_id, ref_id, wx_user_id, token):
+        rs = dict()
+        rs['user'] = self.build_simple_user_result(account_id, wx_user_id, token)
+        rs['user']['sync'] = 1
+        rs["state"] = {
+            "signed": False,
+            "counter": -1
+        }
+        balance_rs = payment_service.query_credit_balance(account_id)
+        rs["balance"] = balance_rs
+        au = auth_service.get_auth_user_by_account_id(account_id)
+        if au:
+            signed_rs = payment_service.check_signed(ref_id)
+
+            if signed_rs:
+                rs["state"] = signed_rs
+        return rs
+
     def profile(self, wx_user_id, guest):
         rs = {}
         wx_acc: AccountWxExt = None
@@ -77,6 +95,21 @@ class WxService(BaseService):
 
         return result
 
+    def build_simple_user_result(self, account_id, wx_id, login_token):
+        lud = arrow.now(self.default_tz)
+        result = dict(
+            token=login_token,
+            login_at=int(arrow.get(lud).timestamp * 1000),
+        )
+        result['id'] = obfuscate_id(account_id)
+        result['uid'] = obfuscate_id(wx_id)
+        result['pin'] = 0
+        result['sync'] = 0
+        result['ri'] = []
+        result['re'] = []
+
+        return result
+
     def get_acc_by_wx_acc(self, wx_acc: AccountWxExt, guest: Accounts):
         if wx_acc:
             acc_id = wx_acc.account_id
@@ -88,16 +121,20 @@ class WxService(BaseService):
         else:
             return guest
 
-    # def check_openid(self, guest):
-    #     rs = dict()
-    #     rs['user'] = dict(
-    #         uid=obfuscate_id(guest.id),
-    #         pin=0,
-    #         sync=1,
-    #         ri=[],
-    #         re=[]
-    #     )
-    #     return rs
+    def guest_profile(self, guest):
+        rs = dict()
+        rs['user'] = dict(
+            uid=obfuscate_id(guest.id),
+            pin=0,
+            sync=1,
+            ri=[],
+            re=[]
+        )
+        rs["state"] = {
+            "signed": False,
+            "counter": -1
+        }
+        return rs
 
     def wx_sync_login(self, openid, session_key, guest, wx_user):
         if openid:

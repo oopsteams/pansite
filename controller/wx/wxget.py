@@ -119,9 +119,11 @@ class WXAppGet(BaseHandler):
                 wx_id = 0
             else:
                 wx_id = decrypt_id(fuzzy_wx_id)
-            print("user_id:", self.user_id, ",ref_id:", self.ref_id, ", guest id:", self.guest.id)
-            rs = wx_service.profile(wx_id, self.guest)
-
+            print("user_id:", self.user_id, ",ref_id:", self.ref_id, ", guest id:", self.guest.id, ",payload:", self.user_payload)
+            if self.token and self.user_id != self.guest.id:
+                rs = wx_service.simple_profile(self.user_id, self.ref_id, wx_id, self.token)
+            else:
+                rs = wx_service.guest_profile(self.guest)
             # if uid:
             #     ub = wx_service.fetch_wx_account(uid)
             #     if ub:
@@ -211,8 +213,14 @@ class WXAppGet(BaseHandler):
             rs['imgs'] = imgs
         return rs
 
+    def check_header(self, tag):
+        headers = self.request.headers
+        for hk in headers:
+            print(tag, ":", hk, "=", headers[hk])
+
     def get(self):
-        rs = {"status": 0}
+        self.check_header("wx get")
+        # rs = {"status": 0}
         cmd = self.get_argument("cmd", "")
         name = self.get_argument("name", "")
         params = {"cmd": cmd, "name": name}
@@ -223,6 +231,7 @@ class WXAppGet(BaseHandler):
         self.to_write_json(rs)
 
     def post(self):
+        self.check_header("wx post")
         rs = {"status": 0}
         cmd = self.get_argument("cmd", "")
         bd = self.request.body
