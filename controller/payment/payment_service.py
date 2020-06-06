@@ -5,7 +5,7 @@ Created by susy at 2020/6/3
 from controller.base_service import BaseService
 from dao.models import PaymentAccount, CreditRecord
 from dao.payment_dao import PaymentDao
-from utils import scale_size, decrypt_user_id, decrypt_id, singleton, get_today_zero_datetime, get_now_datetime, constant, get_now_ts
+from utils import scale_size, compare_dt, decrypt_id, singleton, get_today_zero_datetime, get_now_datetime, constant, get_now_ts
 from utils.caches import cache_data, clear_cache
 PAY_SIGNED_CACHE_TIMEOUT = 24 * 60 * 60
 
@@ -35,7 +35,7 @@ class PaymentService(BaseService):
         rs = None
         cr: CreditRecord = PaymentDao.query_today_signed_record(ref_id)
         if cr:
-            rs = {"signed": cr.start_at > get_today_zero_datetime(),
+            rs = {"signed": compare_dt(cr.start_at, get_today_zero_datetime()) > 0,
                   "to": (get_today_zero_datetime(+1) - get_now_datetime()).total_seconds(),
                   "cr_id": cr.cr_id,
                   "amount": cr.amount
@@ -44,7 +44,7 @@ class PaymentService(BaseService):
             if rs["signed"]:
                 extra_cr: CreditRecord = PaymentDao.query_signed_extra_reward_record(ref_id)
                 if extra_cr:
-                    if extra_cr.start_at > get_today_zero_datetime():
+                    if compare_dt(extra_cr.start_at, get_today_zero_datetime()) > 0:
                         new_counter = extra_cr.counter
 
             rs["counter"] = new_counter
@@ -86,7 +86,7 @@ class PaymentService(BaseService):
                 new_counter = 1
                 extra_amount = 0
                 if extra_cr:
-                    if extra_cr.start_at > get_today_zero_datetime():
+                    if compare_dt(extra_cr.start_at, get_today_zero_datetime()) > 0:
                         new_counter = extra_cr.counter + 1
                         if constant.CREDIT_SIGNED_LEVEL:
                             for item in constant.CREDIT_SIGNED_LEVEL:
