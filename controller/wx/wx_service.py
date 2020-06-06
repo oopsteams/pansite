@@ -28,14 +28,13 @@ class WxService(BaseService):
         rs['user']['sync'] = 0
         rs["state"] = {
             "signed": False,
-            "counter": -1
+            "counter": 0
         }
         balance_rs = payment_service.query_credit_balance(account_id)
         rs["balance"] = balance_rs
         au = auth_service.get_auth_user_by_account_id(account_id)
         if au:
             signed_rs = payment_service.check_signed(ref_id)
-
             if signed_rs:
                 rs["state"] = signed_rs
         return rs
@@ -61,6 +60,7 @@ class WxService(BaseService):
             #               'name': ub.user.rname}
             rs['openid'] = wx_acc.openid
             if guest.id != wx_acc.account_id:
+                rs["state"]["counter"] = 0;
                 balance_rs = payment_service.query_credit_balance(wx_acc.account_id)
                 rs["balance"] = balance_rs
                 au = auth_service.get_auth_user_by_account_id(wx_acc.account_id)
