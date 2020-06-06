@@ -102,6 +102,8 @@ class WXAppGet(BaseHandler):
                         #     signed_rs = payment_service.check_signed(ref_id)
                         #     rs["state"] = signed_rs
             rs = wx_service.profile(wx_id, self.guest)
+            if "state" in rs and "cr_id" in rs["state"]:
+                rs["state"]["cr_id"] = 0
         elif "signed" == cmd:
             if self.guest.id == self.user_id:
                 rs = {
@@ -112,6 +114,8 @@ class WXAppGet(BaseHandler):
             else:
                 payment_service.reward_credit_by_signed(self.user_id, self.ref_id)
                 rs = payment_service.query_credit_balance(self.user_id)
+            if "state" in rs and "cr_id" in rs["state"]:
+                rs["state"]["cr_id"] = 0
 
         elif "profile" == cmd:
             fuzzy_wx_id = params.get('uid', None)
@@ -124,6 +128,8 @@ class WXAppGet(BaseHandler):
                 rs = wx_service.simple_profile(self.user_id, self.ref_id, wx_id, self.token)
             else:
                 rs = wx_service.guest_profile(self.guest)
+            if "state" in rs and "cr_id" in rs["state"]:
+                rs["state"]["cr_id"] = 0
             # if uid:
             #     ub = wx_service.fetch_wx_account(uid)
             #     if ub:
