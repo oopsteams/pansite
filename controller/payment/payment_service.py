@@ -5,7 +5,7 @@ Created by susy at 2020/6/3
 from controller.base_service import BaseService
 from dao.models import PaymentAccount, CreditRecord
 from dao.payment_dao import PaymentDao
-from utils import scale_size, decrypt_user_id, decrypt_id, singleton, get_today_zero_datetime, get_now_datetime, constant
+from utils import scale_size, decrypt_user_id, decrypt_id, singleton, get_today_zero_datetime, get_now_datetime, constant, get_now_ts
 from utils.caches import cache_data, clear_cache
 PAY_SIGNED_CACHE_TIMEOUT = 24 * 60 * 60
 
@@ -52,7 +52,7 @@ class PaymentService(BaseService):
             # rs["to"] = (get_today_zero_datetime(+1) - get_now_datetime()).total_seconds()
         return rs
 
-    def update_payment_account(self, account_id, ref_id, amount, nounce):
+    def update_payment_account(self, account_id, ref_id, amount, nounce=0):
         pa: PaymentAccount = PaymentDao.query_payment_account_by_account_id(account_id=account_id)
         if not pa:
             params = dict(
@@ -77,6 +77,7 @@ class PaymentService(BaseService):
 
     def reward_credit_by_signed(self, account_id, ref_id):
         # 查询今天是否已经signed
+        nounce = get_now_ts()
         rs = {"signed": 0}
         signed = self.check_signed(ref_id)
         if signed:
@@ -120,7 +121,7 @@ class PaymentService(BaseService):
                     amount=signed["amount"] + extra_amount + constant.CREDIT_SIGNED_REWARD
                 )
                 PaymentDao.update_credit_record(signed["cr_id"], cr_params)
-                self.update_payment_account(account_id, ref_id, cr_params["amount"])
+                self.update_payment_account(account_id, ref_id, cr_params["amount"], nounce)
                 clear_cache("pay_signed_{}".format(ref_id))
                 rs["signed"] = 1
         else:
@@ -132,7 +133,7 @@ class PaymentService(BaseService):
                 counter=0
             )
             PaymentDao.signed_credit_record(account_id, ref_id, params)
-            self.update_payment_account(account_id, ref_id, params["amount"])
+            self.update_payment_account(account_id, ref_id, params["amount"], nounce)
             rs["signed"] = 1
         return rs
 
