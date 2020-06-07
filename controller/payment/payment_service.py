@@ -10,6 +10,13 @@ from utils.caches import cache_data, clear_cache
 PAY_SIGNED_CACHE_TIMEOUT = 24 * 60 * 60
 
 
+def clear_signed_state_cache(ref_id):
+    clear_cache("pay_signed_{}".format(ref_id))
+
+
+def clear_balance_cache(account_id):
+    clear_cache("pay_balance_{}".format(account_id))
+
 @singleton
 class PaymentService(BaseService):
 
@@ -122,7 +129,8 @@ class PaymentService(BaseService):
                 )
                 PaymentDao.update_credit_record(signed["cr_id"], cr_params)
                 self.update_payment_account(account_id, ref_id, cr_params["amount"], nounce)
-                clear_cache("pay_signed_{}".format(ref_id))
+                clear_signed_state_cache(ref_id)
+                clear_balance_cache(account_id)
                 rs["signed"] = 1
         else:
             params = dict(
@@ -134,6 +142,7 @@ class PaymentService(BaseService):
             )
             PaymentDao.signed_credit_record(account_id, ref_id, params)
             self.update_payment_account(account_id, ref_id, params["amount"], nounce)
+            clear_balance_cache(account_id)
             rs["signed"] = 1
         return rs
 
