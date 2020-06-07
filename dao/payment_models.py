@@ -50,7 +50,7 @@ class CreditRecord(BaseModel):  # state:2 发放,3:已用过
     @classmethod
     def field_names(cls):
         return BASE_FIELDS + ["cr_id", "amount", "period", "period_unit", "start_at", "end_at", "source", "balance",
-                              "tz", "expired", "account_id", "ref_id", "nounce", counter]
+                              "tz", "expired", "account_id", "ref_id", "nounce", "counter"]
 
     @classmethod
     def to_dict(cls, instance, excludes=[]):
