@@ -60,10 +60,10 @@ def _clear_cache():
             tm = data_obj.get('tm', 0)
             time_out = data_obj.get('to', 0)
             if time_out and get_now_ts() - tm > time_out:
-                print("find timeout idx:", idx)
+                log.warn("find timeout idx:{}".format(idx))
                 break
         if idx > 0:
-            print("clear cache by idx:", idx)
+            log.warn("clear cache by idx:{}".format(idx))
             for i in range(idx, 0, -1):
                 d = DATA_CACHES_TIMEOUT_KEYS_INDEX.pop(i-1)
                 k = d['key']
@@ -82,7 +82,7 @@ def _get_from_cache(key):
         DATA_CACHES.pop(key)
         return None
     else:
-        print("_get_from_cache hit ok! key:", key)
+        log.info("_get_from_cache hit ok! [{}]".format(key))
         return data_obj.get('data', None)
 
 
@@ -111,11 +111,12 @@ def clear_cache(key):
         if _key == key:
             break
     if idx > 0:
+        log.warn("clear cache find [{}], will remove it!".format(key))
         DATA_CACHES_TIMEOUT_KEYS_INDEX.pop(idx - 1)
         DATA_CACHES.pop(key)
 
 
-def cache_data(cache_key, timeout_seconds=0, verify_key=None):
+def cache_data(cache_key, timeout_seconds=None, verify_key=None):
 
     def cache_decorator(func):
         @wraps(func)

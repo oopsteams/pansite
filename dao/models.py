@@ -185,8 +185,8 @@ class AccountWxExt(BaseModel):
                               "language", "country", "province", "city", "job", "is_realname", "account_id", "unionid"]
 
     @classmethod
-    def to_dict(cls, instance):
-        return object_to_dict(instance, cls.field_names())
+    def to_dict(cls, instance, excludes=[]):
+        return object_to_dict(instance, cls.field_names(), excludes)
 
 
 class AccountExt(BaseModel):
@@ -215,8 +215,8 @@ class AccountExt(BaseModel):
                               "is_realname", "account_id"]
 
     @classmethod
-    def to_dict(cls, instance):
-        return object_to_dict(instance, cls.field_names())
+    def to_dict(cls, instance, excludes=[]):
+        return object_to_dict(instance, cls.field_names(), excludes)
 
 
 class PanAccounts(BaseModel):
@@ -240,8 +240,8 @@ class PanAccounts(BaseModel):
                               "token_updated_at", "pin", "refresh_token", "expires_at", "use_count", "bd_uid"]
 
     @classmethod
-    def to_dict(cls, instance):
-        return object_to_dict(instance, cls.field_names())
+    def to_dict(cls, instance, excludes=[]):
+        return object_to_dict(instance, cls.field_names(), excludes)
 
 
 class Accounts(BaseModel):

@@ -243,6 +243,14 @@ class AuthDao(object):
 
     @classmethod
     @query_wrap_db
+    def query_ref_id_by_account_id(cls, account_id) -> int:
+        rs: AuthUser = AuthUser.select().where(AuthUser.acc_id == account_id).first()
+        if rs:
+            return rs.ref_id
+        return 0
+
+    @classmethod
+    @query_wrap_db
     def auth_user(cls, account_id) -> dict:
         rs = AuthUser.select().where(AuthUser.acc_id == account_id)
         auth_user_dict = {}

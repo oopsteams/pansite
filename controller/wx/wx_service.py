@@ -6,14 +6,26 @@ from controller.base_service import BaseService
 from controller.auth_service import auth_service
 from controller.payment.payment_service import payment_service
 from dao.wx_dao import WxDao
-from dao.models import AccountWxExt, Accounts
+from dao.models import AccountWxExt, Accounts, BASE_FIELDS
 import base64
 from Crypto.Cipher import AES
-from utils import singleton, obfuscate_id
+from utils import singleton, obfuscate_id, caches
 from cfg import WX_API
 import arrow
 import json
 
+
+def clear_wx_acc_cache(openid):
+    key = "wx_acc_{}".format(openid)
+    caches.clear_cache(key)
+
+
+def wx_acc_to_simple_dict(wx_acc: AccountWxExt):
+    if wx_acc:
+        return AccountWxExt.to_dict(wx_acc, BASE_FIELDS + ["avatar", "birthday", "marriage", "gender",
+                                                           "language", "country", "province", "city", "job",
+                                                           "is_realname"])
+    return None
 
 @singleton
 class WxService(BaseService):
@@ -21,6 +33,13 @@ class WxService(BaseService):
     def __init__(self):
         super().__init__()
         self.appId = WX_API['appid']
+
+    @caches.cache_data("wx_acc_{1}")
+    def checkout_wx_acc_by_openid(self, openid) -> dict:
+        wx_acc = WxDao.wx_account(openid)
+        if wx_acc:
+            return wx_acc_to_simple_dict(wx_acc)
+        return None
 
     def simple_profile(self, account_id, ref_id, wx_user_id, token):
         rs = dict()
@@ -48,7 +67,7 @@ class WxService(BaseService):
         #                                     nickname="Band",
         #                                     id=0,
         #                                     account_id=guest.id)
-        acc: Accounts = self.get_acc_by_wx_acc(wx_acc, guest)
+        acc: Accounts = self.get_acc_by_wx_acc(wx_acc_to_simple_dict(wx_acc), guest)
         rs['user'] = self.build_user_result(acc, wx_acc)
         rs['user']['sync'] = 1
         rs["state"] = {
@@ -110,9 +129,9 @@ class WxService(BaseService):
 
         return result
 
-    def get_acc_by_wx_acc(self, wx_acc: AccountWxExt, guest: Accounts):
-        if wx_acc:
-            acc_id = wx_acc.account_id
+    def get_acc_by_wx_acc(self, wx_acc_dict: dict, guest: Accounts):
+        if wx_acc_dict:
+            acc_id = wx_acc_dict['account_id']
             if guest and guest.id == acc_id:
                 acc = guest
             else:
@@ -136,20 +155,37 @@ class WxService(BaseService):
         }
         return rs
 
-    def wx_sync_login(self, openid, session_key, guest, wx_user):
+    def wx_sync_login(self, openid, session_key, guest, wx_user_dict):
         if openid:
-            wx_acc = WxDao.wx_account(openid)
-            acc = self.get_acc_by_wx_acc(wx_acc, guest)
+            # wx_acc_dict = self.checkout_wx_acc_by_openid(openid)
+            wx_acc: AccountWxExt = WxDao.wx_account(openid)
+            acc = self.get_acc_by_wx_acc(wx_acc_to_simple_dict(wx_acc), guest)
             sync = 1
+            rs = dict()
             if not wx_acc:
                 wx_acc = WxDao.new_wx_account_ext(openid, session_key, guest)
             else:
                 WxDao.update_wx_account({"session_key": session_key}, wx_acc.id)
                 if wx_acc.account_id != guest.id:
                     sync = 0
-            # rs = auth_service.login_check_user(acc, False, 'WX')
-            rs = dict()
-            rs['user'] = self.build_user_result(acc, wx_acc)
+                    ref_id = auth_service.query_ref_id_by_account_id(wx_acc.account_id)
+                    if ref_id:
+                        result = auth_service.wx_sync_login(wx_acc)
+                        tk = result['token']
+                        login_at = result['login_at']
+                        acc.login_token = tk
+                        rs = self.simple_profile(wx_acc.account_id, ref_id, wx_acc.id, tk)
+                        if login_at:
+                            rs['user']['login_at'] = login_at
+
+            _user = self.build_user_result(acc, wx_acc)
+            if _user and 'user' in rs:
+                for k in _user:
+                    if k == 'login_at':
+                        continue
+                    rs['user'][k] = _user[k]
+            else:
+                rs['user'] = _user
             # rs['uid'] = obfuscate_id(wx_acc.id)
             rs['openid'] = wx_acc.openid
             rs['name'] = wx_acc.nickname

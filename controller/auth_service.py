@@ -342,11 +342,12 @@ class AuthService(BaseService):
         auth_user_dict = AuthDao.auth_user(account.id)
         fuzzy_id = obfuscate_id(account.id)
         auth_user_dict['id'] = fuzzy_id
-        auth_user_dict['wxid'] = params["wx_id"]
+
         # auth_user_dict['_id'] = account.id
         auth_user_dict['login_updated_at'] = account.login_updated_at
         context = params["context"]
-        log.info("build_user_payload_for_wx context:{}".format(context))
+        auth_user_dict['wxid'] = context["wx_id"]
+        # log.info("build_user_payload_for_wx context:{}".format(context))
         tk = make_account_token(auth_user_dict)
         # print('make_account_token:', tk)
         return tk, auth_user_dict
@@ -358,12 +359,12 @@ class AuthService(BaseService):
         if exists_user:
             acc: Accounts = DataDao.account_by_name(name)
             if acc:
-                if acc.login_token:
-                    auth_user_dict = AuthDao.auth_user(acc.id)
-                    fuzzy_id = obfuscate_id(acc.id)
-                    auth_user_dict['id'] = fuzzy_id
-                    return acc.login_token, auth_user_dict
-                else:
+                # if acc.login_token:
+                #     auth_user_dict = AuthDao.auth_user(acc.id)
+                #     fuzzy_id = obfuscate_id(acc.id)
+                #     auth_user_dict['id'] = fuzzy_id
+                #     return acc.login_token, auth_user_dict
+                # else:
                     acc.login_updated_at = get_now_datetime()
                     user_token, user_ext_dict = self._default_new_user_build_user_payload_for_wx(acc, {"context": context})
                     acc.login_token = user_token
