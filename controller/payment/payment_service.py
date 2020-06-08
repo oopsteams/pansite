@@ -93,7 +93,7 @@ class PaymentService(BaseService):
                 new_counter = 1
                 extra_amount = 0
                 if extra_cr:
-                    if compare_dt(extra_cr.start_at, get_today_zero_datetime()) > 0:
+                    if compare_dt(extra_cr.start_at, get_today_zero_datetime()) >= 0:
                         new_counter = extra_cr.counter + 1
                         if constant.CREDIT_SIGNED_LEVEL:
                             for item in constant.CREDIT_SIGNED_LEVEL:
@@ -101,7 +101,13 @@ class PaymentService(BaseService):
                                 _amount = item[1]
                                 if extra_cr.counter < cnt:
                                     if _amount < 0:
-                                        new_counter = 1
+                                        item_l = len(item)
+                                        renew_counter = 1
+                                        if item_l > 2:
+                                            renew_counter = item[2]
+                                        new_counter = renew_counter
+                                        if item_l > 3:
+                                            extra_amount = item[3]
                                     else:
                                         extra_amount = _amount
                                     break

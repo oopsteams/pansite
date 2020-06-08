@@ -89,9 +89,10 @@ CREDIT_SOURCE = dict(
 CREDIT_SIGNED_REWARD = 1
 CREDIT_SIGNED_LEVEL = [
     [3, 0],
-    [5, 1],
-    [6, 2],
-    [7, -1]
+    [6, 1],
+    [29, 2],
+    [30, 10],
+    [31, -1, 3, 1]
 ]
 
 def shared_format(link, code):
