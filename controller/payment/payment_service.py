@@ -107,7 +107,7 @@ class PaymentService(BaseService):
                                     break
 
                     params = dict(
-                        start_at=get_now_datetime(24 * 60 * 60),
+                        start_at=get_today_zero_datetime(1),
                         counter=new_counter
                     )
                     PaymentDao.update_credit_record(extra_cr.cr_id, params)
@@ -115,7 +115,7 @@ class PaymentService(BaseService):
                 else:
                     params = dict(
                         amount=constant.CREDIT_SIGNED_REWARD,
-                        start_at=get_now_datetime(24 * 60 * 60),
+                        start_at=get_today_zero_datetime(1),
                         source=constant.CREDIT_SOURCE["LOGIN_EXTRA"],
                         balance=constant.CREDIT_SIGNED_REWARD,
                         counter=new_counter
@@ -124,7 +124,7 @@ class PaymentService(BaseService):
                     pass
                     # update extra_cr start_at -> tomorrow && counter
                 cr_params = dict(
-                    start_at=get_now_datetime(24 * 60 * 60),
+                    start_at=get_today_zero_datetime(1),
                     amount=signed["amount"] + extra_amount + constant.CREDIT_SIGNED_REWARD
                 )
                 PaymentDao.update_credit_record(signed["cr_id"], cr_params)
