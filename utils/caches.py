@@ -109,9 +109,10 @@ def clear_cache(key):
         data_obj = DATA_CACHES_TIMEOUT_KEYS_INDEX[idx - 1]
         _key = data_obj.get('key', '')
         if _key == key:
+            log.debug("find target keys_index:{}, index:{}".format(data_obj, idx-1))
             break
     if idx > 0:
-        log.warn("clear cache find [{}], will remove it!".format(key))
+        log.warn("clear cache find [{}][index:{}], will remove it!".format(key, idx-1))
         keys_index = DATA_CACHES_TIMEOUT_KEYS_INDEX.pop(idx - 1)
         log.debug("keys_index:{}".format(keys_index))
         DATA_CACHES.pop(key)
