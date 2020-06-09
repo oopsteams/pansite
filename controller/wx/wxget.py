@@ -61,6 +61,8 @@ class WXAppGet(BaseHandler):
             rip = self.getRemoteIp()
             rs['ip'] = rip
             print("rip:%s" % rip)
+        elif "test" == cmd:
+            payment_service.clear_cache(self.user_id, self.ref_id)
         elif u"openid" == cmd:
             code = params["code"]
             print("openid code:", code)

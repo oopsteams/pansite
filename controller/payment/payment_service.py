@@ -17,8 +17,13 @@ def clear_signed_state_cache(ref_id):
 def clear_balance_cache(account_id):
     clear_cache("pay_balance_{}".format(account_id))
 
+
 @singleton
 class PaymentService(BaseService):
+
+    def clear_cache(self, account_id, ref_id):
+        clear_balance_cache(account_id)
+        clear_signed_state_cache(ref_id)
 
     @cache_data("pay_balance_{1}")
     def query_credit_balance(self, account_id):
