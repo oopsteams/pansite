@@ -139,7 +139,7 @@ def init_db():
             for bf in base_fun_list:
                 Fun.insert_many(bf).execute()
         if not Role.select().where(Role.id == 1).exists():
-            Role.insert_many({"id": 1, "desc": "base", "base_fun": 1, "default_path": "/index.html"}).execute()
+            Role.insert_many({"id": 1, "desc": "base", "base_fun": 1, "default_path": "/"}).execute()
         if not Accounts.select().where(Accounts.id == 1).exists():
             Accounts.insert_many({"id": 1, "name": "root", "nickname": "root", "password": "000000",
                                   "mobile_no": "18511338714"}).execute()

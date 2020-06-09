@@ -11,11 +11,15 @@ PAY_SIGNED_CACHE_TIMEOUT = 24 * 60 * 60
 
 
 def clear_signed_state_cache(ref_id):
-    clear_cache("pay_signed_{}".format(ref_id))
+    key = "pay_signed_{}".format(ref_id)
+    print("clear_signed_state_cache key:", key)
+    clear_cache(key)
 
 
 def clear_balance_cache(account_id):
-    clear_cache("pay_balance_{}".format(account_id))
+    key = "pay_balance_{}".format(account_id)
+    print("clear_balance_cache key:", key)
+    clear_cache(key)
 
 
 @singleton
