@@ -113,7 +113,7 @@ class WXAppGet(BaseHandler):
                 }
             else:
                 payment_service.reward_credit_by_signed(self.user_id, self.ref_id)
-                rs = payment_service.query_credit_balance(self.user_id)
+                rs["state"] = payment_service.query_credit_balance(self.user_id)
             if "state" in rs and "cr_id" in rs["state"]:
                 rs["state"]["cr_id"] = 0
 

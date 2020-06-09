@@ -131,7 +131,7 @@ class PaymentService(BaseService):
                     # update extra_cr start_at -> tomorrow && counter
                 cr_params = dict(
                     start_at=get_today_zero_datetime(1),
-                    amount=signed["amount"] + extra_amount + constant.CREDIT_SIGNED_REWARD
+                    amount=extra_amount + constant.CREDIT_SIGNED_REWARD
                 )
                 PaymentDao.update_credit_record(signed["cr_id"], cr_params)
                 self.update_payment_account(account_id, ref_id, cr_params["amount"], nounce)
