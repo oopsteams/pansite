@@ -55,14 +55,16 @@ def _clear_cache():
     if get_now_ts() - LAST_CLEAR_CACHE_CONST['tm'] > LAST_CLEAR_CACHE_CONST['timeout']:
         _l = len(DATA_CACHES_TIMEOUT_KEYS_INDEX)
         idx = 0
+        find_target = False
         for idx in range(_l, 0, -1):
             data_obj = DATA_CACHES_TIMEOUT_KEYS_INDEX[idx-1]
             tm = data_obj.get('tm', 0)
             time_out = data_obj.get('to', 0)
             if time_out and get_now_ts() - tm > time_out:
                 log.warn("find timeout idx:{}".format(idx))
+                find_target = True
                 break
-        if idx > 0:
+        if find_target and idx > 0:
             log.warn("clear cache by idx:{}".format(idx))
             for i in range(idx, 0, -1):
                 d = DATA_CACHES_TIMEOUT_KEYS_INDEX.pop(i-1)
@@ -72,6 +74,24 @@ def _clear_cache():
         LAST_CLEAR_CACHE_CONST['tm'] = get_now_ts()
 
 
+def clear_cache(key):
+    idx = 0
+    _l = len(DATA_CACHES_TIMEOUT_KEYS_INDEX)
+    find_target = False
+    for idx in range(_l, 0, -1):
+        data_obj = DATA_CACHES_TIMEOUT_KEYS_INDEX[idx - 1]
+        _key = data_obj.get('key', '')
+        if _key == key:
+            log.debug("find target keys_index:{}, index:{}".format(data_obj, idx-1))
+            find_target = True
+            break
+    if find_target and idx > 0:
+        log.warn("clear cache find [{}][index:{}], will remove it!".format(key, idx-1))
+        keys_index = DATA_CACHES_TIMEOUT_KEYS_INDEX.pop(idx - 1)
+        log.debug("keys_index:{}".format(keys_index))
+        DATA_CACHES.pop(key)
+
+
 def _get_from_cache(key):
     data_obj = DATA_CACHES.get(key, None)
     if not data_obj:
@@ -79,7 +99,8 @@ def _get_from_cache(key):
     tm = data_obj.get('tm', 0)
     time_out = data_obj.get('to', 0)
     if time_out and get_now_ts() - tm > time_out:
-        DATA_CACHES.pop(key)
+        # DATA_CACHES.pop(key)
+        clear_cache(key)
         return None
     else:
         log.info("_get_from_cache hit ok! [{}]".format(key))
@@ -100,22 +121,6 @@ def _put_to_cache(key, val, timeout_seconds=0):
         DATA_CACHES_TIMEOUT_KEYS_INDEX.sort(key=lambda el: el['tm'] + el['to'])
 
     _clear_cache()
-
-
-def clear_cache(key):
-    idx = 0
-    _l = len(DATA_CACHES_TIMEOUT_KEYS_INDEX)
-    for idx in range(_l, 0, -1):
-        data_obj = DATA_CACHES_TIMEOUT_KEYS_INDEX[idx - 1]
-        _key = data_obj.get('key', '')
-        if _key == key:
-            log.debug("find target keys_index:{}, index:{}".format(data_obj, idx-1))
-            break
-    if idx > 0:
-        log.warn("clear cache find [{}][index:{}], will remove it!".format(key, idx-1))
-        keys_index = DATA_CACHES_TIMEOUT_KEYS_INDEX.pop(idx - 1)
-        log.debug("keys_index:{}".format(keys_index))
-        DATA_CACHES.pop(key)
 
 
 def cache_data(cache_key, timeout_seconds=None, verify_key=None):
