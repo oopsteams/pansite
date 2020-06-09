@@ -112,7 +112,8 @@ def clear_cache(key):
             break
     if idx > 0:
         log.warn("clear cache find [{}], will remove it!".format(key))
-        DATA_CACHES_TIMEOUT_KEYS_INDEX.pop(idx - 1)
+        keys_index = DATA_CACHES_TIMEOUT_KEYS_INDEX.pop(idx - 1)
+        log.debug("keys_index:{}".format(keys_index))
         DATA_CACHES.pop(key)
 
 
