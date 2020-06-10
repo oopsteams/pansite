@@ -101,9 +101,13 @@ class PaymentService(BaseService):
                 new_counter = 1
                 extra_amount = 0
                 if extra_cr:
-                    if compare_dt(extra_cr.start_at, get_today_zero_datetime()) == 0:
-                        new_counter = extra_cr.counter + 1
-                        if constant.CREDIT_SIGNED_LEVEL:
+                    diff_val = compare_dt(extra_cr.start_at, get_today_zero_datetime())
+                    if diff_val >= 0:
+                        if diff_val == 0:
+                            new_counter = extra_cr.counter + 1
+                        else:
+                            new_counter = extra_cr.counter
+                        if diff_val == 0 and constant.CREDIT_SIGNED_LEVEL:
                             for item in constant.CREDIT_SIGNED_LEVEL:
                                 cnt = item[0]
                                 _amount = item[1]
