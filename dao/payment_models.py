@@ -23,7 +23,7 @@ class PaymentAccount(BaseModel):
 
     @classmethod
     def field_names(cls):
-        return BASE_FIELDS + ["pay_id", "account_type", "balance", "currency", "start_at", "expire_at", "source",
+        return BASE_FIELDS + ["pay_id", "account_type", "amount", "frozen_amount", "balance", "currency", "start_at", "expire_at", "source",
                               "account_id", "ref_id", "nounce"]
 
     @classmethod

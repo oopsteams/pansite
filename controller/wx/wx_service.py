@@ -103,6 +103,7 @@ class WxService(BaseService):
             id=acc.fuzzy_id
                       )
         result['id'] = acc.fuzzy_id
+
         if wx_acc:
             result['portrait'] = wx_acc.avatar
             result['uid'] = obfuscate_id(wx_acc.id)
@@ -120,10 +121,13 @@ class WxService(BaseService):
             token=login_token,
             login_at=int(arrow.get(lud).timestamp * 1000),
         )
+        sync = 0
+        if not wx_id:
+            sync = 1
         result['id'] = obfuscate_id(account_id)
         result['uid'] = obfuscate_id(wx_id)
         result['pin'] = 0
-        result['sync'] = 0
+        result['sync'] = sync
         result['ri'] = []
         result['re'] = []
 

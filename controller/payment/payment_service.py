@@ -94,8 +94,7 @@ class PaymentService(BaseService):
     def reward_credit_by_signed(self, account_id, ref_id):
         # 查询今天是否已经signed
         nounce = get_now_ts()
-        rs = {"signed": 0}
-        signed = self.check_signed(ref_id)
+        rs = signed = self.check_signed(ref_id)
         if signed:
             if not signed["signed"]:
                 extra_cr: CreditRecord = PaymentDao.query_signed_extra_reward_record(ref_id)
@@ -146,7 +145,7 @@ class PaymentService(BaseService):
                 self.update_payment_account(account_id, ref_id, cr_params["amount"], nounce)
                 clear_signed_state_cache(ref_id)
                 clear_balance_cache(account_id)
-                rs["signed"] = 1
+                rs = self.check_signed(ref_id)
         else:
             params = dict(
                 amount=constant.CREDIT_SIGNED_REWARD,
@@ -158,7 +157,7 @@ class PaymentService(BaseService):
             PaymentDao.signed_credit_record(account_id, ref_id, params)
             self.update_payment_account(account_id, ref_id, params["amount"], nounce)
             clear_balance_cache(account_id)
-            rs["signed"] = 1
+            rs = self.check_signed(ref_id)
         return rs
 
     def reward_credit_by_invite(self):

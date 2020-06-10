@@ -108,14 +108,19 @@ class WXAppGet(BaseHandler):
                 rs["state"]["cr_id"] = 0
         elif "signed" == cmd:
             if self.guest.id == self.user_id:
-                rs = {
+                rs["balance"] = {
                     "balance": 0,
                     "amount": 0,
                     "frozen_amount": 0
                 }
+                rs["state"] = {
+                    "signed": False,
+                    "counter": -1
+                }
             else:
-                payment_service.reward_credit_by_signed(self.user_id, self.ref_id)
-                rs["state"] = payment_service.query_credit_balance(self.user_id)
+                rs["state"] = payment_service.reward_credit_by_signed(self.user_id, self.ref_id)
+                balance_rs = payment_service.query_credit_balance(self.user_id)
+                rs["balance"] = balance_rs
             if "state" in rs and "cr_id" in rs["state"]:
                 rs["state"]["cr_id"] = 0
 
