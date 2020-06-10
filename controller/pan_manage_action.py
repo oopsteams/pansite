@@ -47,7 +47,7 @@ class ManageHandler(BaseHandler):
                 if not '#' == node_id:
                     node_id_val = decrypt_id(node_id)
                     parent_id = int(node_id_val)
-                    params = mpan_service.query_file_list(parent_id)
+                    params, _ = mpan_service.query_file_list(parent_id)
                 else:
                     params = mpan_service.fetch_root_item_by_user(self.user_id)
 

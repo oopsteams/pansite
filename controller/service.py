@@ -440,17 +440,22 @@ class PanService(BaseService):
                 # if __idx > 0:
                 #     fn_name = fn_name[0:__idx]
                 txt = "[{}]{}".format(fn_name, aliasname)
-            f_type = guess_file_type(txt)
-            if f_type:
-                icon_val = "file file-%s" % f_type
+            if _s["_source"]["isdir"] == 1:
+                icon_val = "folder"
+            else:
+                f_type = guess_file_type(txt)
+                if f_type:
+                    icon_val = "file file-%s" % f_type
             item_fuzzy_id = obfuscate_id(_s["_source"]["id"])
-            params.append({"id": obfuscate_id(_s["_source"]["id"]), "text": txt,
+            params.append({"id": item_fuzzy_id, "text": txt,
                            "data": {"path": _s["_source"]["path"], "isdir": _s["_source"]["isdir"], "source": "local",
                                     "media_type": media_type, "format_size": format_size, "category": category,
                                     "fs_id": _s["_source"]["fs_id"], "_id": item_fuzzy_id
                                     },
                            "children": False, "icon": icon_val})
-        return params
+        has_next = offset + size < total
+        meta = {"has_next": has_next, "total": total, "pagesize": size}
+        return params, meta
 
     # 分享文件
     def share_folder(self, fs_id):

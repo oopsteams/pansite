@@ -146,6 +146,51 @@ class BaseHandler(RequestHandler):
 
 class PanHandler(BaseHandler):
 
+    def load_file_list(self, source, node_id, page, size):
+        params = []
+        meta = {
+            "has_next": False, "pagesize": size
+        }
+        if not '#' == node_id:
+            # if "shared" == source:
+            #     params = pan_service.query_shared_file_list(parent_id, self.request.user_id)
+            if "assets" == source:
+                if 'assets_0' == node_id:
+                    params = ProductDao.query_assets_by_ref_id_for_tree(self.ref_id)
+            elif "free" == source:
+                if 'free_0' == node_id:
+                    params = pan_service.query_root_list()
+            elif "self" == source:
+                if 'self_0' == node_id:
+                    if not self.default_pan_id:
+                        pan_acc = auth_service.default_pan_account(self.user_id)
+                        self.default_pan_id = pan_acc.id
+                    if self.default_pan_id:
+                        params = pan_service.query_client_root_list(self.default_pan_id)
+                else:
+                    node_id_val = decrypt_id(node_id)
+                    parent_id = int(node_id_val)
+                    params = pan_service.query_client_sub_list(parent_id, self.ref_id)
+            elif "empty" == source:
+                pass
+            else:
+                node_id_val = decrypt_id(node_id)
+                parent_id = int(node_id_val)
+                params, meta = pan_service.query_file_list(parent_id, int(page), int(size))
+        else:
+            # params = pan_service.query_root_list(self.request.user_id)
+            params.append({"id": "free_0", "text": PAN_TREE_TXT['free_root'], "data": {"source": "free"},
+                           "children": True, "icon": "folder"})
+            params.append({"id": "assets_0", "text": PAN_TREE_TXT['buy_root'], "data": {"source": "assets"},
+                           "children": True, "icon": "folder"})
+            params.append({"id": "self_0", "text": PAN_TREE_TXT['self_root'], "data": {"source": "self"},
+                           "children": True, "icon": "folder"})
+            params.append({"id": "empty_0", "text": PAN_TREE_TXT['empty_root'], "data": {"source": "empty"},
+                           "children": False, "icon": "file"})
+        if "total" not in meta:
+            meta["total"] = len(params)
+        return params, meta
+
     @authenticated
     def get(self):
         path = self.request.path
@@ -158,6 +203,16 @@ class PanHandler(BaseHandler):
             # for item in item_list:
             #     print(item.filename)
             self.render('list.html', **params)
+        elif path.endswith("/wxfload"):
+            source = self.get_argument("source", "")
+            node_id = self.get_argument("id")
+            page = self.get_argument("page", "0")
+            size = self.get_argument("size", "100")
+            params, meta = self.load_file_list(source, node_id, page, size)
+            rs = meta
+            rs['data'] = params
+            self.to_write_json(rs)
+
         elif path.endswith("/fload"):
             source = self.get_argument("source", "")
             node_id = self.get_argument("id")
@@ -168,43 +223,7 @@ class PanHandler(BaseHandler):
             #     parent_path = "%s/" % parent_path
             logger.info("fload node_id:{},source:{}".format(node_id, source))
             # parent_id = 55
-            params = []
-            if not '#' == node_id:
-                # if "shared" == source:
-                #     params = pan_service.query_shared_file_list(parent_id, self.request.user_id)
-                if "assets" == source:
-                    if 'assets_0' == node_id:
-                        params = ProductDao.query_assets_by_ref_id_for_tree(self.ref_id)
-                elif "free" == source:
-                    if 'free_0' == node_id:
-                        params = pan_service.query_root_list()
-                elif "self" == source:
-                    if 'self_0' == node_id:
-                        if not self.default_pan_id:
-                            pan_acc = auth_service.default_pan_account(self.user_id)
-                            self.default_pan_id = pan_acc.id
-                        if self.default_pan_id:
-                            params = pan_service.query_client_root_list(self.default_pan_id)
-                    else:
-                        node_id_val = decrypt_id(node_id)
-                        parent_id = int(node_id_val)
-                        params = pan_service.query_client_sub_list(parent_id, self.ref_id)
-                elif "empty" == source:
-                    pass
-                else:
-                    node_id_val = decrypt_id(node_id)
-                    parent_id = int(node_id_val)
-                    params = pan_service.query_file_list(parent_id, int(page), int(size))
-            else:
-                # params = pan_service.query_root_list(self.request.user_id)
-                params.append({"id": "free_0", "text": PAN_TREE_TXT['free_root'], "data": {"source": "free"},
-                               "children": True, "icon": "folder"})
-                params.append({"id": "assets_0", "text": PAN_TREE_TXT['buy_root'], "data": {"source": "assets"},
-                               "children": True, "icon": "folder"})
-                params.append({"id": "self_0", "text": PAN_TREE_TXT['self_root'], "data": {"source": "self"},
-                               "children": True, "icon": "folder"})
-                params.append({"id": "empty_0", "text": PAN_TREE_TXT['empty_root'], "data": {"source": "empty"},
-                               "children": False, "icon": "file"})
+            params, _ = self.load_file_list(source, node_id, page, size)
 
             self.to_write_json(params)
         elif path.endswith("/search"):
