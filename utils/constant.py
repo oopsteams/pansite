@@ -44,6 +44,7 @@ SHARED_FR_DAYS_ERR = "今日以至上限,明日再试!"
 SHARED_FR_HOURS_ERR = "请过一小时再试!"
 SHARED_FR_MINUTES_ERR = "请过一会儿再试!"
 SHARED_BAN_ERR = "该文件不能提供分享!"
+SHARED_NOT_EXISTS_ERR = "该文件不存在了!"
 
 MAX_RESULT_WINDOW = 10000
 

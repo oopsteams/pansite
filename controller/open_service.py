@@ -5,7 +5,7 @@ Created by susy at 2019/12/18
 from controller.base_service import BaseService
 from utils import singleton, log as logger, compare_dt_by_now, get_now_datetime_format, scale_size, split_filename, \
     obfuscate_id
-from dao.models import Accounts, DataItem, ShareLogs, ShareFr, ShareApp, AppCfg, AuthUser
+from dao.models import Accounts, DataItem, ShareLogs, ShareFr, ShareApp, AppCfg, AuthUser, BASE_FIELDS
 from utils.utils_es import SearchParams, build_query_item_es_body
 from dao.es_dao import es_dao_share, es_dao_local
 from dao.community_dao import CommunityDao
@@ -13,12 +13,13 @@ from dao.mdao import DataDao
 from dao.auth_dao import AuthDao
 from utils.caches import cache_data, cache_service
 from utils.constant import shared_format, SHARED_FR_MINUTES_CNT, SHARED_FR_HOURS_CNT, SHARED_FR_DAYS_CNT, \
-    SHARED_FR_DAYS_ERR, SHARED_FR_HOURS_ERR, SHARED_FR_MINUTES_ERR, MAX_RESULT_WINDOW, SHARED_BAN_ERR
+    SHARED_FR_DAYS_ERR, SHARED_FR_HOURS_ERR, SHARED_FR_MINUTES_ERR, MAX_RESULT_WINDOW, SHARED_BAN_ERR, \
+    SHARED_NOT_EXISTS_ERR
 from controller.sync_service import sync_pan_service
 from controller.service import pan_service
 from controller.auth_service import auth_service
 import time
-import json
+ONE_DAY_SECONDS_TOTAL = 24 * 60 * 60
 
 
 @singleton
@@ -48,7 +49,7 @@ class OpenService(BaseService):
                 if not sl.link:
                     sync_pan_service.clear_share_log(sl.id)
                     continue
-                if abs(compare_dt_by_now(sl.created_at)) < 24*60*60:
+                if abs(compare_dt_by_now(sl.created_at)) < ONE_DAY_SECONDS_TOTAL:
                     share_log = sl
                     rs = {'state': 0, 'sl': shared_format(sl.link, sl.password)}
                     break
@@ -86,13 +87,33 @@ class OpenService(BaseService):
 
         return rs, share_log
 
-    def fetch_shared(self, fs_id):
-        # print('fs_id:', fs_id)
+    @cache_data("check_free_permit_{1}", timeout_seconds=ONE_DAY_SECONDS_TOTAL)
+    def check_free_item_permit(self, fs_id):
         item: DataItem = DataDao.query_data_item_by_fs_id(fs_id)
         if item:
             if not CommunityDao.local_check_free_by_id(item):
                 return {'state': -1, 'err': SHARED_BAN_ERR}
-        rs, share_log = self.build_shared_log(item)
+            else:
+                rs = DataItem.to_dict(item, BASE_FIELDS + DataItem.field_names() -
+                                      ["id", "fs_id", "parent", "account_id", "panacc"])
+                rs['state'] = 0
+                return rs
+        else:
+            return {'state': -1, 'err': SHARED_NOT_EXISTS_ERR}
+
+    def fetch_shared(self, fs_id):
+        # print('fs_id:', fs_id)
+        # item: DataItem = DataDao.query_data_item_by_fs_id(fs_id)
+        # if item:
+        #     if not CommunityDao.local_check_free_by_id(item):
+        #         return {'state': -1, 'err': SHARED_BAN_ERR}
+        item_dict = self.check_free_item_permit(fs_id)
+        if item_dict['state'] == 0:
+            item = DataItem(id=item_dict['id'], fs_id=item_dict['fs_id'], panacc=item_dict['panacc'],
+                            parent=item_dict['parent'], account_id=item_dict['account_id'])
+            rs, share_log = self.build_shared_log(item)
+        else:
+            rs = item_dict
         return rs
 
     def update_share_fr(self, m_val, h_val, d_val, pan_id, sharefr):
