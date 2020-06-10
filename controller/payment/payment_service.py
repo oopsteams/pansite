@@ -60,7 +60,7 @@ class PaymentService(BaseService):
             if rs["signed"]:
                 extra_cr: CreditRecord = PaymentDao.query_signed_extra_reward_record(ref_id)
                 if extra_cr:
-                    if compare_dt(extra_cr.start_at, get_today_zero_datetime()) > 0:
+                    if compare_dt(extra_cr.start_at, get_today_zero_datetime()) >= 0:
                         new_counter = extra_cr.counter
 
             rs["counter"] = new_counter
@@ -101,7 +101,7 @@ class PaymentService(BaseService):
                 new_counter = 1
                 extra_amount = 0
                 if extra_cr:
-                    if compare_dt(extra_cr.start_at, get_today_zero_datetime()) >= 0:
+                    if compare_dt(extra_cr.start_at, get_today_zero_datetime()) == 0:
                         new_counter = extra_cr.counter + 1
                         if constant.CREDIT_SIGNED_LEVEL:
                             for item in constant.CREDIT_SIGNED_LEVEL:
@@ -135,7 +135,7 @@ class PaymentService(BaseService):
                         counter=new_counter
                     )
                     PaymentDao.signed_credit_record(account_id, ref_id, params)
-                    pass
+
                     # update extra_cr start_at -> tomorrow && counter
                 cr_params = dict(
                     start_at=get_today_zero_datetime(1),
@@ -149,7 +149,7 @@ class PaymentService(BaseService):
         else:
             params = dict(
                 amount=constant.CREDIT_SIGNED_REWARD,
-                start_at=get_now_datetime(),
+                start_at=get_today_zero_datetime(1),
                 source=constant.CREDIT_SOURCE["LOGIN"],
                 balance=constant.CREDIT_SIGNED_REWARD,
                 counter=0
