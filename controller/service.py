@@ -391,6 +391,9 @@ class PanService(BaseService):
         offset = int(page) * size
         if offset > MAX_RESULT_WINDOW - size:
             offset = MAX_RESULT_WINDOW - size
+
+        parent_item_fuzzy_id = obfuscate_id(parent_item_id)
+
         # item_list = DataDao.query_data_item_by_parent(parent_item_id, True, limit=1000)
         # params = []
         # for item in item_list:
@@ -450,7 +453,8 @@ class PanService(BaseService):
             params.append({"id": item_fuzzy_id, "text": txt,
                            "data": {"path": _s["_source"]["path"], "isdir": _s["_source"]["isdir"], "source": "local",
                                     "media_type": media_type, "format_size": format_size, "category": category,
-                                    "fs_id": _s["_source"]["fs_id"], "_id": item_fuzzy_id
+                                    "fs_id": _s["_source"]["fs_id"], "_id": item_fuzzy_id,
+                                    "parent_fuzzy_id": parent_item_fuzzy_id
                                     },
                            "children": False, "icon": icon_val})
         has_next = offset + size < total
