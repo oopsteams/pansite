@@ -29,7 +29,7 @@ class PaymentService(BaseService):
         clear_balance_cache(account_id)
         clear_signed_state_cache(ref_id)
 
-    @cache_data("pay_balance_{1}")
+    @cache_data("pay_balance_{1}", timeout_seconds=lambda s, account_id, rs: PAY_SIGNED_CACHE_TIMEOUT)
     def query_credit_balance(self, account_id):
         rs = {
                 "balance": 0,

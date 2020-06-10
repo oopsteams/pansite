@@ -90,6 +90,10 @@ def clear_cache(key):
         keys_index = DATA_CACHES_TIMEOUT_KEYS_INDEX.pop(idx - 1)
         log.debug("keys_index:{}".format(keys_index))
         DATA_CACHES.pop(key)
+    if not find_target:
+        if key in DATA_CACHES:
+            log.warn("clear cache, timeout is 0, [{}][index:{}], will remove it!".format(key, idx - 1))
+            DATA_CACHES.pop(key)
 
 
 def _get_from_cache(key):
