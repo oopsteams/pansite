@@ -22,6 +22,7 @@ PAN_ACCESS_TOKEN_TIMEOUT = constant.PAN_ACCESS_TOKEN_TIMEOUT
 DLINK_TIMEOUT = constant.DLINK_TIMEOUT
 # PAN_ACC_CACHE_TIMEOUT = 24 * 60 * 60
 ACCOUNT_PAN_ACC_CACHE_CNT = 5
+MAX_RESULT_WINDOW = 10000
 
 
 @singleton
@@ -386,29 +387,34 @@ class PanService(BaseService):
                                     "isdir": _s["_source"]["isdir"], "source": "shared"}, "children": True, "icon": "folder"})
         return params
 
-    def query_file_list(self, parent_item_id):
-        item_list = DataDao.query_data_item_by_parent(parent_item_id, True, limit=1000)
-        params = []
-        for item in item_list:
-            _item_path = item.path
-            txt = item.filename
-            if item.aliasname:
-                txt = item.aliasname
-            item_fuzzy_id = obfuscate_id(item.id)
-            format_size = scale_size(item.size)
-            # print("id:", item.id, ",item_fuzzy_id:", item_fuzzy_id)
-            params.append({"id": item_fuzzy_id, "text": txt, "data": {"path": _item_path, "_id": item_fuzzy_id,
-                                                                      "format_size": format_size, "fs_id": item.fs_id,
-                                                                      "category": item.category, "source": "local",
-                                                                      "isdir": item.isdir},
-                           "children": True, "icon": "folder"})
+    def query_file_list(self, parent_item_id, page, size):
+        offset = int(page) * size
+        if offset > MAX_RESULT_WINDOW - size:
+            offset = MAX_RESULT_WINDOW - size
+        # item_list = DataDao.query_data_item_by_parent(parent_item_id, True, limit=1000)
+        # params = []
+        # for item in item_list:
+        #     _item_path = item.path
+        #     txt = item.filename
+        #     if item.aliasname:
+        #         txt = item.aliasname
+        #     item_fuzzy_id = obfuscate_id(item.id)
+        #     format_size = scale_size(item.size)
+        #     # print("id:", item.id, ",item_fuzzy_id:", item_fuzzy_id)
+        #     params.append({"id": item_fuzzy_id, "text": txt, "data": {"path": _item_path, "_id": item_fuzzy_id,
+        #                                                               "format_size": format_size, "fs_id": item.fs_id,
+        #                                                               "category": item.category, "source": "local",
+        #                                                               "isdir": item.isdir},
+        #                    "children": True, "icon": "folder"})
         # print("dirs total:", len(params))
-
-        sp: SearchParams = SearchParams.build_params(0, 1000)
+        params = []
+        # sp: SearchParams = SearchParams.build_params(0, 1000)
+        sp: SearchParams = SearchParams.build_params(offset, size)
         # sp.add_must(is_match=False, field="path", value=parent_path)
         sp.add_must(is_match=False, field="parent", value=parent_item_id)
-        sp.add_must(is_match=False, field="isdir", value=0)
-        es_body = build_query_item_es_body(sp)
+        # sp.add_must(is_match=False, field="isdir", value=0)
+        _sort_fields = [{"isdir": {"order": "desc"}}, {"filename": {"order": "asc"}}]
+        es_body = build_query_item_es_body(sp, sort_fields=_sort_fields)
         # logger.info("es_body:{}".format(es_body))
         es_result = es_dao_local().es_search_exec(es_body)
         hits_rs = es_result["hits"]

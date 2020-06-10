@@ -161,6 +161,8 @@ class PanHandler(BaseHandler):
         elif path.endswith("/fload"):
             source = self.get_argument("source", "")
             node_id = self.get_argument("id")
+            page = self.get_argument("page", "0")
+            size = self.get_argument("size", "1000")
             # parent_path = self.get_argument("path")
             # if not parent_path.endswith("/"):
             #     parent_path = "%s/" % parent_path
@@ -192,7 +194,7 @@ class PanHandler(BaseHandler):
                 else:
                     node_id_val = decrypt_id(node_id)
                     parent_id = int(node_id_val)
-                    params = pan_service.query_file_list(parent_id)
+                    params = pan_service.query_file_list(parent_id, int(page), int(size))
             else:
                 # params = pan_service.query_root_list(self.request.user_id)
                 params.append({"id": "free_0", "text": PAN_TREE_TXT['free_root'], "data": {"source": "free"},
