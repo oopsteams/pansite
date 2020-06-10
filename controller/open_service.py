@@ -90,7 +90,7 @@ class OpenService(BaseService):
         # print('fs_id:', fs_id)
         item: DataItem = DataDao.query_data_item_by_fs_id(fs_id)
         if item:
-            if not CommunityDao.local_check_free_by_id(item.id):
+            if not CommunityDao.local_check_free_by_id(item):
                 return {'state': -1, 'err': SHARED_BAN_ERR}
         rs, share_log = self.build_shared_log(item)
         return rs

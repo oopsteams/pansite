@@ -61,8 +61,14 @@ class CommunityDao(object):
 
     @classmethod
     @query_wrap_db
-    def local_check_free_by_id(cls, _id):
-        return LocalVisible.select().where(LocalVisible.id == _id).exists()
+    def local_check_free_by_id(cls, item: DataItem):
+        permit = LocalVisible.select().where(LocalVisible.id == item.id).exists()
+        dog = 20
+        while item and not permit and item.parent and dog > 0:
+            item = DataItem.select().where(DataItem.id == item.parent).first()
+            permit = LocalVisible.select().where(LocalVisible.id == item.id).exists()
+            dog = dog - 1
+        return permit
 
     @classmethod
     @query_wrap_db
