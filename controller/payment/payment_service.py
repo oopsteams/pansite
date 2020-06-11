@@ -60,7 +60,9 @@ class PaymentService(BaseService):
             if rs["signed"]:
                 extra_cr: CreditRecord = PaymentDao.query_signed_extra_reward_record(ref_id)
                 if extra_cr:
-                    if compare_dt(extra_cr.start_at, get_today_zero_datetime()) >= 0:
+                    diff = compare_dt(extra_cr.start_at, get_today_zero_datetime())
+                    print("extra cr start_at - today diff:", diff)
+                    if diff >= 0:
                         new_counter = extra_cr.counter
 
             rs["counter"] = new_counter
@@ -89,7 +91,7 @@ class PaymentService(BaseService):
             )
 
             PaymentDao.update_payment_account(pa.pay_id, params)
-            clear_cache("pay_balance_{}".format(account_id))
+            # clear_cache("pay_balance_{}".format(account_id))
 
     def reward_credit_by_signed(self, account_id, ref_id):
         # 查询今天是否已经signed
@@ -160,6 +162,7 @@ class PaymentService(BaseService):
             )
             PaymentDao.signed_credit_record(account_id, ref_id, params)
             self.update_payment_account(account_id, ref_id, params["amount"], nounce)
+            clear_signed_state_cache(ref_id)
             clear_balance_cache(account_id)
             rs = self.check_signed(ref_id)
         return rs
