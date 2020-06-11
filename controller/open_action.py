@@ -50,7 +50,8 @@ class OpenHandler(BaseHandler):
             self.to_write_json(rs)
         elif path.endswith("/shared"):
             fs_id = self.get_argument("fs_id")
-            rs = open_service.fetch_shared(fs_id)
+            # rs = open_service.fetch_shared(fs_id)
+            rs = open_service.fetch_shared_skip_visible(fs_id)
             self.to_write_json(rs)
         elif path.endswith("/cfg"):
             platform = self.get_argument("platform", "win32")
