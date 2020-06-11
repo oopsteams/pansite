@@ -149,6 +149,7 @@ class PaymentService(BaseService):
                     start_at=get_today_zero_datetime(1),
                     amount=extra_amount + constant.CREDIT_SIGNED_REWARD
                 )
+                print("will update cr params:", cr_params, ",cr_id:", signed["cr_id"])
                 PaymentDao.update_credit_record(signed["cr_id"], cr_params)
                 self.update_payment_account(account_id, ref_id, cr_params["amount"], nounce)
                 clear_signed_state_cache(ref_id)
