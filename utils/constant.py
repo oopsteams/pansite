@@ -44,6 +44,7 @@ SHARED_FR_DAYS_ERR = "今日以至上限,明日再试!"
 SHARED_FR_HOURS_ERR = "请过一小时再试!"
 SHARED_FR_MINUTES_ERR = "请过一会儿再试!"
 SHARED_BAN_ERR = "该文件不能提供分享!"
+SHARED_NOT_EXISTS_ERR = "该文件不存在了!"
 
 MAX_RESULT_WINDOW = 10000
 
@@ -77,7 +78,23 @@ PAN_TREE_TXT = dict(
     self_root="已获取目录",
     empty_root="到底了",
 )
-
+PAYMENT_ACC_SOURCE = dict(
+    CREDIT="credit"
+)
+CREDIT_SOURCE = dict(
+    LOGIN="login",
+    LOGIN_EXTRA="login_extra",
+    INVITE="invite",
+    SHARE_PLAN="share_plan",
+)
+CREDIT_SIGNED_REWARD = 1
+CREDIT_SIGNED_LEVEL = [
+    [3, 0],
+    [6, 1],
+    [29, 2],
+    [30, 15],
+    [31, -1, 3, 1]
+]
 
 def shared_format(link, code):
     return """链接: {} 提取码: {} 复制这段内容后打开百度网盘手机App，操作更方便哦""".format(link, code)

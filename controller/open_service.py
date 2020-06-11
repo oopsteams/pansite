@@ -11,11 +11,12 @@ from dao.community_dao import CommunityDao
 from dao.dao import DataDao
 from utils.caches import cache_data, cache_service
 from utils.constant import shared_format, SHARED_FR_MINUTES_CNT, SHARED_FR_HOURS_CNT, SHARED_FR_DAYS_CNT, \
-    SHARED_FR_DAYS_ERR, SHARED_FR_HOURS_ERR, SHARED_FR_MINUTES_ERR, MAX_RESULT_WINDOW, SHARED_BAN_ERR
+    SHARED_FR_DAYS_ERR, SHARED_FR_HOURS_ERR, SHARED_FR_MINUTES_ERR, MAX_RESULT_WINDOW, SHARED_BAN_ERR, \
+    SHARED_NOT_EXISTS_ERR
 from controller.sync_service import sync_pan_service
 from controller.service import pan_service
 import time
-import json
+ONE_DAY_SECONDS_TOTAL = 24 * 60 * 60
 
 
 @singleton
@@ -90,6 +91,14 @@ class OpenService(BaseService):
             if not CommunityDao.local_check_free_by_id(item.id):
                 return {'state': -1, 'err': SHARED_BAN_ERR}, None
         rs, share_log = self.build_shared_log(item)
+        return rs
+
+    def fetch_shared_skip_visible(self, fs_id):
+        # print('fs_id:', fs_id)
+        item: DataItem = DataDao.query_data_item_by_fs_id(fs_id)
+        if not item:
+            return {'state': -1, 'err': SHARED_NOT_EXISTS_ERR}
+        rs, _ = self.build_shared_log(item)
         return rs
 
     def update_share_fr(self, m_val, h_val, d_val, pan_id, sharefr):
