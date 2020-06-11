@@ -94,6 +94,7 @@ if __name__ == "__main__":
         (r"/product/[^/]+", ProductHandler, dict(middleware=middle_list, context=context)),
         (r"/man/[^/]+", ManageHandler, dict(middleware=middle_list, context=context)),
         (r"/open/[^/]+", OpenHandler, dict(middleware=middle_list, context=context)),
+        (r"/rpc/[^/]+", OpenHandler, dict(middleware=middle_list, context=context)),
         (r"/async/[^/]+", AsyncHandler, dict(middleware=middle_list, context=context)),
         (r"/user/[^/]+", UserHandler, dict(middleware=middle_list, context=context)),
         (r"/login/", MainHandler, dict(middleware=middle_list, context=context)),
