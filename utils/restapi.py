@@ -8,7 +8,26 @@ import time
 import json
 from utils import url_encode, get_now_ts, log as logger
 from utils.constant import PAN_ERROR_CODES
+from functools import wraps
 POINT = "{protocol}://{domain}".format(protocol=PAN_SERVICE['protocol'], domain=PAN_SERVICE['domain'])
+PROXY_POINT = "http://api.oopsteam.site/rpc"
+
+
+def api_proxy():
+    def cache_decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+
+            datas = {"clazz": "restapi", "fn": func.__name__, "args": args}
+            headers = {"User-Agent": "pan.baidu.com"}
+            # print("file_rename file:", access_token, ",path:", filepath, ", filelist:", datas["filelist"])
+            rs = requests.post(PROXY_POINT, data=datas, headers=headers)
+            # print("content:", rs.content)
+            jsonrs = rs.json()
+            # result = func(*args, **kwargs)
+            return jsonrs
+        return wrapper
+    return cache_decorator
 
 
 # auth
