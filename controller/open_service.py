@@ -51,7 +51,7 @@ class OpenService(BaseService):
                     continue
                 if abs(compare_dt_by_now(sl.created_at)) < ONE_DAY_SECONDS_TOTAL:
                     share_log = sl
-                    rs = {'state': 0, 'sl': shared_format(sl.link, sl.password)}
+                    rs = {'state': 0, 'info': shared_format(sl.link, sl.password)}
                     break
                 else:
                     sync_pan_service.clear_share_log(sl.id)
