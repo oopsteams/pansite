@@ -51,7 +51,9 @@ class PaymentService(BaseService):
         rs = None
         cr: CreditRecord = PaymentDao.query_today_signed_record(ref_id)
         if cr:
-            rs = {"signed": compare_dt(cr.start_at, get_today_zero_datetime()) > 0,
+            diff = compare_dt(cr.start_at, get_today_zero_datetime())
+            print("login cr start_at - today diff:", diff)
+            rs = {"signed": diff > 0,
                   "to": (get_today_zero_datetime(+1) - get_now_datetime()).total_seconds(),
                   "cr_id": cr.cr_id,
                   "amount": cr.amount
