@@ -53,7 +53,7 @@ class PaymentDao(object):
     def active_payment_frozen(cls, account_id):
         with db:
             # db.execute_sql("update paymentaccount set balance = balance - frozen_amount where account_id={}".format(account_id))
-            PaymentAccount.update(balance=PaymentAccount.balance - PaymentAccount.frozen_amount).where(PaymentAccount.account_id == account_id).execute()
+            PaymentAccount.update(balance=PaymentAccount.balance - PaymentAccount.frozen_amount, frozen_amount=0).where(PaymentAccount.account_id == account_id).execute()
 
     ###############################
     # SAVE TO DB
