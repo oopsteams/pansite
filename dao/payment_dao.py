@@ -27,6 +27,12 @@ class PaymentDao(object):
         return CreditRecord.select().where(CreditRecord.ref_id == ref_id,
                                            CreditRecord.source == constant.CREDIT_SOURCE["LOGIN_EXTRA"]).first()
 
+    @classmethod
+    @query_wrap_db
+    def query_invite_record(cls, ref_id, nounce):
+        return CreditRecord.select().where(CreditRecord.ref_id == ref_id, CreditRecord.nounce == nounce,
+                                           CreditRecord.source == constant.CREDIT_SOURCE["INVITE"]).first()
+
     ###############################
     # UPDATE TO DB
     ###############################
@@ -34,6 +40,8 @@ class PaymentDao(object):
     def update_credit_record(cls, cr_id, params):
         _params = {p: params[p] for p in params if p in CreditRecord.field_names()}
         with db:
+            if 'amount' in _params:
+                _params['amount'] = CreditRecord.amount + params['amount']
             CreditRecord.update(**_params).where(CreditRecord.cr_id == cr_id).execute()
 
     @classmethod

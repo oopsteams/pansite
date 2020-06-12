@@ -178,11 +178,13 @@ class AccountWxExt(BaseModel):
     unionid = CharField(null=True, max_length=128)  # wx跨服务唯一标识
     is_realname = IntegerField(null=False, default=0)  # 是否实名制
     account_id = IntegerField(null=False, default=0, index=True)
+    source = IntegerField(null=False, default=0, index=True)
 
     @classmethod
     def field_names(cls):
         return BASE_FIELDS + ["id", "openid", "nickname", "session_key", "avatar", "birthday", "marriage", "gender",
-                              "language", "country", "province", "city", "job", "is_realname", "account_id", "unionid"]
+                              "language", "country", "province", "city", "job", "is_realname", "account_id", "unionid",
+                              "source"]
 
     @classmethod
     def to_dict(cls, instance, excludes=[]):

@@ -16,5 +16,5 @@ class BaseService:
 
     def get_price(self, fs_id):
         if fs_id:
-            return 1
+            return 2
         return 0

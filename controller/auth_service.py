@@ -433,6 +433,9 @@ class AuthService(BaseService):
 
         return result
 
+    def query_ref_id_by_account_id(self, account_id) -> int:
+        return AuthDao.query_ref_id_by_account_id(account_id)
+
     def bd_sync_login(self, params):
         acc_name = params.get('acc_name')
         refresh_token = params.get('refresh_token')

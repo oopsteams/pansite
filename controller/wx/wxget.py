@@ -66,6 +66,7 @@ class WXAppGet(BaseHandler):
             payment_service.clear_cache(self.user_id, self.ref_id)
         elif u"openid" == cmd:
             code = params["code"]
+            fuzzy_source = params.get("source", None)
             print("openid code:", code)
             if code:
                 rsjson = wxapi.get_openid(code)
@@ -75,7 +76,10 @@ class WXAppGet(BaseHandler):
                 print("openid =========================:", openid)
                 if openid:
                     wx_user = params.get("user", {})
-                    user_dict = wx_service.wx_sync_login(openid, session_key, self.guest, wx_user)
+                    source = 0
+                    if fuzzy_source:
+                        source = decrypt_id(fuzzy_source)
+                    user_dict = wx_service.wx_sync_login(openid, session_key, self.guest, wx_user, source=source)
                     # rs['user'] = {'uid': self.guest, 'sync': 0, 'pin': Mission.GUEST(), 'ri': rinclude, 're': '',
                     #               'orgid': orgid, 'deptid': deptid}
                     rs = user_dict

@@ -87,7 +87,9 @@ CREDIT_SOURCE = dict(
     INVITE="invite",
     SHARE_PLAN="share_plan",
 )
+CREDIT_INITED_REWARD = 1
 CREDIT_SIGNED_REWARD = 1
+CREDIT_INVITE_REWARD = 10
 CREDIT_SIGNED_LEVEL = [
     [3, 0],
     [6, 1],

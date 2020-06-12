@@ -33,9 +33,9 @@ class WxDao(object):
 
     # new data
     @classmethod
-    def new_wx_account_ext(cls, openid, session_key, guest):
+    def new_wx_account_ext(cls, openid, session_key, guest, source):
         with db:
             user_token = None
-            wxacc: AccountWxExt = AccountWxExt(openid=openid, session_key=session_key, account_id=guest.id)
+            wxacc: AccountWxExt = AccountWxExt(openid=openid, session_key=session_key, account_id=guest.id, source=source)
             wxacc.save(force_insert=True)
             return wxacc

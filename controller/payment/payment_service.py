@@ -3,8 +3,10 @@
 Created by susy at 2020/6/3
 """
 from controller.base_service import BaseService
-from dao.models import PaymentAccount, CreditRecord
+from controller.auth_service import auth_service
+from dao.models import PaymentAccount, CreditRecord, AccountWxExt
 from dao.payment_dao import PaymentDao
+from dao.wx_dao import WxDao
 from utils import scale_size, compare_dt, decrypt_id, singleton, get_today_zero_datetime, get_now_datetime, constant, get_now_ts
 from utils.caches import cache_data, clear_cache
 PAY_SIGNED_CACHE_TIMEOUT = 24 * 60 * 60
@@ -75,6 +77,7 @@ class PaymentService(BaseService):
     def update_payment_account(self, account_id, ref_id, amount, nounce=0):
         pa: PaymentAccount = PaymentDao.query_payment_account_by_account_id(account_id=account_id)
         if not pa:
+            amount = amount + constant.CREDIT_INITED_REWARD
             params = dict(
                 start_at=get_now_datetime(),
                 source=constant.PAYMENT_ACC_SOURCE["CREDIT"],
@@ -129,17 +132,19 @@ class PaymentService(BaseService):
                                     break
 
                     params = dict(
+                        amount=extra_amount,
                         start_at=get_today_zero_datetime(1),
+                        balance=extra_amount,
                         counter=new_counter
                     )
                     PaymentDao.update_credit_record(extra_cr.cr_id, params)
 
                 else:
                     params = dict(
-                        amount=constant.CREDIT_SIGNED_REWARD,
+                        amount=extra_amount,
                         start_at=get_today_zero_datetime(1),
                         source=constant.CREDIT_SOURCE["LOGIN_EXTRA"],
-                        balance=constant.CREDIT_SIGNED_REWARD,
+                        balance=extra_amount,
                         counter=new_counter
                     )
                     PaymentDao.signed_credit_record(account_id, ref_id, params)
@@ -147,11 +152,12 @@ class PaymentService(BaseService):
                     # update extra_cr start_at -> tomorrow && counter
                 cr_params = dict(
                     start_at=get_today_zero_datetime(1),
-                    amount=extra_amount + constant.CREDIT_SIGNED_REWARD
+                    amount=extra_amount + constant.CREDIT_SIGNED_REWARD,
+                    balance=extra_amount + constant.CREDIT_SIGNED_REWARD,
                 )
                 print("will update cr params:", cr_params, ",cr_id:", signed["cr_id"])
                 PaymentDao.update_credit_record(signed["cr_id"], cr_params)
-                self.update_payment_account(account_id, ref_id, cr_params["amount"], nounce)
+                self.update_payment_account(account_id, ref_id, cr_params["balance"], nounce)
                 clear_signed_state_cache(ref_id)
                 clear_balance_cache(account_id)
                 rs = self.check_signed(ref_id)
@@ -164,14 +170,30 @@ class PaymentService(BaseService):
                 counter=0
             )
             PaymentDao.signed_credit_record(account_id, ref_id, params)
-            self.update_payment_account(account_id, ref_id, params["amount"], nounce)
+            self.update_payment_account(account_id, ref_id, params["balance"], nounce)
             clear_signed_state_cache(ref_id)
             clear_balance_cache(account_id)
             rs = self.check_signed(ref_id)
         return rs
 
-    def reward_credit_by_invite(self):
-        pass
+    def reward_credit_by_invite(self, source_wx_id, new_wx_id):
+        wx_acc: AccountWxExt = WxDao.wx_account_by_id(source_wx_id)
+        if wx_acc:
+            account_id = wx_acc.account_id
+            if account_id:
+                ref_id = auth_service.query_ref_id_by_account_id(wx_acc.account_id)
+                if ref_id:
+                    params = dict(
+                        amount=constant.CREDIT_INVITE_REWARD,
+                        start_at=get_now_datetime(),
+                        source=constant.CREDIT_SOURCE["INVITE"],
+                        balance=constant.CREDIT_INVITE_REWARD,
+                        counter=0,
+                        nounce=new_wx_id
+                    )
+                    PaymentDao.signed_credit_record(account_id, ref_id, params)
+                    self.update_payment_account(account_id, ref_id, params["balance"], new_wx_id)
+                    clear_balance_cache(account_id)
 
     def active_credit(self, params):
         pass

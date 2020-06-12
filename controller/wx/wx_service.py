@@ -159,7 +159,7 @@ class WxService(BaseService):
         }
         return rs
 
-    def wx_sync_login(self, openid, session_key, guest, wx_user_dict):
+    def wx_sync_login(self, openid, session_key, guest, wx_user_dict, source=0):
         if openid:
             # wx_acc_dict = self.checkout_wx_acc_by_openid(openid)
             wx_acc: AccountWxExt = WxDao.wx_account(openid)
@@ -167,7 +167,11 @@ class WxService(BaseService):
             sync = 1
             rs = dict()
             if not wx_acc:
-                wx_acc = WxDao.new_wx_account_ext(openid, session_key, guest)
+
+                wx_acc = WxDao.new_wx_account_ext(openid, session_key, guest, source)
+                if wx_acc and source:
+                    payment_service.reward_credit_by_invite(source, wx_acc.id)
+
             else:
                 WxDao.update_wx_account({"session_key": session_key}, wx_acc.id)
                 if wx_acc.account_id != guest.id:
