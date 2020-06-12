@@ -23,7 +23,7 @@ def get_openid(code):
 def rpc_shared(fs_id):
     host = RPC['hosts']
     params = {'fs_id': fs_id}
-    res = requests.get(host, params=params, verify=False)
+    res = requests.get("{}{}".format(host, "/rpc/shared"), params=params, verify=False)
     if res.status_code:
         return res.json()
     else:
