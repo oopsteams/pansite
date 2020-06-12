@@ -238,6 +238,7 @@ class WXAppGet(BaseHandler):
             if pay_id:
                 try:
                     rs = wxapi.rpc_shared(fs_id)
+                    print("rpc return:", rs)
                     if rs['state'] == 0:
                         payment_service.active_frozen_credit(self.user_id)
                     else:

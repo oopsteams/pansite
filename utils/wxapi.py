@@ -24,7 +24,7 @@ def rpc_shared(fs_id):
     host = RPC['hosts'][0]
     params = {'fs_id': fs_id}
     res = requests.get("{}{}".format(host, "/rpc/shared"), params=params, verify=False)
-    if res.status_code:
+    if res.status_code == 200:
         return res.json()
     else:
         return {
