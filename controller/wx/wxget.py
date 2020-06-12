@@ -96,7 +96,7 @@ class WXAppGet(BaseHandler):
             fuzzy_uid = params['uid']
             wx_id = decrypt_id(fuzzy_uid)
             iv = params['iv']
-            print("raw:", raw, ",wx_id:", wx_id)
+            # print("raw:", raw, ",wx_id:", wx_id)
             u = wx_service.fetch_wx_account(wx_id)
             if u:
                 info = wx_service.extractUserInfo(u.session_key, raw, iv)
@@ -110,6 +110,7 @@ class WXAppGet(BaseHandler):
                         #     signed_rs = payment_service.check_signed(ref_id)
                         #     rs["state"] = signed_rs
             rs = wx_service.profile(wx_id, self.guest)
+            print("userrawdata profile rs:", rs)
             if "state" in rs and "cr_id" in rs["state"]:
                 rs["state"] = rs["state"].copy()
                 rs["state"]["cr_id"] = 0
