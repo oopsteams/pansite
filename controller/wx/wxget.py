@@ -230,7 +230,7 @@ class WXAppGet(BaseHandler):
             rs['imgs'] = imgs
         elif "shared" == cmd:
             fs_id = params.get("fs_id", "")
-            print("shared fs_id:", fs_id)
+            print("shared fs_id:", fs_id, ",params:", params)
             # freeze credit
             price = open_service.get_price(fs_id)
             pay_id = payment_service.freeze_credit(self.user_id, price)
