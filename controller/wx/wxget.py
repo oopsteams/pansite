@@ -246,7 +246,7 @@ class WXAppGet(BaseHandler):
                     log.error("rpc shared err.", exc_info=True)
                     payment_service.un_freeze_credit_by_id(pay_id, price)
                     rs = {'state': -1, 'err': 'rpc service ,bad gateway!'}
-            sself.to_write_json(rs)
+            self.to_write_json(rs)
         return rs
 
     def check_header(self, tag):
