@@ -184,6 +184,7 @@ class PaymentService(BaseService):
             nounce=nounce
         )
         PaymentDao.update_payment_account(pa.pay_id, params)
+        clear_balance_cache(account_id)
         return pa.pay_id
 
     def un_freeze_credit_by_id(self, pay_id, amount):
@@ -191,6 +192,7 @@ class PaymentService(BaseService):
 
     def active_frozen_credit(self, account_id):
         PaymentDao.active_payment_frozen(account_id)
+        clear_balance_cache(account_id)
 
 
 payment_service = PaymentService()
