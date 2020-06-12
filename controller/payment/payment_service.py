@@ -192,7 +192,7 @@ class PaymentService(BaseService):
                         nounce=new_wx_id
                     )
                     PaymentDao.signed_credit_record(account_id, ref_id, params)
-                    self.update_payment_account(account_id, ref_id, params["balance"], new_wx_id)
+                    self.update_payment_account(account_id, ref_id, params["balance"], params["nounce"])
                     clear_balance_cache(account_id)
 
     def active_credit(self, params):

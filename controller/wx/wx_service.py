@@ -167,8 +167,8 @@ class WxService(BaseService):
             sync = 1
             rs = dict()
             if not wx_acc:
-
                 wx_acc = WxDao.new_wx_account_ext(openid, session_key, guest, source)
+                print("reg source:", source)
                 if wx_acc and source:
                     payment_service.reward_credit_by_invite(source, wx_acc.id)
 

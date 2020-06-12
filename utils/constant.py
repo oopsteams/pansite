@@ -98,6 +98,7 @@ CREDIT_SIGNED_LEVEL = [
     [31, -1, 3, 1]
 ]
 
+
 def shared_format(link, code):
     return """链接: {} 提取码: {} 复制这段内容后打开百度网盘手机App，操作更方便哦""".format(link, code)
 
