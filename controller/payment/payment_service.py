@@ -54,7 +54,7 @@ class PaymentService(BaseService):
             diff = compare_dt(cr.start_at, get_today_zero_datetime())
             print("login cr start_at - today diff:", diff)
             rs = {"signed": diff > 0,
-                  "to": (get_today_zero_datetime(+1) - get_now_datetime()).total_seconds(),
+                  "to": int((get_today_zero_datetime(+1) - get_now_datetime()).total_seconds()) + 1,
                   "cr_id": cr.cr_id,
                   "amount": cr.amount
                   }

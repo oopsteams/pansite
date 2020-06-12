@@ -105,6 +105,7 @@ class WXAppGet(BaseHandler):
                         #     rs["state"] = signed_rs
             rs = wx_service.profile(wx_id, self.guest)
             if "state" in rs and "cr_id" in rs["state"]:
+                rs["state"] = rs["state"].copy()
                 rs["state"]["cr_id"] = 0
         elif "signed" == cmd:
             if self.guest.id == self.user_id:
@@ -122,6 +123,7 @@ class WXAppGet(BaseHandler):
                 balance_rs = payment_service.query_credit_balance(self.user_id)
                 rs["balance"] = balance_rs
             if "state" in rs and "cr_id" in rs["state"]:
+                rs["state"] = rs["state"].copy()
                 rs["state"]["cr_id"] = 0
 
         elif "profile" == cmd:
@@ -136,6 +138,7 @@ class WXAppGet(BaseHandler):
             else:
                 rs = wx_service.guest_profile(self.guest)
             if "state" in rs and "cr_id" in rs["state"]:
+                rs["state"] = rs["state"].copy()
                 rs["state"]["cr_id"] = 0
             # if uid:
             #     ub = wx_service.fetch_wx_account(uid)

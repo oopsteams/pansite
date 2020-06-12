@@ -91,6 +91,7 @@ def split_filename(filename):
 
     return name, suffix
 
+
 def compare_dt(dt1, dt2) -> int:
     arrow_dt1 = arrow.get(dt1).replace(tzinfo=default_tz)
     arrow_dt2 = arrow.get(dt2).replace(tzinfo=default_tz)
