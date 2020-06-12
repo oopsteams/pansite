@@ -42,6 +42,16 @@ class PaymentDao(object):
         with db:
             PaymentAccount.update(**_params).where(PaymentAccount.pay_id == pay_id).execute()
 
+    @classmethod
+    def un_freeze_credit_by_id(cls, pay_id, frozen_amount):
+        with db:
+            PaymentAccount.update(frozen_amount=PaymentAccount.frozen_amount - frozen_amount).where(PaymentAccount.pay_id == pay_id).execute()
+
+    @classmethod
+    def active_payment_frozen(cls, account_id):
+        with db:
+            PaymentAccount.update(balance=PaymentAccount.balance - PaymentAccount.frozen_amount).where(PaymentAccount.account_id == account_id).execute()
+
     ###############################
     # SAVE TO DB
     ###############################

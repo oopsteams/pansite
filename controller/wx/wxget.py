@@ -8,6 +8,7 @@ from utils.constant import USER_TYPE
 from controller.wx.wx_service import wx_service
 from controller.wx.goods_service import goods_service
 from controller.payment.payment_service import payment_service
+from controller.open_service import open_service
 from utils import wxapi, decrypt_id
 
 import json
@@ -227,6 +228,19 @@ class WXAppGet(BaseHandler):
             pid = int(decrypt_id(fuzzy_pid))
             imgs = goods_service.query_imgs(pid)
             rs['imgs'] = imgs
+        elif "shared" == cmd:
+            fs_id = self.get_argument("fs_id")
+            # freeze credit
+            price = open_service.get_price(fs_id)
+            pay_id = payment_service.freeze_credit(self.user_id, price)
+            rs = open_service.fetch_shared_skip_visible(fs_id)
+            if pay_id:
+                if rs['state'] == 0:
+                    payment_service.active_frozen_credit(self.user_id)
+                else:
+                    payment_service.un_freeze_credit_by_id(pay_id, price)
+            rs['balance'] = payment_service.query_credit_balance(self.user_id)
+            self.to_write_json(rs)
         return rs
 
     def check_header(self, tag):

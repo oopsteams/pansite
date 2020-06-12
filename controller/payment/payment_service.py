@@ -176,5 +176,21 @@ class PaymentService(BaseService):
     def active_credit(self, params):
         pass
 
+    def freeze_credit(self, account_id, amount):
+        pa: PaymentAccount = PaymentDao.query_payment_account_by_account_id(account_id=account_id)
+        nounce = get_now_ts()
+        params = dict(
+            frozen_amount=pa.frozen_amount + amount,
+            nounce=nounce
+        )
+        PaymentDao.update_payment_account(pa.pay_id, params)
+        return pa.pay_id
+
+    def un_freeze_credit_by_id(self, pay_id, amount):
+        PaymentDao.un_freeze_credit_by_id(pay_id, amount)
+
+    def active_frozen_credit(self, account_id):
+        PaymentDao.active_payment_frozen(account_id)
+
 
 payment_service = PaymentService()

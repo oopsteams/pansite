@@ -454,7 +454,7 @@ class PanService(BaseService):
                            "data": {"path": _s["_source"]["path"], "isdir": _s["_source"]["isdir"], "source": "local",
                                     "media_type": media_type, "format_size": format_size, "category": category,
                                     "fs_id": _s["_source"]["fs_id"], "_id": item_fuzzy_id,
-                                    "parent_id": parent_item_fuzzy_id, "price": 1
+                                    "parent_id": parent_item_fuzzy_id, "price": self.get_price(_s["_source"]["fs_id"])
                                     },
                            "children": False, "icon": icon_val})
         has_next = offset + size < total

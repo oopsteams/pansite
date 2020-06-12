@@ -13,3 +13,8 @@ class BaseService:
     def __init__(self):
         self.default_tz = pytz.timezone('Asia/Chongqing')
         # self.pan_acc: PanAccounts = DataDao.pan_account_list(MASTER_ACCOUNT_ID, False)
+
+    def get_price(self, fs_id):
+        if fs_id:
+            return 1
+        return 0
