@@ -84,12 +84,10 @@ class WxService(BaseService):
                 rs["balance"] = balance_rs
                 au = auth_service.get_auth_user_by_account_id(wx_acc.account_id)
                 if au:
+                    rs['user']['sync'] = 0
                     signed_rs = payment_service.check_signed(au.ref_id)
-
                     if signed_rs:
                         rs["state"] = signed_rs
-        if rs["state"]["signed"]:
-            rs['user']['sync'] = 0
 
         return rs
 
