@@ -233,7 +233,8 @@ class WXAppGet(BaseHandler):
             # freeze credit
             price = open_service.get_price(fs_id)
             pay_id = payment_service.freeze_credit(self.user_id, price)
-            rs = open_service.fetch_shared_skip_visible(fs_id)
+            # rs = open_service.fetch_shared_skip_visible(fs_id)
+            rs = wxapi.rpc_shared(fs_id)
             if pay_id:
                 if rs['state'] == 0:
                     payment_service.active_frozen_credit(self.user_id)

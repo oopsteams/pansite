@@ -3,7 +3,8 @@
 Created by susy at 2020/4/26
 """
 import requests
-from cfg import WX_API
+from cfg import WX_API, RPC
+from utils import constant
 import json
 
 
@@ -17,3 +18,15 @@ def get_openid(code):
     res = requests.get(openid_api, verify=False)
     rsjson = res.json()
     return rsjson
+
+
+def rpc_shared(fs_id):
+    host = RPC['hosts']
+    params = {'fs_id': fs_id}
+    res = requests.get(host, params=params, verify=False)
+    if res.status_code:
+        return res.json()
+    else:
+        return {
+            'state': -1, 'err': constant.SHARED_NOT_EXISTS_ERR
+        }

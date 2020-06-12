@@ -69,6 +69,9 @@ PAN_ROOT_DIR = {
 CDN = dict(
     hosts=["http://static.oopsteam.site"]
 )
+RPC = dict(
+    hosts=["http://api.oopsteam.site"]
+)
 ES = {
     "hosts": [{"host": "111.229.193.232", "port": 9200}],
 
