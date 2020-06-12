@@ -103,7 +103,8 @@ class WXAppGet(BaseHandler):
                 if info:
                     wx_service.update_wx_account(info, u.id)
                     if u.account_id == self.guest.id:
-                        result = auth_service.wx_sync_login(u)
+                        auth_service.wx_sync_login(u)
+                        # result = auth_service.wx_sync_login(u)
                         # if result:
                         #     ref_id = result['ref_id']
                         #     signed_rs = payment_service.check_signed(ref_id)
