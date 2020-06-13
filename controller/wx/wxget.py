@@ -101,7 +101,7 @@ class WXAppGet(BaseHandler):
             if u:
                 info = wx_service.extractUserInfo(u.session_key, raw, iv)
                 if info:
-                    wx_service.update_wx_account(info, u.id)
+                    wx_service.update_wx_account(info, u)
                     if u.account_id == self.guest.id:
                         auth_service.wx_sync_login(u)
                         # result = auth_service.wx_sync_login(u)

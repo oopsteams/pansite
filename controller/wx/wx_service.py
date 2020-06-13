@@ -205,7 +205,8 @@ class WxService(BaseService):
     def fetch_user_by_id(self, user_id):
         return WxDao.account_by_id(user_id)
 
-    def update_wx_account(self, info, wx_id):
+    def update_wx_account(self, info, wx_acc: AccountWxExt):
+        wx_id = wx_acc.id
         params = dict(
             nickname=info.get('nickName', ''),
             avatar=info.get('avatarUrl', ''),
@@ -215,6 +216,11 @@ class WxService(BaseService):
             province=info.get('province', ''),
             city=info.get('city', '')
         )
+        wx_acc.nickname = params['nickname']
+        wx_acc.gender = params['gender']
+        wx_acc.country = params['country']
+        wx_acc.province = params['province']
+        wx_acc.city = params['city']
         if 'unionId' in info:
             params['unionid'] = info['unionId']
 
