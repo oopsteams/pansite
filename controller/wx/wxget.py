@@ -9,7 +9,7 @@ from controller.wx.wx_service import wx_service
 from controller.wx.goods_service import goods_service
 from controller.payment.payment_service import payment_service
 from controller.open_service import open_service
-from utils import wxapi, decrypt_id, log, get_now_ts, get_payload_from_token
+from utils import wxapi, decrypt_id, log, get_now_ts, get_payload_from_token, constant
 
 import json
 
@@ -17,12 +17,11 @@ import json
 def build_role_include(user_payload):
     au = user_payload['au']
     oid = au['oid']
-    print("build_role_include payload:", user_payload)
     if oid in [1, 2, 4]:
-        role = user_payload['role']
-        print("role:", role)
-    ri = []
-    return ri
+        base_val = user_payload['ext']['bf']
+        if (base_val & constant.FUN_BASE['DEL']) == constant.FUN_BASE['DEL']:
+            return [2001]
+    return []
 
 
 class WXAppGet(BaseHandler):
