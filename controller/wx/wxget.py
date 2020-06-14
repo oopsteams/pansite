@@ -147,9 +147,9 @@ class WXAppGet(BaseHandler):
                 rs["state"]["cr_id"] = 0
 
         elif "ntoken" == cmd:
-            fuzzy_wx_id = params.get('uid', None)
-            if fuzzy_wx_id:
-                caches.cache_service.put_on_not_exists(fuzzy_wx_id, get_now_ts())
+            if self.token and self.user_id != self.guest.id:
+                key = "ntoken_tag_{}".format(self.user_id)
+                caches.cache_service.put_on_not_exists(key, get_now_ts())
 
         elif "profile" == cmd:
             fuzzy_wx_id = params.get('uid', None)
@@ -161,7 +161,8 @@ class WXAppGet(BaseHandler):
             new_token = self.token
             if self.token and self.user_id != self.guest.id:
                 # print('payload:', self.user_payload, ctm, ctm - tm, LOGIN_TOKEN_TIMEOUT)
-                need_new_token = caches.cache_service.rm(fuzzy_wx_id)
+                key = "ntoken_tag_{}".format(self.user_id)
+                need_new_token = caches.cache_service.rm(key)
                 print("need_new_token:", need_new_token)
                 if need_new_token:
                     acc = wx_service.get_acc_by_wx_acc({"account_id": self.user_id}, self.guest)
