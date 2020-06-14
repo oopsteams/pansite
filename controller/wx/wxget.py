@@ -4,14 +4,25 @@ Created by susy at 2020/4/26
 """
 from controller.action import BaseHandler
 from controller.auth_service import auth_service
-from utils.constant import USER_TYPE
+from utils.constant import LOGIN_TOKEN_TIMEOUT
 from controller.wx.wx_service import wx_service
 from controller.wx.goods_service import goods_service
 from controller.payment.payment_service import payment_service
 from controller.open_service import open_service
-from utils import wxapi, decrypt_id, log
+from utils import wxapi, decrypt_id, log, get_now_ts, get_payload_from_token
 
 import json
+
+
+def build_role_include(user_payload):
+    au = user_payload['au']
+    oid = au['oid']
+    print("build_role_include payload:", user_payload)
+    if oid in [1, 2, 4]:
+        role = user_payload['role']
+        print("role:", role)
+    ri = []
+    return ri
 
 
 class WXAppGet(BaseHandler):
@@ -104,12 +115,15 @@ class WXAppGet(BaseHandler):
                     wx_service.update_wx_account(info, u)
                     if u.account_id == self.guest.id:
                         auth_service.wx_sync_login(u)
-                        # result = auth_service.wx_sync_login(u)
+                        result = auth_service.wx_sync_login(u)
+                        self.token = result["token"]
+                        self.user_payload = get_payload_from_token(self.token)
                         # if result:
                         #     ref_id = result['ref_id']
                         #     signed_rs = payment_service.check_signed(ref_id)
                         #     rs["state"] = signed_rs
             rs = wx_service.profile(wx_id, self.guest)
+            rs['user']['ri'] = build_role_include(self.user_payload)
             print("userrawdata profile rs:", rs)
             if "state" in rs and "cr_id" in rs["state"]:
                 rs["state"] = rs["state"].copy()
@@ -140,8 +154,19 @@ class WXAppGet(BaseHandler):
             else:
                 wx_id = decrypt_id(fuzzy_wx_id)
             print("user_id:", self.user_id, ",ref_id:", self.ref_id, ", guest id:", self.guest.id, ",payload:", self.user_payload)
+            new_token = self.token
             if self.token and self.user_id != self.guest.id:
-                rs = wx_service.simple_profile(self.user_id, self.ref_id, wx_id, self.token)
+                tm = self.user_payload['tm']
+                ctm = get_now_ts()
+                # print('payload:', self.user_payload, ctm, ctm - tm, LOGIN_TOKEN_TIMEOUT)
+                ri = []
+                if ctm - tm > LOGIN_TOKEN_TIMEOUT:
+                    acc = wx_service.get_acc_by_wx_acc({"account_id": self.user_id}, self.guest)
+                    login_rs = auth_service.login_check_user(acc, source="wx")
+                    new_token = login_rs['token']
+                    self.user_payload = get_payload_from_token(new_token)
+                rs = wx_service.simple_profile(self.user_id, self.ref_id, wx_id, new_token)
+                rs['user']['ri'] = build_role_include(self.user_payload)
             else:
                 rs = wx_service.guest_profile(self.guest)
             if "state" in rs and "cr_id" in rs["state"]:
