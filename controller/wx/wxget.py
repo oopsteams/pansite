@@ -162,11 +162,13 @@ class WXAppGet(BaseHandler):
             if self.token and self.user_id != self.guest.id:
                 # print('payload:', self.user_payload, ctm, ctm - tm, LOGIN_TOKEN_TIMEOUT)
                 need_new_token = caches.cache_service.rm(fuzzy_wx_id)
+                print("need_new_token:", need_new_token)
                 if need_new_token:
                     acc = wx_service.get_acc_by_wx_acc({"account_id": self.user_id}, self.guest)
                     login_rs = auth_service.login_check_user(acc, source="wx")
                     new_token = login_rs['token']
                     self.user_payload = get_payload_from_token(new_token)
+                    print("new_token payload:", self.user_payload)
                 rs = wx_service.simple_profile(self.user_id, self.ref_id, wx_id, new_token)
                 rs['user']['ri'] = build_role_include(self.user_payload)
             else:
