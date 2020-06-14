@@ -30,16 +30,20 @@ class WXAppPut(BaseHandler):
             spuids = params.get("spuids", "")
             spustructids = params.get("spustructids", "")
             print("newproduct params:", params)
+            # org_id = self.guest.auth_user.org_id
+            ref_id = self.guest.auth_user.ref_id
             if pname:
-                p: CourseProduct = goods_service.new_product(pname, netweight, tpcid, cid, desc, self.ref_id, spuids, spustructids, ip_rule)
+                p: CourseProduct = goods_service.new_product(pname, netweight, tpcid, cid, desc, ref_id, spuids, spustructids, ip_rule)
                 rs['pid'] = obfuscate_id(p.pid)
 
         elif "newgoods" == cmd:
             fuzzy_pid = params.get("pid", None)
             price = int(float(params.get("price", '0')) * 100)
             if fuzzy_pid:
+                # org_id = self.guest.auth_user.org_id
+                ref_id = self.guest.auth_user.ref_id
                 pid = decrypt_id(fuzzy_pid)
-                rs = goods_service.new_goods(pid, price, self.ref_id)
+                rs = goods_service.new_goods(pid, price, ref_id)
             else:
                 rs["status"] = -1
                 rs["error"] = "Please Select one Product!"

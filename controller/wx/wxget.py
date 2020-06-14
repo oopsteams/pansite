@@ -222,8 +222,10 @@ class WXAppGet(BaseHandler):
             pin = params.get('pin', None)
             if pin:
                 pin = int(pin)
-            print("user_payload:", self.user_payload)
-            rs['list'] = goods_service.query_product_list_by_ref(self.ref_id, self.org_id, pin, page, size, False)
+            # print("user_payload:", self.user_payload)
+            org_id = self.guest.auth_user.org_id
+            ref_id = self.guest.auth_user.ref_id
+            rs['list'] = goods_service.query_product_list_by_ref(ref_id, org_id, pin, page, size, False)
             rs['page'] = page
             rs['size'] = size
         elif "queryproduct" == cmd:
