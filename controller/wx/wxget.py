@@ -9,7 +9,7 @@ from controller.wx.wx_service import wx_service
 from controller.wx.goods_service import goods_service
 from controller.payment.payment_service import payment_service
 from controller.open_service import open_service
-from utils import wxapi, decrypt_id, log, get_now_ts, get_payload_from_token, constant
+from utils import wxapi, decrypt_id, log, get_now_ts, get_payload_from_token, constant, caches
 
 import json
 
@@ -146,6 +146,11 @@ class WXAppGet(BaseHandler):
                 rs["state"] = rs["state"].copy()
                 rs["state"]["cr_id"] = 0
 
+        elif "ntoken" == cmd:
+            fuzzy_wx_id = params.get('uid', None)
+            if fuzzy_wx_id:
+                caches.cache_service.put_on_not_exists(fuzzy_wx_id, get_now_ts())
+
         elif "profile" == cmd:
             fuzzy_wx_id = params.get('uid', None)
             if not fuzzy_wx_id:
@@ -155,11 +160,9 @@ class WXAppGet(BaseHandler):
             print("user_id:", self.user_id, ",ref_id:", self.ref_id, ", guest id:", self.guest.id, ",payload:", self.user_payload)
             new_token = self.token
             if self.token and self.user_id != self.guest.id:
-                tm = self.user_payload['tm']
-                ctm = get_now_ts()
                 # print('payload:', self.user_payload, ctm, ctm - tm, LOGIN_TOKEN_TIMEOUT)
-                ri = []
-                if ctm - tm > LOGIN_TOKEN_TIMEOUT:
+                need_new_token = caches.cache_service.rm(fuzzy_wx_id)
+                if need_new_token:
                     acc = wx_service.get_acc_by_wx_acc({"account_id": self.user_id}, self.guest)
                     login_rs = auth_service.login_check_user(acc, source="wx")
                     new_token = login_rs['token']
