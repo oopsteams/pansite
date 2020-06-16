@@ -113,7 +113,7 @@ class WXAppGet(BaseHandler):
                 if info:
                     wx_service.update_wx_account(info, u)
                     if u.account_id == self.guest.id:
-                        auth_service.wx_sync_login(u)
+                        # auth_service.wx_sync_login(u)
                         result = auth_service.wx_sync_login(u)
                         self.token = result["token"]
                         self.user_payload = get_payload_from_token(self.token)
