@@ -12,6 +12,15 @@ from controller.open_service import open_service
 from utils import wxapi, decrypt_id, log, get_now_ts, get_payload_from_token, constant, caches
 
 import json
+NEW_TOKEN_TAG_TIMEOUT = 7 * 24 * 60 * 60  # seconds
+
+
+def try_clean_new_token_tag(key):
+    val = caches.cache_service.get(key)
+    if val:
+        if get_now_ts() - val > NEW_TOKEN_TAG_TIMEOUT:
+            caches.cache_service.rm(key)
+    return val
 
 
 def build_role_include(user_payload):
@@ -150,7 +159,7 @@ class WXAppGet(BaseHandler):
         elif "ntoken" == cmd:
             if self.token and self.user_id != self.guest.id:
                 key = "ntoken_tag_{}".format(self.user_id)
-                caches.cache_service.put_on_not_exists(key, get_now_ts())
+                caches.cache_service.put(key, get_now_ts())
 
         elif "profile" == cmd:
             fuzzy_wx_id = params.get('uid', None)
@@ -163,9 +172,10 @@ class WXAppGet(BaseHandler):
             if self.token and self.user_id != self.guest.id:
                 # print('payload:', self.user_payload, ctm, ctm - tm, LOGIN_TOKEN_TIMEOUT)
                 key = "ntoken_tag_{}".format(self.user_id)
-                need_new_token = caches.cache_service.rm(key)
-                print("need_new_token:", need_new_token)
-                if need_new_token:
+                tm = self.user_payload['tm']
+                need_new_token_tm = try_clean_new_token_tag(key)
+                print("need_new_token:", (need_new_token_tm > tm))
+                if need_new_token_tm > tm:
                     acc = wx_service.get_acc_by_wx_acc({"account_id": self.user_id}, self.guest)
                     login_rs = auth_service.login_check_user(acc, source="wx")
                     new_token = login_rs['token']

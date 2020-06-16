@@ -34,13 +34,6 @@ class WxService(BaseService):
         super().__init__()
         self.appId = WX_API['appid']
 
-    @caches.cache_data("wx_acc_{1}")
-    def checkout_wx_acc_by_openid(self, openid) -> dict:
-        wx_acc = WxDao.wx_account(openid)
-        if wx_acc:
-            return wx_acc_to_simple_dict(wx_acc)
-        return None
-
     def simple_profile(self, account_id, ref_id, wx_user_id, token):
         rs = dict()
         rs['user'] = self.build_simple_user_result(account_id, wx_user_id, token)

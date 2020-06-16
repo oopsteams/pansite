@@ -26,7 +26,9 @@ class CacheService:
             if type(val) is dict and type(_val) is dict:
                 for k in val:
                     _val[k] = val[k]
-            return False
+            else:
+                self.SYNC_PAN_DIR_CACHES[key] = val
+            return True
         else:
             self.SYNC_PAN_DIR_CACHES[key] = val
             return True
