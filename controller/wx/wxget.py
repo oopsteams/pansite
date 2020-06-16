@@ -17,7 +17,7 @@ import json
 def build_role_include(user_payload):
     au = user_payload['au']
     oid = au['oid']
-    log.debug("build_role_include oid:", oid)
+    log.debug("build_role_include oid:{}".format(oid))
     if oid in [1, 2, 4]:
         base_val = user_payload['ext']['bf']
         if (base_val & constant.FUN_BASE['DEL']) == constant.FUN_BASE['DEL']:
