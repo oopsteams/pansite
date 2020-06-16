@@ -20,6 +20,8 @@ def try_clean_new_token_tag(key):
     if val:
         if get_now_ts() - val > NEW_TOKEN_TAG_TIMEOUT:
             caches.cache_service.rm(key)
+    if not val:
+        val = 0
     return val
 
 
@@ -158,6 +160,7 @@ class WXAppGet(BaseHandler):
 
         elif "ntoken" == cmd:
             if self.token and self.user_id != self.guest.id:
+                auth_service.rm_login_token(self.user_id)
                 key = "ntoken_tag_{}".format(self.user_id)
                 caches.cache_service.put(key, get_now_ts())
 

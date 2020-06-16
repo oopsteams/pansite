@@ -561,6 +561,9 @@ class AuthService(BaseService):
                                                                    account_id=account_id))
         return None
 
+    def rm_login_token(self, user_id):
+        DataDao.update_account_by_pk(user_id, {"login_token": None})
+
     def fresh_token(self, pan_id):
         def cb(pan_accounts):
             now = arrow.now(self.default_tz)
