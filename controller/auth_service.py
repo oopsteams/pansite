@@ -239,11 +239,11 @@ class AuthService(BaseService):
 
     def login_check_user(self, acc: Accounts, need_update_login_time=True, source="BD"):
         need_renew_pan_acc = []
+        need_renew_access_token = False
         if acc:
             if not source == "wx":
                 pan_acc_list = DataDao.pan_account_list(acc.id)
                 # pan_acc: PanAccounts = DataDao.pan_account_list(acc.id)
-                need_renew_access_token = False
                 l = len(pan_acc_list)
                 for pan_acc in pan_acc_list:
                     if pan_acc.client_id != self.client_id or pan_acc.client_secret != self.client_secret:
