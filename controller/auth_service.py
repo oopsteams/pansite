@@ -240,27 +240,29 @@ class AuthService(BaseService):
     def login_check_user(self, acc: Accounts, need_update_login_time=True, source="BD"):
         need_renew_pan_acc = []
         if acc:
-            pan_acc_list = DataDao.pan_account_list(acc.id)
-            # pan_acc: PanAccounts = DataDao.pan_account_list(acc.id)
-            need_renew_access_token = False
-            l = len(pan_acc_list)
-            for pan_acc in pan_acc_list:
-                if pan_acc.client_id != self.client_id or pan_acc.client_secret != self.client_secret:
-                    need_renew_access_token = True
-                    need_renew_pan_acc.append({"id": pan_acc.id, "name": pan_acc.name, "use_cnt": pan_acc.use_count,
-                                               "refresh": False, 'auth': self.pan_auth})
-                elif pan_acc.access_token and pan_acc.token_updated_at:
-                    tud = arrow.get(pan_acc.token_updated_at).replace(tzinfo=self.default_tz)
-                    if (arrow.now(self.default_tz) - tud).total_seconds() > PAN_ACCESS_TOKEN_TIMEOUT:
+            if not source == "wx":
+                pan_acc_list = DataDao.pan_account_list(acc.id)
+                # pan_acc: PanAccounts = DataDao.pan_account_list(acc.id)
+                need_renew_access_token = False
+                l = len(pan_acc_list)
+                for pan_acc in pan_acc_list:
+                    if pan_acc.client_id != self.client_id or pan_acc.client_secret != self.client_secret:
+                        need_renew_access_token = True
+                        need_renew_pan_acc.append({"id": pan_acc.id, "name": pan_acc.name, "use_cnt": pan_acc.use_count,
+                                                   "refresh": False, 'auth': self.pan_auth})
+                    elif pan_acc.access_token and pan_acc.token_updated_at:
+                        tud = arrow.get(pan_acc.token_updated_at).replace(tzinfo=self.default_tz)
+                        if (arrow.now(self.default_tz) - tud).total_seconds() > PAN_ACCESS_TOKEN_TIMEOUT:
+                            need_renew_access_token = True
+                            need_renew_pan_acc.append({"id": pan_acc.id, "name": pan_acc.name, "use_cnt": pan_acc.use_count,
+                                                       "refresh": True, 'auth': self.pan_auth})
+                    else:
                         need_renew_access_token = True
                         need_renew_pan_acc.append({"id": pan_acc.id, "name": pan_acc.name, "use_cnt": pan_acc.use_count,
                                                    "refresh": True, 'auth': self.pan_auth})
-                else:
+                if l == 0:
                     need_renew_access_token = True
-                    need_renew_pan_acc.append({"id": pan_acc.id, "name": pan_acc.name, "use_cnt": pan_acc.use_count,
-                                               "refresh": True, 'auth': self.pan_auth})
-            if l == 0:
-                need_renew_access_token = True
+
             # if pan_acc and pan_acc['access_token'] and pan_acc['token_updated_at']:
             #     tud = arrow.get(pan_acc['token_updated_at']).replace(tzinfo=self.default_tz)
             #     if (arrow.now(self.default_tz) - tud).total_seconds() < PAN_ACCESS_TOKEN_TIMEOUT:
