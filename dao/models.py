@@ -590,10 +590,12 @@ class UserRootCfg(BaseModel):
     pin = IntegerField(null=False, default=0, index=0)
     source = CharField(null=True, max_length=16, index=True)
     desc = CharField(null=True, max_length=256)
+    tag = CharField(null=True, max_length=32, index=True)
+    idx = IntegerField(null=True, default=0, index=True)
 
     @classmethod
     def field_names(cls):
-        return BASE_FIELDS + ["id", "fs_id", "filename", "account_id", "pin", "panacc", "source", "desc"]
+        return BASE_FIELDS + ["id", "fs_id", "filename", "account_id", "pin", "panacc", "source", "desc", "tag", "idx"]
 
     @classmethod
     def to_dict(cls, instance):

@@ -201,7 +201,7 @@ class DataDao(object):
     @classmethod
     @query_wrap_db
     def query_free_root_files(cls):
-        return UserRootCfg.select().where(UserRootCfg.source == 'local', UserRootCfg.pin == 0)
+        return UserRootCfg.select().where(UserRootCfg.source == 'local', UserRootCfg.pin == 0).order_by(UserRootCfg.idx.asc())
 
     #################################################################
     # split line
