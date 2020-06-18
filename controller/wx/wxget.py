@@ -106,6 +106,9 @@ class WXAppGet(BaseHandler):
                     #               'orgid': orgid, 'deptid': deptid}
                     rs = user_dict
                     rs['openid'] = openid
+                    if rs['user']['token'] != self.token:
+                        self.user_payload = get_payload_from_token(rs['user']['token'])
+                        rs['user']['ri'] = build_role_include(self.user_payload)
                     # rs['user'] = wx_service.check_openid(self.guest)
             return rs
 
