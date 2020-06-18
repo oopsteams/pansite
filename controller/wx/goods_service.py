@@ -77,6 +77,7 @@ class GoodsService(BaseService):
             upload_path = os.path.join(basepath, 'static', 'files', str(ref_id), str(pid))  # 文件的暂存路径
             upload_thumb_path = os.path.join(upload_path, 's')
             file_path = os.path.join(upload_path, url)
+            print("will remove filepath:", file_path)
             if os.path.exists(file_path):
                 os.remove(file_path)
 

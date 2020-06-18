@@ -59,12 +59,14 @@ class WXAppPut(BaseHandler):
             url = params.get("url", "")
             fuzzy_uid = params.get("uid", None)
             tag = params.get("tag", "")
+
             if url and fuzzy_pid:
                 pid = decrypt_id(fuzzy_pid)
                 p_ref_id = decrypt_id(fuzzy_uid)
                 basepath = self.context['basepath']
                 istop = int(params.get("top", "0"))
-                goods_service.update_img(pid, url, istop, cmd, p_ref_id, basepath)
+                print("fuzzy_pid:", fuzzy_pid, ", url:", url, ", fuzzy_uid:", fuzzy_uid, ", pid:", pid, ",p_ref_id:", p_ref_id, ", istop:", istop, ",tag:", tag)
+                goods_service.update_img(pid, url, istop, tag, p_ref_id, basepath)
                 rs['istop'] = istop
             else:
                 rs['status'] = -1
