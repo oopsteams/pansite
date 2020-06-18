@@ -169,7 +169,9 @@ class WxService(BaseService):
                     sync = 0
                     ref_id = auth_service.query_ref_id_by_account_id(wx_acc.account_id)
                     if ref_id:
-                        result = auth_service.wx_sync_login(wx_acc)
+                        result = auth_service.login_check_user(acc, source="wx")
+                        # tk = result['token']
+                        # result = auth_service.wx_sync_login(wx_acc)
                         tk = result['token']
                         login_at = result['login_at']
                         acc.login_token = tk
