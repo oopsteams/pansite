@@ -47,7 +47,7 @@ class WxService(BaseService):
         _props = self.queryprop(wx_user_id)
         if _props:
             for p in props:
-                WxDao.update_study_prop(wx_user_id, p["code"], p)
+                WxDao.update_study_prop(wx_user_id, p["c"], {'val': p["v"]})
         else:
             props_map = {i['c']: i['v'] for i in props}
             codes = constant.STUDY["CODES"]
