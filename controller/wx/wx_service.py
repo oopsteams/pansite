@@ -6,10 +6,10 @@ from controller.base_service import BaseService
 from controller.auth_service import auth_service
 from controller.payment.payment_service import payment_service
 from dao.wx_dao import WxDao
-from dao.models import AccountWxExt, Accounts, BASE_FIELDS
+from dao.models import AccountWxExt, Accounts, BASE_FIELDS, StudyProps
 import base64
 from Crypto.Cipher import AES
-from utils import singleton, obfuscate_id, caches
+from utils import singleton, obfuscate_id, caches, constant
 from cfg import WX_API
 import arrow
 import json
@@ -33,6 +33,29 @@ class WxService(BaseService):
     def __init__(self):
         super().__init__()
         self.appId = WX_API['appid']
+
+    @caches.cache_data("study_props_{1}")
+    def queryprop(self, wx_user_id):
+        props = WxDao.wx_props_by_wx_id(wx_user_id)
+        rs = []
+        if props:
+            for sp in props:
+                rs.append(StudyProps.to_dict(sp, ['wx_id', 'idx']))
+        return rs
+
+    def sync_props(self, wx_user_id, props):
+        _props = self.queryprop(wx_user_id)
+        if _props:
+            for p in props:
+                WxDao.update_study_prop(wx_user_id, p["code"], p)
+        else:
+            props_map = {i['c']: i['v'] for i in props}
+            codes = constant.STUDY["CODES"]
+            for idx in range(0, len(codes)):
+                c = codes[idx]
+                if c in props_map:
+                    WxDao.new_study_props(wx_user_id, c, props_map[c], idx)
+        caches.clear_cache("study_props_{}".format(wx_user_id))
 
     def simple_profile(self, account_id, ref_id, wx_user_id, token):
         rs = dict()

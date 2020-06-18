@@ -303,6 +303,28 @@ class WXAppGet(BaseHandler):
                     log.error("rpc shared err.", exc_info=True)
                     payment_service.un_freeze_credit_by_id(pay_id, price)
                     rs = {'state': -1, 'err': 'rpc service ,bad gateway!'}
+        elif "queryprops" == cmd:
+            fuzzy_wx_id = params.get('uid', None)
+            if not fuzzy_wx_id:
+                wx_id = 0
+            else:
+                wx_id = decrypt_id(fuzzy_wx_id)
+            if self.token and self.user_id != self.guest.id:
+                rs['datas'] = wx_service.queryprop(wx_id)
+            else:
+                rs['datas'] = []
+        elif "syncprops" == cmd:
+            fuzzy_wx_id = params.get('uid', None)
+            props = params.get('props', [])
+            rs['datas'] = []
+            if not fuzzy_wx_id:
+                wx_id = 0
+            else:
+                wx_id = decrypt_id(fuzzy_wx_id)
+            if self.token and self.user_id != self.guest.id:
+                wx_service.sync_props(wx_id, props)
+                rs['datas'] = wx_service.queryprop(wx_id)
+
         return rs
 
     def check_header(self, tag):

@@ -98,6 +98,29 @@ CREDIT_SIGNED_LEVEL = [
     [31, -1, 3, 1]
 ]
 
+"""
+{name:'计算', value:100},
+      { name: '逻辑思维', value: 100 },
+      { name: '应用理解', value: 90 },
+      { name: '语文诗词', value: 90 },
+      { name: '语文阅读', value: 80 },
+      { name: '句子成分', value: 70 },
+      { name: '看图写话', value: 70 },
+      { name: '英语词汇', value: 90 },
+      { name: '英语语法', value: 50 },
+      { name: '英语阅读', value: 50 },
+      { name: '习惯养成', value: 50 },
+      { name: '专注力', value: 60 },
+      { name: '视力', value: 90 },
+      { name: '体能', value: 90 },
+      { name: '陪读能力', value: 60 }
+"""
+STUDY = dict(
+    CODES=["ca", "lo", "ch", "po", "re", "se", "lw", "ew", "es", "er", "ha", "co", "vi", "ph", "ac"],
+    DESC=["计算", "逻辑思维", "应用理解", "语文诗词", "语文阅读", "句子成分", "看图写话", "英语词汇", "英语语法", "英语阅读",
+          "习惯养成", "专注力", "视力", "体能", "陪读能力"]
+)
+
 
 def shared_format(link, code):
     return """链接: {} 提取码: {} 复制这段内容后打开百度网盘手机App，操作更方便哦""".format(link, code)

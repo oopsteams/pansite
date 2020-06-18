@@ -12,6 +12,7 @@ from functools import wraps
 from dao.base import db, BaseModel, BASE_FIELDS, db_update_field_sql
 from dao.goods_models import *
 from dao.payment_models import *
+from dao.study_models import *
 # BATCH_DB_USER = config["user"]  # 'market'
 # BATCH_DB_PASSWORD = config["password"]  # 'market'
 # # BATCH_DB_HOST='172.31.140.249'
@@ -108,7 +109,8 @@ def init_db():
                       Fun, Role, RoleExtend, Org, OrgOrg, UserRefExtend, UserRoleExtend, UserOrgExtend, Product, Order,
                       OrderItem, Assets, LocalVisible, CommunityVisible, ShareApp, DataItemExt, ClientDataItem,
                       AppCfg, AccountWxExt, Category, CateCate, SPUStruct, Brand, NetWeight, SweetNess, Pack,
-                      CourseProduct, ProductSpu, ProductImg, Goods, Subjects, PaymentAccount, CreditRecord], safe=True)
+                      CourseProduct, ProductSpu, ProductImg, Goods, Subjects, PaymentAccount, CreditRecord,
+                      StudyProps], safe=True)
 
     with db:
         if not Org.select().where(Org.id == 1).exists():
