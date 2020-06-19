@@ -74,8 +74,9 @@ class MPanService(BaseService):
     def query_file_list(self, parent_item_id):
         # item_list = CommunityDao.query_data_item_by_parent(parent_item_id, True, pan_id, limit=1000)
         params = []
-
-        sp: SearchParams = SearchParams.build_params(0, 1000)
+        offset = 0
+        size = 1000
+        sp: SearchParams = SearchParams.build_params(offset, size)
         # sp.add_must(is_match=False, field="path", value=parent_path)
 
         sp.add_must(is_match=False, field="parent", value=parent_item_id)
@@ -156,7 +157,9 @@ class MPanService(BaseService):
             if a_attr:
                 node_param['a_attr'] = a_attr
             params.append(node_param)
-        return params
+        has_next = offset + size < total
+        meta = {"has_next": has_next, "total": total, "pagesize": size}
+        return params, meta
 
     def query_share_list(self, parent_item_id):
         params = []
