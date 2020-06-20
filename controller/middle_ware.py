@@ -30,8 +30,11 @@ class CheckLogin(MiddleWare):
             token = handler.get_argument('tk', None, True)
             handler.is_web = True
         logger.info("Middle CheckLogin in token:{}".format(token))
+        if token and not isinstance(token, str):
+            token = None
         if "undefined" == token:
             token = None
+
         if "login" != token and token:
             try:
                 handler.user_payload = get_payload_from_token(token)
