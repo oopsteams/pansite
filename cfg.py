@@ -20,7 +20,7 @@ redis_config = {
 
 mysql_worker_config = {
     # "host":"172.31.140.255",
-    "host": "127.0.0.1",
+    "host": "152.136.21.249",
     "port": 3306,
     "user": "worker",
     "password": "worker",
