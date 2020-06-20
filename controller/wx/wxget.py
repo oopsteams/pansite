@@ -143,7 +143,7 @@ class WXAppGet(BaseHandler):
                 rs["state"] = rs["state"].copy()
                 rs["state"]["cr_id"] = 0
         elif "signed" == cmd:
-            if self.guest.id == self.user_id:
+            if not self.user_id or self.guest.id == self.user_id:
                 rs["balance"] = {
                     "balance": 0,
                     "amount": 0,
@@ -175,7 +175,7 @@ class WXAppGet(BaseHandler):
                 wx_id = decrypt_id(fuzzy_wx_id)
             print("user_id:", self.user_id, ",ref_id:", self.ref_id, ", guest id:", self.guest.id, ",payload:", self.user_payload)
             new_token = self.token
-            if self.token and self.user_id != self.guest.id:
+            if self.user_id and self.token and self.user_id != self.guest.id:
                 # print('payload:', self.user_payload, ctm, ctm - tm, LOGIN_TOKEN_TIMEOUT)
                 key = "ntoken_tag_{}".format(self.user_id)
                 tm = self.user_payload['tm']
