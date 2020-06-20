@@ -100,6 +100,7 @@ class WXAppGet(BaseHandler):
                     wx_user = params.get("user", {})
                     source = 0
                     if fuzzy_source:
+                        print("fuzzy_source:", fuzzy_source)
                         source = decrypt_id(fuzzy_source)
                     user_dict = wx_service.wx_sync_login(openid, session_key, self.guest, wx_user, source=source)
                     # rs['user'] = {'uid': self.guest, 'sync': 0, 'pin': Mission.GUEST(), 'ri': rinclude, 're': '',
