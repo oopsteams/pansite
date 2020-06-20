@@ -285,24 +285,31 @@ class WXAppGet(BaseHandler):
             rs['imgs'] = imgs
         elif "shared" == cmd:
             fs_id = params.get("fs_id", "")
-            print("shared fs_id:", fs_id, ",params:", params)
-            # freeze credit
-            price = open_service.get_price(fs_id)
-            pay_id = payment_service.freeze_credit(self.user_id, price)
-            # rs = open_service.fetch_shared_skip_visible(fs_id)
-            if pay_id:
-                try:
-                    rs = wxapi.rpc_shared(fs_id)
-                    print("rpc return:", rs)
-                    if rs['state'] == 0:
-                        payment_service.active_frozen_credit(self.user_id)
-                    else:
-                        payment_service.un_freeze_credit_by_id(pay_id, price)
-                    rs['balance'] = payment_service.query_credit_balance(self.user_id)
-                except Exception:
-                    log.error("rpc shared err.", exc_info=True)
-                    payment_service.un_freeze_credit_by_id(pay_id, price)
-                    rs = {'state': -1, 'err': 'rpc service ,bad gateway!'}
+            if self.user_id and self.token and self.user_id != self.guest.id:
+                print("shared fs_id:", fs_id, ",params:", params)
+                # freeze credit
+                price = open_service.get_price(fs_id)
+                ba = payment_service.query_credit_balance(self.user_id)
+                if ba["balance"] < price:
+                    rs = {'state': -1, 'err': 'not enough credits!'}
+                else:
+                    pay_id = payment_service.freeze_credit(self.user_id, price)
+                    # rs = open_service.fetch_shared_skip_visible(fs_id)
+                    if pay_id:
+                        try:
+                            rs = wxapi.rpc_shared(fs_id)
+                            print("rpc return:", rs)
+                            if rs['state'] == 0:
+                                payment_service.active_frozen_credit(self.user_id)
+                            else:
+                                payment_service.un_freeze_credit_by_id(pay_id, price)
+                            rs['balance'] = payment_service.query_credit_balance(self.user_id)
+                        except Exception:
+                            log.error("rpc shared err.", exc_info=True)
+                            payment_service.un_freeze_credit_by_id(pay_id, price)
+                            rs = {'state': -1, 'err': 'rpc service ,bad gateway!'}
+            else:
+                rs = {'state': -1, 'err': 'user state wrong!'}
         elif "queryprops" == cmd:
             fuzzy_wx_id = params.get('uid', None)
             if not fuzzy_wx_id:
