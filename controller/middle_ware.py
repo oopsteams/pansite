@@ -34,7 +34,8 @@ class CheckLogin(MiddleWare):
             token = None
         if "undefined" == token:
             token = None
-
+        if "[object Null]" == token:
+            token = None
         if "login" != token and token:
             try:
                 handler.user_payload = get_payload_from_token(token)
