@@ -44,10 +44,24 @@ class WxDao(object):
 
     # new data
     @classmethod
-    def new_wx_account_ext(cls, openid, session_key, guest, source):
+    def new_wx_account_ext(cls, openid, session_key, guest, source, wx_user_dict):
         with db:
-            user_token = None
             wxacc: AccountWxExt = AccountWxExt(openid=openid, session_key=session_key, account_id=guest.id, source=source)
+            if "avatarUrl" in wx_user_dict:
+                wxacc.avatar = wx_user_dict["avatarUrl"]
+            if "city" in wx_user_dict:
+                wxacc.city = wx_user_dict["city"]
+            if "country" in wx_user_dict:
+                wxacc.country = wx_user_dict["country"]
+            if "gender" in wx_user_dict:
+                wxacc.gender = wx_user_dict["gender"]
+            if "language" in wx_user_dict:
+                wxacc.language = wx_user_dict["language"]
+            if "nickName" in wx_user_dict:
+                wxacc.nickname = wx_user_dict["nickName"]
+            if "province" in wx_user_dict:
+                wxacc.province = wx_user_dict["province"]
+
             wxacc.save(force_insert=True)
             return wxacc
 
