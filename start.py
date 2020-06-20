@@ -57,12 +57,13 @@ def scheduler_clear_all_expired_share_log():
 
 def update_access_token():
     try:
-        from dao.models import PanAccounts
+        # from dao.models import PanAccounts
         # sync_pan_service.clear_all_expired_share_log()
-        pan_acc_list = PanAccounts.select().where(PanAccounts.user_id == 1)
-        for pan_acc in pan_acc_list:
-            logger.info("will validation pan acc id:{}, name:{}".format(pan_acc.id, pan_acc.name))
+        # pan_acc_list = PanAccounts.select().where(PanAccounts.user_id == 1)
+        # for pan_acc in pan_acc_list:
+        #     logger.info("will validation pan acc id:{}, name:{}".format(pan_acc.id, pan_acc.name))
             # auth_service.check_pan_token_validation(pan_acc)
+        logger.info("bj service will ignore [update_access_token] task.")
     except Exception as e:
         traceback.print_exc()
         print("update_access_token err:", e)
