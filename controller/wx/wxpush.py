@@ -36,8 +36,8 @@ class WXAppPush(BaseHandler):
             MsgType = params.get("MsgType", "text")
             Content = params.get("Content", "")
             MsgId = params.get("MsgId", 0)
-            print("ToUserName:", ToUserName, ",FromUserName:", FromUserName, ",CreateTime:", CreateTime, ",MsgType:", MsgType, ",MsgId:", MsgId)
-            self.write("Message received!")
+            print("ToUserName:", ToUserName, ",FromUserName:", FromUserName, ",CreateTime:", CreateTime, ",MsgType:", MsgType, ",MsgId:", MsgId, ",Content:", Content)
+            self.write("success")
         else:
             self.write(0)
 
