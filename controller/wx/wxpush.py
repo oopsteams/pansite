@@ -49,4 +49,6 @@ class WXAppPush(BaseHandler):
             self.write(0)
 
     def post(self):
+        bd = self.request.body
+        print("bd:", bd)
         self.get()
