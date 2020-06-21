@@ -28,27 +28,28 @@ class WXAppPush(BaseHandler):
         else:
             return False
 
-    def get(self):
-        # sign = self.get_argument("signature","")
-        # tt = self.get_argument("timestamp",0)
-        # nonce=self.get_argument("nonce",0)
-        echostr = self.get_argument("echostr", "")
-        print("query_arguments:",self.request.query_arguments)
-        # rs={"status":0}
-        # arr = [TOKEN,tt,nonce]
-        # print "arr:",arr
-        # arr.sort()
-        # print "sorted arr:",arr
-        # str = ''.join(arr)
-        # sha1str = hashlib.sha1(str).hexdigest()
-        # print "str:%s,sha1str:%s,sign:%s"%(str,sha1str,sign)
-        print("echostr:", echostr)
+    def parse_msg(self, params):
         if self.checksign():
-            self.write(echostr)
+            ToUserName = params.get("ToUserName", None)
+            FromUserName = params.get("FromUserName", None)
+            CreateTime = params.get("CreateTime", 0)
+            MsgType = params.get("MsgType", "text")
+            Content = params.get("Content", "")
+            MsgId = params.get("MsgId", 0)
+
+            self.write(Content)
         else:
             self.write(0)
 
+    def get(self):
+        self.parse_msg({})
+
     def post(self):
         bd = self.request.body
-        print("bd:", bd)
-        self.get()
+        _params = {}
+        if bd:
+            try:
+                _params = json.loads(bd)
+            except Exception:
+                pass
+        self.parse_msg(_params)
