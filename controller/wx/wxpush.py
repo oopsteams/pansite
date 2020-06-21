@@ -33,6 +33,7 @@ class WXAppPush(BaseHandler):
         # tt = self.get_argument("timestamp",0)
         # nonce=self.get_argument("nonce",0)
         echostr = self.get_argument("echostr", "")
+        print("query_arguments:",self.request.query_arguments)
         # rs={"status":0}
         # arr = [TOKEN,tt,nonce]
         # print "arr:",arr
