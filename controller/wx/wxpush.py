@@ -21,7 +21,7 @@ class WXAppPush(BaseHandler):
         arr = [WX_PUSH['token'], tt, nonce]
         arr.sort()
         astr = ''.join(arr)
-        sha1str = hashlib.sha1(astr).hexdigest()
+        sha1str = hashlib.sha1(astr.encode("utf8")).hexdigest()
         print("sha1str:", sha1str, ",sign:", sign)
         if sign == sha1str:
             return True
