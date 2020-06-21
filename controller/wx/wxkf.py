@@ -34,7 +34,7 @@ class WXAppKf(BaseHandler):
                     if len(d) == 1:
                         params[k] = d[0]
                     else:
-                        params[k] = str(d)
+                        params[k] = d.decode()
         print("params:", params)
         rs = self.parseCMD(params)
         print("rs:", rs)
