@@ -20,7 +20,7 @@ class WXAppKf(BaseHandler):
         return rs
 
     def get(self):
-        self.check_header("wx get")
+        # self.check_header("wx get")
         # rs = {"status": 0}
         cmd = self.get_argument("cmd", "")
         name = self.get_argument("name", "")
@@ -41,7 +41,6 @@ class WXAppKf(BaseHandler):
         self.to_write_json(rs)
 
     def post(self):
-        self.check_header("wx post")
         rs = {"status": 0}
         cmd = self.get_argument("cmd", "")
         bd = self.request.body
