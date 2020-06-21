@@ -22,6 +22,7 @@ class WXAppPush(BaseHandler):
         arr.sort()
         astr = ''.join(arr)
         sha1str = hashlib.sha1(astr).hexdigest()
+        print("sha1str:", sha1str, ",sign:", sign)
         if sign == sha1str:
             return True
         else:
@@ -40,6 +41,7 @@ class WXAppPush(BaseHandler):
         # str = ''.join(arr)
         # sha1str = hashlib.sha1(str).hexdigest()
         # print "str:%s,sha1str:%s,sign:%s"%(str,sha1str,sign)
+        print("echostr:", echostr)
         if self.checksign():
             self.write(echostr)
         else:
