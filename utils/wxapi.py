@@ -30,3 +30,11 @@ def rpc_shared(fs_id):
         return {
             'state': -1, 'err': constant.SHARED_NOT_EXISTS_ERR
         }
+
+
+def getkflist():
+    point = WX_API["point"]
+    getkflist_api = "{point}/cgi-bin/customservice/getkflist?access_token={token}".format(point=point, token=WX_API["token"])
+    res = requests.get(getkflist_api, verify=False)
+    rsjson = res.json()
+    return rsjson

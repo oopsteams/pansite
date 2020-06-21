@@ -38,33 +38,6 @@ def build_role_include(user_payload):
 
 class WXAppGet(BaseHandler):
 
-    # def sendmsg(self, sn, params, cb, cb_key):
-    #     context = {'cbok': False}
-    #
-    #     def _cb(tag, sn, txt):
-    #         print("tag:%s,sn:%s,txt:%s" % (tag, sn, txt))
-    #         context['cbok'] = True
-    #         _json = json.loads(txt)
-    #         cb(_json)
-    #
-    #     self.recv.delegate.addCB(cb_key, cb=_cb)
-    #     msg = "m:%s:%s" % (sn, json.dumps(params))
-    #     sid = self.recv.sid
-    #     vid = self.recv.vid
-    #     self.recv.sendmsg(sid, vid, self.recv.touid, msg=msg)
-    #     dog = 25
-    #     while not context['cbok'] and dog > 0:
-    #         sleep(.2)
-    #         dog = dog - 1
-    #     if not context['cbok']:
-    #         self.recv.sendmsg(sid, vid, self.recv.touid, msg=msg)
-    #         dog = 20
-    #         while not context['cbok'] and dog > 0:
-    #             sleep(.2)
-    #             dog = dog - 1
-    #     if not context['cbok']:
-    #         print("wait push service call timeout.")
-
     def wx_user(self):
         if self.guest and self.user_id:
             if self.guest.id == self.user_id:

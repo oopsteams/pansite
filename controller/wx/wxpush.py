@@ -3,7 +3,7 @@
 Created by susy at 2020/6/21
 """
 from controller.action import BaseHandler
-from cfg import WX_PUSH
+from cfg import WX_API
 import hashlib
 from controller.auth_service import auth_service
 from controller.wx.goods_service import goods_service
@@ -18,7 +18,7 @@ class WXAppPush(BaseHandler):
         sign = self.get_argument("signature", "")
         tt = self.get_argument("timestamp", '0')
         nonce = self.get_argument("nonce", '0')
-        arr = [WX_PUSH['token'], tt, nonce]
+        arr = [WX_API['token'], tt, nonce]
         arr.sort()
         astr = ''.join(arr)
         sha1str = hashlib.sha1(astr.encode("utf8")).hexdigest()
