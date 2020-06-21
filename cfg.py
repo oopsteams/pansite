@@ -50,6 +50,10 @@ WX_API = dict(appid='wx86242b978be4eb84',
               aeskey='0wxappchinacloudappcn1wxappchinacloudappcn2',
               point='https://api.weixin.qq.com'
               )
+WX_PUSH = dict(
+    token='20200622',
+    aeskey='1JR32YSTAFShT1xs6ZqCKmWCZjQ7e3piDjsux1muzAD'
+)
 PAN_SERVICE = {
     "protocol": "https",
     "domain": "pan.baidu.com/rest/2.0/xpan",

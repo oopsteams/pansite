@@ -19,6 +19,7 @@ from controller.async_action import AsyncHandler
 from controller.main_action import MainHandler
 from controller.wx.wxget import WXAppGet
 from controller.wx.wxput import WXAppPut
+from controller.wx.wxpush import WXAppPush
 from controller.wx.wxupload import WXAppUpload
 from utils import log as logger
 scheduler = TornadoScheduler()
@@ -109,6 +110,7 @@ if __name__ == "__main__":
 
         (r"/wx/put", WXAppPut, dict(middleware=middle_list, context=context)),
         (r"/wx/get", WXAppGet, dict(middleware=middle_list, context=context)),
+        (r"/wx/push", WXAppPush, dict(middleware=middle_list, context=context)),
         (r"/wx/upload", WXAppUpload, dict(middleware=middle_list, context=context)),
         # (r"/wx/push", WXAppPush),
 
