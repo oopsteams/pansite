@@ -32,7 +32,7 @@ class WXAppKf(BaseHandler):
                 d = arguments[k]
                 if isinstance(d, list):
                     if len(d) == 1:
-                        params[k] = str(d[0])
+                        params[k] = d[0].decode()
                     else:
                         params[k] = d
         print("params:", params)
