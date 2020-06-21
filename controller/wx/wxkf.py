@@ -35,7 +35,7 @@ class WXAppKf(BaseHandler):
                         params[k] = d[0]
                     else:
                         params[k] = d
-
+        print("params:", params)
         rs = self.parseCMD(params)
         print("rs:", rs)
         self.to_write_json(rs)
