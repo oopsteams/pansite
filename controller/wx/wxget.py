@@ -110,6 +110,9 @@ class WXAppGet(BaseHandler):
                     if rs['user']['token'] != self.token:
                         self.user_payload = get_payload_from_token(rs['user']['token'])
                         rs['user']['ri'] = build_role_include(self.user_payload)
+                    if "state" in rs and "cr_id" in rs["state"]:
+                        rs["state"] = rs["state"].copy()
+                        rs["state"]["cr_id"] = 0
                     # rs['user'] = wx_service.check_openid(self.guest)
             return rs
 

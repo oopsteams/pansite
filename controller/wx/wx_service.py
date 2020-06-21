@@ -67,8 +67,9 @@ class WxService(BaseService):
         }
         balance_rs = payment_service.query_credit_balance(account_id)
         rs["balance"] = balance_rs
-        au = auth_service.get_auth_user_by_account_id(account_id)
-        if au:
+        # au = auth_service.get_auth_user_by_account_id(account_id)
+        # if au:
+        if ref_id:
             signed_rs = payment_service.check_signed(ref_id)
             if signed_rs:
                 rs["state"] = signed_rs
@@ -188,6 +189,13 @@ class WxService(BaseService):
                 result = auth_service.wx_sync_login(wx_acc)
                 tk = result['token']
                 acc.login_token = tk
+                login_at = result['login_at']
+                if wx_acc.account_id != guest.id:
+                    ref_id = auth_service.query_ref_id_by_account_id(wx_acc.account_id)
+                    if ref_id:
+                        rs = self.simple_profile(wx_acc.account_id, ref_id, wx_acc.id, tk)
+                        if login_at:
+                            rs['user']['login_at'] = login_at
 
             else:
                 WxDao.update_wx_account({"session_key": session_key}, wx_acc.id)
