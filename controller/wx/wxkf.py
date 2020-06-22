@@ -18,8 +18,9 @@ class WXAppKf(BaseHandler):
         if "getkflist" == cmd:
             if at_dict:
                 kflist = wxapi.getkflist(at_dict["access_token"])
-                print("kflist:", kflist)
-            pass
+                if kflist and "kf_list" in kflist:
+                    wx_service.put_kf(kflist["kf_list"])
+                # print("kflist:", kflist)
         return rs
 
     def get(self):

@@ -2,7 +2,7 @@
 """
 Created by susy at 2020/4/26
 """
-from dao.models import db, query_wrap_db, Accounts, AccountExt, AccountWxExt, StudyProps, AppCfg
+from dao.models import db, query_wrap_db, Accounts, AccountExt, AccountWxExt, StudyProps, AppCfg, KfMsg, Kf
 from dao.mdao import DataDao
 from utils import utils_es, get_now_datetime, obfuscate_id
 
@@ -32,6 +32,24 @@ class WxDao(object):
         if ac:
             return dict(access_token=ac.val, expires_in=int(ac.type))
         return None
+
+    @classmethod
+    @query_wrap_db
+    def query_one_kf(cls, fr) -> Kf:
+        kf: Kf = Kf.select().where(Kf.last_fr == fr).first()
+        if not kf:
+            kf = Kf.select().limit(1).first()
+        return kf
+
+    @classmethod
+    @query_wrap_db
+    def query_kf_list(cls, cnt=50) -> list:
+        return Kf.select().offset(0).limit(cnt)
+
+    @classmethod
+    @query_wrap_db
+    def query_kf_msg_list(cls, pin, offset=0, cnt=50) -> list:
+        return KfMsg.select().where(KfMsg.pin == pin).offset(offset).limit(cnt)
 
     @classmethod
     def account_by_id(cls, account_id) -> Accounts:
@@ -92,3 +110,35 @@ class WxDao(object):
                 ac.type = str(expires_in)
                 AppCfg.update(val=ac.val, type=ac.type).where(AppCfg.key == "access_token").execute()
             return ac
+
+    @classmethod
+    def update_kf_msg_pin(cls, msg_id, pin):
+        with db:
+            KfMsg.update(pin=pin).where(KfMsg.msg_id == msg_id).execute()
+
+    @classmethod
+    def update_kf_msg(cls, msg_id, to, fr, msg_ct, msg_type, content):
+        with db:
+            kfmsg: KfMsg = KfMsg.select().where(KfMsg.msg_id == str(msg_id)).first()
+            if not kfmsg:
+                kfmsg = KfMsg(msg_id=str(msg_id), to=to, fr=fr, msg_ct=msg_ct, msg_type=msg_type, content=content, pin=0)
+                kfmsg.save(force_insert=True)
+            return kfmsg
+
+    @classmethod
+    def update_kf_cnt(cls, kf_id, last_fr, incr):
+        with db:
+            Kf.update(cnt=Kf.cnt+incr, last_fr=last_fr).where(Kf.kf_id == kf_id).execute()
+
+    @classmethod
+    def update_kf(cls, kf_id, kf_params):
+        with db:
+
+            kf: Kf = Kf.select().where(Kf.kf_id == kf_id).first()
+            if not kf:
+                kf = Kf(**kf_params)
+                kf.pin = 0
+                kf.cnt = 0
+            else:
+                _params = {p: kf_params[p] for p in kf_params if p in Kf.field_names()}
+                Kf.update(**_params).where(Kf.kf_id == kf_id).execute()

@@ -34,9 +34,10 @@ def rpc_shared(fs_id):
 
 def get_access_token():
     point = WX_API["point"]
-    getkflist_api = "{point}/cgi-bin/token?grant_type=client_credential&appid={appid}&secret={secret}".format(
+    fresh_access_token_api = "{point}/cgi-bin/token?grant_type=client_credential&appid={appid}&secret={secret}".format(
         point=point, appid=WX_API["appid"], secret=WX_API["appsecret"])
-    res = requests.get(getkflist_api, verify=False)
+    res = requests.get(fresh_access_token_api, verify=False)
+
     rsjson = res.json()
     return rsjson
 

@@ -5,6 +5,7 @@ Created by susy at 2020/6/21
 from controller.action import BaseHandler
 from cfg import WX_API
 import hashlib
+from controller.wx.wx_service import wx_service
 from controller.auth_service import auth_service
 from controller.wx.goods_service import goods_service
 from dao.models import CourseProduct
@@ -37,6 +38,7 @@ class WXAppPush(BaseHandler):
             Content = params.get("Content", "")
             MsgId = params.get("MsgId", 0)
             print("ToUserName:", ToUserName, ",FromUserName:", FromUserName, ",CreateTime:", CreateTime, ",MsgType:", MsgType, ",MsgId:", MsgId, ",Content:", Content)
+            wx_service.put_kf_msg(MsgId, ToUserName, FromUserName, CreateTime, MsgType, Content)
             self.write("success")
         else:
             self.write(0)

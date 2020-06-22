@@ -6,7 +6,7 @@ from controller.base_service import BaseService
 from controller.auth_service import auth_service
 from controller.payment.payment_service import payment_service
 from dao.wx_dao import WxDao
-from dao.models import AccountWxExt, Accounts, BASE_FIELDS, StudyProps
+from dao.models import AccountWxExt, Accounts, BASE_FIELDS, StudyProps, Kf, KfMsg
 import base64
 from Crypto.Cipher import AES
 from utils import singleton, obfuscate_id, caches, constant, wxapi, get_now_ts
@@ -272,6 +272,24 @@ class WxService(BaseService):
 
     def _unpad(self, s):
         return s[:-ord(s[len(s) - 1:])]
+
+    def put_kf_msg(self, msg_id, to, fr, msg_ct, msg_type, content):
+        if content:
+            WxDao.update_kf_msg(msg_id, to, fr, msg_ct, msg_type, content)
+
+    def put_kf(self, kf_list):
+        if kf_list:
+            for kf in kf_list:
+                if kf and 'kf_id' in kf:
+                    kf_id = kf["kf_id"]
+                    WxDao.update_kf(kf_id, kf)
+
+    def query_kf_list(self):
+        kf_list = WxDao.query_kf_list()
+        rs = []
+        if kf_list:
+            for kf in kf_list:
+                rs.append(Kf.to_dict(kf, ))
 
     def refresh_access_token(self):
         jsonrs = wxapi.get_access_token()
