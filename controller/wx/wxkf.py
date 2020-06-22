@@ -3,6 +3,7 @@
 Created by susy at 2020/6/22
 """
 from controller.action import BaseHandler
+from controller.wx.wx_service import wx_service
 from utils import wxapi
 import json
 
@@ -13,9 +14,11 @@ class WXAppKf(BaseHandler):
         cmd = u'' + params.get("cmd", "")
         rs = {"status": 0}
         # print("header", header)
+        at_dict = wx_service.get_valid_access_token()
         if "getkflist" == cmd:
-            kflist = wxapi.getkflist()
-            print("kflist:", kflist)
+            if at_dict:
+                kflist = wxapi.getkflist(at_dict["access_token"])
+                print("kflist:", kflist)
             pass
         return rs
 

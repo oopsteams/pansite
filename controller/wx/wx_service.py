@@ -9,7 +9,7 @@ from dao.wx_dao import WxDao
 from dao.models import AccountWxExt, Accounts, BASE_FIELDS, StudyProps
 import base64
 from Crypto.Cipher import AES
-from utils import singleton, obfuscate_id, caches, constant
+from utils import singleton, obfuscate_id, caches, constant, wxapi, get_now_ts
 from cfg import WX_API
 import arrow
 import json
@@ -272,6 +272,27 @@ class WxService(BaseService):
 
     def _unpad(self, s):
         return s[:-ord(s[len(s) - 1:])]
+
+    def refresh_access_token(self):
+        jsonrs = wxapi.get_access_token()
+        if "access_token" in jsonrs:
+            access_token = jsonrs["access_token"]
+            expires_in = jsonrs["expires_in"]
+            ac = WxDao.update_access_token(access_token, expires_in + get_now_ts())
+            return dict(access_token=ac.val, expires_in=int(ac.type))
+        return None
+
+    @caches.cache_data("access_token", timeout_seconds=lambda s, rs: rs["to"])
+    def get_valid_access_token(self):
+        rs = WxDao.query_access_token()
+        if not rs or rs["expires_in"] <= get_now_ts():
+            new_rs = self.refresh_access_token()
+            if new_rs:
+                new_rs["to"] = new_rs["expires_in"] - get_now_ts() - 1
+            return new_rs
+        if rs:
+            rs["to"] = rs["expires_in"] - get_now_ts() - 1
+        return rs
 
 
 wx_service = WxService()

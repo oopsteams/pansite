@@ -2,7 +2,7 @@
 """
 Created by susy at 2020/4/26
 """
-from dao.models import db, query_wrap_db, Accounts, AccountExt, AccountWxExt, StudyProps
+from dao.models import db, query_wrap_db, Accounts, AccountExt, AccountWxExt, StudyProps, AppCfg
 from dao.mdao import DataDao
 from utils import utils_es, get_now_datetime, obfuscate_id
 
@@ -24,6 +24,14 @@ class WxDao(object):
     @query_wrap_db
     def wx_props_by_wx_id(cls, wx_id) -> StudyProps:
         return StudyProps.select().where(StudyProps.wx_id == wx_id).order_by(StudyProps.idx.asc())
+
+    @classmethod
+    @query_wrap_db
+    def query_access_token(cls) -> dict:
+        ac: AppCfg = AppCfg.select().where(AppCfg.key == "access_token").first()
+        if ac:
+            return dict(access_token=ac.val, expires_in=int(ac.type))
+        return None
 
     @classmethod
     def account_by_id(cls, account_id) -> Accounts:
@@ -71,3 +79,16 @@ class WxDao(object):
             sp: StudyProps = StudyProps(wx_id=wx_id, code=code, val=val, idx=idx)
             sp.save(force_insert=True)
             return sp
+
+    @classmethod
+    def update_access_token(cls, access_token, expires_in) -> AppCfg:
+        with db:
+            ac: AppCfg = AppCfg.select().where(AppCfg.key == "access_token").first()
+            if not ac:
+                ac = AppCfg(key="access_token", name="access_token", val=access_token, pin=1, type=str(expires_in))
+                ac.save(force_insert=True)
+            else:
+                ac.val = access_token
+                ac.type = str(expires_in)
+                AppCfg.update(val=ac.val, type=ac.type).where(AppCfg.key == "access_token").execute()
+            return ac

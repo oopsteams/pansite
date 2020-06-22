@@ -32,9 +32,19 @@ def rpc_shared(fs_id):
         }
 
 
-def getkflist():
+def get_access_token():
     point = WX_API["point"]
-    getkflist_api = "{point}/cgi-bin/customservice/getkflist?access_token={token}".format(point=point, token=WX_API["token"])
+    getkflist_api = "{point}/cgi-bin/token?grant_type=client_credential&appid={appid}&secret={secret}".format(
+        point=point, appid=WX_API["appid"], secret=WX_API["appsecret"])
+    res = requests.get(getkflist_api, verify=False)
+    rsjson = res.json()
+    return rsjson
+
+
+def getkflist(access_token):
+    point = WX_API["point"]
+    getkflist_api = "{point}/cgi-bin/customservice/getkflist?access_token={token}".format(point=point,
+                                                                                          token=access_token)
     res = requests.get(getkflist_api, verify=False)
     rsjson = res.json()
     return rsjson

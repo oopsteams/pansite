@@ -66,6 +66,8 @@ def update_access_token():
         #     logger.info("will validation pan acc id:{}, name:{}".format(pan_acc.id, pan_acc.name))
             # auth_service.check_pan_token_validation(pan_acc)
         logger.info("bj service will ignore [update_access_token] task.")
+        from controller.wx.wx_service import wx_service
+        wx_service.get_valid_access_token()
     except Exception as e:
         traceback.print_exc()
         print("update_access_token err:", e)
