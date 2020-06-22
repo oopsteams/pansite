@@ -13,6 +13,7 @@
 	    <legend>功能区</legend>
         <div class="toolbar">
             <button id="partial">文件临时节点</button>
+            <button id="auth">用户权限管理</button>
         </div>
     </fieldset>
     <div id="accordion">
@@ -77,6 +78,10 @@ $(function () {
     $('.patchupdate').button({"icon": "ui-icon-wrench","showLabel": true}).on('click',(e, ui)=>{
             let panid = e.currentTarget.dataset.id;
             document.location.href='/man/batchupdate?tk=' + GetQueryString('tk') + '&panid='+panid;
+        });
+
+    $('#auth').button({"icon": "ui-icon-person","showLabel": true}).on('click',(event, ui)=>{
+            document.location.href='/static/dist/index.html?tk=' + GetQueryString('tk') + '#/user';
         });
 
 });
