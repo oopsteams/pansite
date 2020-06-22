@@ -387,7 +387,8 @@ class PanService(BaseService):
         return params
 
     def query_file_list(self, parent_item_id):
-        item_list = DataDao.query_data_item_by_parent(parent_item_id, True, limit=1000)
+        size = 200
+        item_list = DataDao.query_data_item_by_parent(parent_item_id, True, limit=size)
         params = []
         for item in item_list:
             _item_path = item.path
@@ -404,7 +405,7 @@ class PanService(BaseService):
                            "children": True, "icon": "folder"})
         # print("dirs total:", len(params))
 
-        sp: SearchParams = SearchParams.build_params(0, 1000)
+        sp: SearchParams = SearchParams.build_params(0, size)
         # sp.add_must(is_match=False, field="path", value=parent_path)
         sp.add_must(is_match=False, field="parent", value=parent_item_id)
         sp.add_must(is_match=False, field="isdir", value=0)
