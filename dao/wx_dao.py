@@ -173,7 +173,7 @@ class WxDao(object):
         with db:
             pt: PlanTime = PlanTime.select().where(PlanTime.code == code, PlanTime.wx_id == wx_id).first()
             if not pt:
-                pt = PlanTime(info=info, val=time_val, wx_id=wx_id)
+                pt = PlanTime(info=info, val=time_val, wx_id=wx_id, code=code)
                 pt.save(force_insert=True)
             else:
                 PlanTime.update(info=info, val=time_val).where(PlanTime.code == code, PlanTime.wx_id == wx_id).execute()
@@ -183,7 +183,7 @@ class WxDao(object):
         with db:
             ps: PlanSubject = PlanSubject.select().where(PlanSubject.code == code, PlanSubject.wx_id == wx_id).first()
             if not ps:
-                ps = PlanSubject(info=info, wx_id=wx_id)
+                ps = PlanSubject(info=info, wx_id=wx_id, code=code)
                 if product_code:
                     ps.val = product_code
                 ps.save(force_insert=True)
