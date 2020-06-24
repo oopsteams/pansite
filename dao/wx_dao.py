@@ -54,7 +54,7 @@ class WxDao(object):
                 val = ''
                 if ps.val:
                     val = ps.val
-                rs.append(dict(txt=ps.info, id=ps.code, val=val))
+                rs.append(dict(info=ps.info, id=ps.code, val=val))
         return rs
 
     @classmethod
