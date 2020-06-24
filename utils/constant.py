@@ -188,7 +188,7 @@ _SUBJECT_CELLS = default_subjects = {
     "7_7": {"info": "-", "val": ""},
     "7_8": {"info": "-", "val": ""},
     "7_9": {"info": "-", "val": ""},
-    "7_10": {"info": "-", "val": ""},
+    "7_10": {"info": "作文", "val": ""},
 }
 STUDY = dict(
     CODES=["ca", "lo", "ch", "po", "re", "se", "lw", "ew", "es", "er", "ha", "co", "vi", "ph", "ac"],
