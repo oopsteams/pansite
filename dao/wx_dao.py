@@ -37,7 +37,7 @@ class WxDao(object):
     @classmethod
     @query_wrap_db
     def query_pan_headers(cls, wx_id) -> list:
-        ms: ModelSelect = PlanTime.select().where(PlanTime.wx_id == wx_id)
+        ms = PlanTime.select().where(PlanTime.wx_id == wx_id)
         rs = []
         if ms:
             for pt in ms:
@@ -47,7 +47,7 @@ class WxDao(object):
     @classmethod
     @query_wrap_db
     def query_pan_cells(cls, wx_id) -> list:
-        ms: ModelSelect = PlanSubject.select().where(PlanSubject.wx_id == wx_id)
+        ms = PlanSubject.select().where(PlanSubject.wx_id == wx_id)
         rs = []
         if ms:
             for ps in ms:
