@@ -110,7 +110,7 @@ def init_db():
                       OrderItem, Assets, LocalVisible, CommunityVisible, ShareApp, DataItemExt, ClientDataItem,
                       AppCfg, AccountWxExt, Category, CateCate, SPUStruct, Brand, NetWeight, SweetNess, Pack,
                       CourseProduct, ProductSpu, ProductImg, Goods, Subjects, PaymentAccount, CreditRecord,
-                      StudyProps], safe=True)
+                      StudyProps, PlanTime, PlanSubject], safe=True)
 
     with db:
         if not Org.select().where(Org.id == 1).exists():

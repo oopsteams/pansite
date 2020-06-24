@@ -4,7 +4,7 @@ Created by susy at 2020/4/26
 """
 from controller.action import BaseHandler
 from controller.auth_service import auth_service
-from utils.constant import LOGIN_TOKEN_TIMEOUT
+
 from controller.wx.wx_service import wx_service
 from controller.wx.goods_service import goods_service
 from controller.payment.payment_service import payment_service
@@ -314,6 +314,8 @@ class WXAppGet(BaseHandler):
                 wx_id = decrypt_id(fuzzy_wx_id)
                 rs = wx_service.load_plan_datas(wx_id)
                 rs["status"] = 0
+        elif "plandefault" == cmd:
+            rs["data"] = constant.STUDY
         return rs
 
     def check_header(self, tag):
