@@ -3,7 +3,8 @@
 Created by susy at 2020/4/26
 """
 from controller.action import BaseHandler
-from controller.auth_service import auth_service
+from controller.wx.wx_service import wx_service
+
 from controller.wx.goods_service import goods_service
 from dao.models import CourseProduct
 from utils import obfuscate_id, decrypt_id
@@ -71,6 +72,15 @@ class WXAppPut(BaseHandler):
             else:
                 rs['status'] = -1
                 rs['error'] = "Product[{}] not exists!".format(fuzzy_pid)
+        elif "updatecells" == cmd:
+            fuzzy_wx_id = params.get('uid', None)
+            if fuzzy_wx_id:
+                wx_id = decrypt_id(fuzzy_wx_id)
+                headers = params.get('headers', None)
+                cells = params.get('cells', None)
+                wx_service.update_plan_table(wx_id, headers, cells)
+                rs = wx_service.load_plan_datas(wx_id)
+                rs["status"] = 0
 
         return rs
 

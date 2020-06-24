@@ -308,7 +308,12 @@ class WXAppGet(BaseHandler):
             if self.token and self.user_id != self.guest.id:
                 wx_service.sync_props(wx_id, props)
                 rs['datas'] = wx_service.queryprop(wx_id)
-
+        elif "loadcells" == cmd:
+            fuzzy_wx_id = params.get('uid', None)
+            if fuzzy_wx_id:
+                wx_id = decrypt_id(fuzzy_wx_id)
+                rs = wx_service.load_plan_datas(wx_id)
+                rs["status"] = 0
         return rs
 
     def check_header(self, tag):

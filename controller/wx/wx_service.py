@@ -312,5 +312,19 @@ class WxService(BaseService):
             rs["to"] = rs["expires_in"] - get_now_ts() - 1
         return rs
 
+    def load_plan_datas(self, wx_id):
+        headers = WxDao.query_pan_headers(wx_id)
+        cells = WxDao.query_pan_cells(wx_id)
+        rs = {"headers": headers, "cells": cells}
+        return rs
+
+    def update_plan_table(self, wx_id, headers, cells):
+        if headers:
+            for h in headers:
+                WxDao.update_plan_time(wx_id, h["id"], h["txt"][0], h["txt"][1])
+        if cells:
+            for c in cells:
+                WxDao.update_plan_sub(wx_id, c["id"], c["info"])
+
 
 wx_service = WxService()

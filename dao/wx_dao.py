@@ -2,8 +2,9 @@
 """
 Created by susy at 2020/4/26
 """
-from dao.models import db, query_wrap_db, Accounts, AccountExt, AccountWxExt, StudyProps, AppCfg, KfMsg, Kf
+from dao.models import db, query_wrap_db, Accounts, AccountExt, AccountWxExt, StudyProps, AppCfg, KfMsg, Kf, PlanTime, PlanSubject
 from dao.mdao import DataDao
+from peewee import ModelSelect
 from utils import utils_es, get_now_datetime, obfuscate_id
 
 
@@ -31,7 +32,30 @@ class WxDao(object):
         ac: AppCfg = AppCfg.select().where(AppCfg.key == "access_token").first()
         if ac:
             return dict(access_token=ac.val, expires_in=int(ac.type))
-        return None
+        return dict()
+
+    @classmethod
+    @query_wrap_db
+    def query_pan_headers(cls, wx_id) -> list:
+        ms: ModelSelect = PlanTime.select().where(PlanTime.wx_id == wx_id)
+        rs = []
+        if ms:
+            for pt in ms:
+                rs.append(dict(txt=[pt.info, pt.val], id=pt.code))
+        return rs
+
+    @classmethod
+    @query_wrap_db
+    def query_pan_cells(cls, wx_id) -> list:
+        ms: ModelSelect = PlanSubject.select().where(PlanSubject.wx_id == wx_id)
+        rs = []
+        if ms:
+            for ps in ms:
+                val = ''
+                if ps.val:
+                    val = ps.val
+                rs.append(dict(txt=[ps.info], id=ps.code, val=val))
+        return rs
 
     @classmethod
     @query_wrap_db
@@ -139,6 +163,32 @@ class WxDao(object):
                 kf = Kf(**kf_params)
                 kf.pin = 0
                 kf.cnt = 0
+                kf.save(force_insert=True)
             else:
                 _params = {p: kf_params[p] for p in kf_params if p in Kf.field_names()}
                 Kf.update(**_params).where(Kf.kf_id == kf_id).execute()
+
+    @classmethod
+    def update_plan_time(cls, wx_id, code, info, time_val):
+        with db:
+            pt: PlanTime = PlanTime.select().where(PlanTime.code == code, PlanTime.wx_id == wx_id).first()
+            if not pt:
+                pt = PlanTime(info=info, val=time_val, wx_id=wx_id)
+                pt.save(force_insert=True)
+            else:
+                PlanTime.update(info=info, val=time_val).where(PlanTime.code == code, PlanTime.wx_id == wx_id).execute()
+
+    @classmethod
+    def update_plan_sub(cls, wx_id, code, info, product_code=None):
+        with db:
+            ps: PlanSubject = PlanSubject.select().where(PlanSubject.code == code, PlanSubject.wx_id == wx_id).first()
+            if not ps:
+                ps = PlanSubject(info=info, wx_id=wx_id)
+                if product_code:
+                    ps.val = product_code
+                ps.save(force_insert=True)
+            else:
+                params = {"info": info}
+                if product_code:
+                    params["val"] = product_code
+                PlanSubject.update(**params).where(PlanSubject.code == code, PlanSubject.wx_id == wx_id).execute()
