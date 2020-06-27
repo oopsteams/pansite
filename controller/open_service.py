@@ -77,7 +77,7 @@ class OpenService(BaseService):
                 dict_obj, share_log, data_item = pan_service.share_folder(fs_id)
                 if share_log:
                     if share_log.is_black == 1:
-                        rs = {'state': 0, 'info': share_log.err}
+                        rs = {'state': -9, 'info': share_log.err}
                     else:
                         rs = {'state': 0, 'info': shared_format(share_log.link, share_log.password)}
                         self.update_share_fr(m_val, h_val, d_val, pan_id, sharefr)
