@@ -54,6 +54,16 @@ class DataDao(object):
 
     @classmethod
     @query_wrap_db
+    def query_pan_acc_by_acc_name(cls, acc_name) -> list:
+        model_rs = PanAccounts.select().where(PanAccounts.name == acc_name)
+        rs = []
+        if model_rs:
+            for r in model_rs:
+                rs.append(PanAccounts.to_dict(r))
+        return rs
+
+    @classmethod
+    @query_wrap_db
     def pan_account_by_id(cls, pk_id):
         return PanAccounts.select().where(PanAccounts.id == pk_id).first()
 
@@ -116,6 +126,14 @@ class DataDao(object):
     @query_wrap_db
     def get_data_item_by_fs_id(cls, fs_id):
         return DataItem.select().where(DataItem.fs_id == fs_id).first()
+
+    @classmethod
+    @query_wrap_db
+    def get_data_item_by_filename(cls, filename) -> dict:
+        o = DataItem.select().where(DataItem.filename == filename).first()
+        if o:
+            return DataItem.to_dict(o)
+        return dict()
 
     @classmethod
     def query_data_item_by_fs_id(cls, fs_id):
