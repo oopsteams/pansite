@@ -5,7 +5,7 @@ Created by susy at 2019/10/17
 import logging
 import os
 import sys
-
+TAG = "dev"
 env = os.getenv('env', None)
 if not env and len(sys.argv) > 1:
     env = sys.argv[-1]
@@ -26,7 +26,8 @@ mysql_worker_config = {
     "password": "worker",
     "db": "panproxy"
 }
-
+if TAG == "dev":
+    mysql_worker_config["host"] = "152.136.21.249"
 service = {
     # "port": 443,
     "port": 8080,
@@ -89,6 +90,8 @@ ES = {
         "doctype": "dataitem"
     }
 }
+if TAG == "dev":
+    ES["hosts"] = [{"host": "127.0.0.1"}]
 
 NEW_USER_DEFAULT = dict(org_id=5, role_id=1)
 
