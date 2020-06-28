@@ -5,7 +5,7 @@ Created by susy at 2019/10/17
 import logging
 import os
 import sys
-TAG = "dev"
+TAG = "goods"
 env = os.getenv('env', None)
 if not env and len(sys.argv) > 1:
     env = sys.argv[-1]
@@ -20,7 +20,7 @@ redis_config = {
 
 mysql_worker_config = {
     # "host":"172.31.140.255",
-    "host": "152.136.21.249",
+    "host": "127.0.0.1",
     "port": 3306,
     "user": "worker",
     "password": "worker",
@@ -75,7 +75,7 @@ RPC = dict(
     hosts=["http://api.oopsteam.site"]
 )
 ES = {
-    "hosts": [{"host": "127.0.0.1"}],
+    "hosts": [{"host": "111.229.193.232", "port": 9200}],
 
     "share": {
         "index_name": "share",
