@@ -443,9 +443,11 @@ class PanService(BaseService):
                 # if __idx > 0:
                 #     fn_name = fn_name[0:__idx]
                 txt = "[{}]{}".format(fn_name, aliasname)
+            has_children = True
             if _s["_source"]["isdir"] == 1:
                 icon_val = "folder"
             else:
+                has_children = False
                 f_type = guess_file_type(txt)
                 if f_type:
                     icon_val = "file file-%s" % f_type
@@ -456,7 +458,7 @@ class PanService(BaseService):
                                     "fs_id": _s["_source"]["fs_id"], "_id": item_fuzzy_id,
                                     "parent_id": parent_item_fuzzy_id, "price": self.get_price(_s["_source"]["fs_id"])
                                     },
-                           "children": False, "icon": icon_val})
+                           "children": has_children, "icon": icon_val})
         has_next = offset + size < total
         meta = {"has_next": has_next, "total": total, "pagesize": size}
         return params, meta
