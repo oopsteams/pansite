@@ -74,7 +74,7 @@ RPC = dict(
     hosts=["http://api.oopsteam.site"]
 )
 ES = {
-    "hosts": [{"host": "111.229.193.232", "port": 9200}],
+    "hosts": [{"host": "127.0.0.1"}],
 
     "share": {
         "index_name": "share",
