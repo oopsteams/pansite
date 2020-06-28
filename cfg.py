@@ -46,10 +46,11 @@ DEFAULT_CONTACT_QR_URI = '/static/img/contact/contact.jpeg'
 
 WX_API = dict(appid='wx86242b978be4eb84',
               appsecret='687e701c47b40c027dac1de39af8fcba',
-              token='20170919',
-              aeskey='0wxappchinacloudappcn1wxappchinacloudappcn2',
+              token='20200622',
+              aeskey='1JR32YSTAFShT1xs6ZqCKmWCZjQ7e3piDjsux1muzAD',
               point='https://api.weixin.qq.com'
               )
+
 PAN_SERVICE = {
     "protocol": "https",
     "domain": "pan.baidu.com/rest/2.0/xpan",
@@ -66,8 +67,14 @@ PAN_ROOT_DIR = {
     "name": "_SHAREDSYS",
     "alias": "分享盘"
 }
+CDN = dict(
+    hosts=["http://static.oopsteam.site"]
+)
+RPC = dict(
+    hosts=["http://api.oopsteam.site"]
+)
 ES = {
-    "hosts": [{"host": "127.0.0.1"}],
+    "hosts": [{"host": "111.229.193.232", "port": 9200}],
 
     "share": {
         "index_name": "share",

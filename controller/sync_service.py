@@ -3,7 +3,7 @@
 Created by susy at 2019/11/8
 """
 import requests
-from dao.dao import DataDao
+from dao.mdao import DataDao
 from dao.community_dao import CommunityDao
 from dao.models import PanAccounts, ShareLogs, DataItem, TransferLogs, try_release_conn, CommunityDataItem
 from utils import singleton, log, make_token, obfuscate_id, get_now_datetime, random_password, get_now_ts, restapi, guess_file_type, constant

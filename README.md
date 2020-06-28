@@ -11,3 +11,8 @@ pan site
 - Free
 
     - tags: free, es/db
+    
+- lib
+
+    - pip freeze > requirements.txt
+    - pip install -r requirements.txt

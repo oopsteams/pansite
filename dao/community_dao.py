@@ -2,10 +2,11 @@
 """
 Created by susy at 2019/12/17
 """
-from dao.models import db, Accounts, DataItem, PanAccounts, AccountExt, CommunityDataItem, UserTags, Tags, ShareLogs, \
+from dao.models import db, Accounts, DataItem, PanAccounts, AuthUser, CommunityDataItem, UserTags, Tags, ShareLogs, \
     TransferLogs, query_wrap_db, ShareFr, LoopAdTask, AdSource, CommunityVisible, LocalVisible, ShareApp
 from utils import utils_es, get_now_datetime, obfuscate_id
 from dao.es_dao import es_dao_share
+from cfg import CDN
 
 
 class CommunityDao(object):
@@ -40,6 +41,11 @@ class CommunityDao(object):
 
     @classmethod
     @query_wrap_db
+    def get_community_item_by_fs_id(cls, fs_id):
+        return CommunityDataItem.select().where(CommunityDataItem.fs_id == fs_id).first()
+
+    @classmethod
+    @query_wrap_db
     def query_community_item_by_parent_all(cls, parent_id, offset=0, limit=100):
         return CommunityDataItem.select().where(CommunityDataItem.parent == parent_id).limit(limit).offset(offset)
 
@@ -55,8 +61,14 @@ class CommunityDao(object):
 
     @classmethod
     @query_wrap_db
-    def local_check_free_by_id(cls, _id):
-        return LocalVisible.select().where(LocalVisible.id == _id).exists()
+    def local_check_free_by_id(cls, item: DataItem):
+        permit = LocalVisible.select().where(LocalVisible.id == item.id).exists()
+        dog = 20
+        while item and not permit and item.parent and dog > 0:
+            item = DataItem.select().where(DataItem.id == item.parent).first()
+            permit = LocalVisible.select().where(LocalVisible.id == item.id).exists()
+            dog = dog - 1
+        return permit
 
     @classmethod
     @query_wrap_db
@@ -93,12 +105,6 @@ class CommunityDao(object):
     @query_wrap_db
     def default_guest_account(cls):
         guest: Accounts = Accounts.select().where(Accounts.name == "guest").first()
-        if guest:
-            if not guest.fuzzy_id:
-                fuzzy_id = obfuscate_id(guest.id)
-                guest.fuzzy_id = fuzzy_id
-                with db:
-                    Accounts.update(fuzzy_id=fuzzy_id).where(Accounts.id == guest.id).execute()
         return guest
 
     @classmethod
@@ -114,6 +120,7 @@ class CommunityDao(object):
                 for s in srcs:
                     s_dict = AdSource.to_dict(s)
                     rs['sources'].append(s_dict)
+        rs["hosts"] = CDN["hosts"]
         return rs
 
     @classmethod
@@ -211,6 +218,15 @@ class CommunityDao(object):
                         CommunityDataItem.id == data_item.id).execute()
                 cls.update_es_by_community_item(data_item.id, {'parent': params.get('parent', ''),
                                                                'size': params.get('size', 0)})
+
+    @classmethod
+    def update_data_item(cls, pk_id, params):
+        _params = {p: params[p] for p in params if p in CommunityDataItem.field_names()}
+        with db:
+            CommunityDataItem.update(**_params).where(CommunityDataItem.id == pk_id).execute()
+            es_up_params = es_dao_share().filter_update_params(_params)
+            if es_up_params:
+                es_dao_share().update_fields(pk_id, **es_up_params)
 
     @classmethod
     def sync_community_item_to_es(cls, data_item: CommunityDataItem, source):

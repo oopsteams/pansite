@@ -8,7 +8,26 @@ import time
 import json
 from utils import url_encode, get_now_ts, log as logger
 from utils.constant import PAN_ERROR_CODES
+from functools import wraps
 POINT = "{protocol}://{domain}".format(protocol=PAN_SERVICE['protocol'], domain=PAN_SERVICE['domain'])
+PROXY_POINT = "http://api.oopsteam.site/rpc"
+
+
+def api_proxy():
+    def cache_decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+
+            datas = {"clazz": "restapi", "fn": func.__name__, "args": args}
+            headers = {"User-Agent": "pan.baidu.com"}
+            # print("file_rename file:", access_token, ",path:", filepath, ", filelist:", datas["filelist"])
+            rs = requests.post(PROXY_POINT, data=datas, headers=headers)
+            # print("content:", rs.content)
+            jsonrs = rs.json()
+            # result = func(*args, **kwargs)
+            return jsonrs
+        return wrapper
+    return cache_decorator
 
 
 # auth
@@ -25,29 +44,30 @@ def access_token_code(code):
     return jsonrs
 
 
-def refresh_token(refresh_token, recursion):
+def refresh_token(refresh_tk, recursion=True):
     auth_point = "{}://{}".format(PAN_SERVICE['protocol'], PAN_SERVICE['auth_domain'])
     path = "token"
-    params = {"grant_type": 'refresh_token', "refresh_token": refresh_token, "client_id": PAN_SERVICE["client_id"],
+    params = {"grant_type": 'refresh_token', "refresh_token": refresh_tk, "client_id": PAN_SERVICE["client_id"],
               "client_secret": PAN_SERVICE["client_secret"]}
     headers = {"User-Agent": "pan.baidu.com"}
     rs = requests.get("%s%s" % (auth_point, path), params=params, headers=headers)
     # logger.info("refresh_token request state:{}".format(rs.status_code))
     # print("content:", rs.content)
-    logger.info("restapi refresh_token:{}, status_code:{}".format(refresh_token, rs.status_code))
+    logger.info("restapi refresh_token:{}, status_code:{}".format(refresh_tk, rs.status_code))
     if rs.status_code == 200:
         jsonrs = rs.json()
         return jsonrs
     else:
+        logger.warn(rs.content)
         if recursion:
             time.sleep(1)
-            return refresh_token(refresh_token)
+            return refresh_token(refresh_tk, False)
         else:
             return {}
 
 
 # pan accounts
-def sync_user_info(access_token, recursion):
+def sync_user_info(access_token, recursion=True):
     auth_point = "{}://{}".format(PAN_SERVICE['protocol'], "openapi.baidu.com/rest/2.0/passport/users/getInfo")
     params = {"access_token": access_token}
     headers = {"User-Agent": "pan.baidu.com"}
@@ -62,7 +82,7 @@ def sync_user_info(access_token, recursion):
     else:
         if recursion:
             time.sleep(1)
-            return refresh_token(refresh_token)
+            return refresh_token(refresh_token, False)
         else:
             return {}
 
@@ -404,7 +424,7 @@ def split_file_content(size, cnt, fs_id):
 
 if __name__ == '__main__':
     from controller.service import pan_service
-    from dao.dao import DataDao
+    from dao.mdao import DataDao
     # at = pan_service.pan_acc.access_token
     # print(file_list(at, "/"))
     fs_id = '214812092436210'

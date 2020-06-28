@@ -19,13 +19,17 @@ from controller.async_action import AsyncHandler
 from controller.main_action import MainHandler
 from controller.wx.wxget import WXAppGet
 from controller.wx.wxput import WXAppPut
+from controller.wx.wxpush import WXAppPush
+from controller.wx.wxkf import WXAppKf
+from controller.wx.wxupload import WXAppUpload
 from utils import log as logger
 scheduler = TornadoScheduler()
 scheduler.start()
 
 
 guest_user = None
-context = dict(guest=None)
+base_dir = os.path.dirname(__file__)
+context = dict(guest=None, basepath=base_dir)
 
 
 def update_sys_cfg(release=True):
@@ -55,12 +59,15 @@ def scheduler_clear_all_expired_share_log():
 
 def update_access_token():
     try:
-        from dao.models import PanAccounts
+        # from dao.models import PanAccounts
         # sync_pan_service.clear_all_expired_share_log()
-        pan_acc_list = PanAccounts.select().where(PanAccounts.user_id == 1)
-        for pan_acc in pan_acc_list:
-            logger.info("will validation pan acc id:{}, name:{}".format(pan_acc.id, pan_acc.name))
-            auth_service.check_pan_token_validation(pan_acc)
+        # pan_acc_list = PanAccounts.select().where(PanAccounts.user_id == 1)
+        # for pan_acc in pan_acc_list:
+        #     logger.info("will validation pan acc id:{}, name:{}".format(pan_acc.id, pan_acc.name))
+            # auth_service.check_pan_token_validation(pan_acc)
+        logger.info("bj service will ignore [update_access_token] task.")
+        # from controller.wx.wx_service import wx_service
+        # wx_service.get_valid_access_token()
     except Exception as e:
         traceback.print_exc()
         print("update_access_token err:", e)
@@ -77,7 +84,6 @@ update_sys_cfg()
 
 
 if __name__ == "__main__":
-    base_dir = os.path.dirname(__file__)
     settings = {
         "static_path": os.path.join(base_dir, "static"),
         "static_url_prefix": r"/static/",
@@ -108,6 +114,9 @@ if __name__ == "__main__":
 
         (r"/wx/put", WXAppPut, dict(middleware=middle_list, context=context)),
         (r"/wx/get", WXAppGet, dict(middleware=middle_list, context=context)),
+        (r"/wx/push", WXAppPush, dict(middleware=middle_list, context=context)),
+        (r"/wx/kf", WXAppKf, dict(middleware=middle_list, context=context)),
+        (r"/wx/upload", WXAppUpload, dict(middleware=middle_list, context=context)),
         # (r"/wx/push", WXAppPush),
 
         (r"/.*\.html", MainHandler, dict(middleware=middle_list)),

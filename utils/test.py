@@ -3,9 +3,13 @@
 Created by susy at 2019/10/20
 """
 import requests
+from cfg import mysql_worker_config, ES
+mysql_worker_config['port'] = 3307
+ES["hosts"] = [{"host": "127.0.0.1", "port": 9201}]
 import time
 import os
 from utils import random_password
+from dao.mdao import DataDao
 
 
 def downfile(filename,url,start,end,total):
@@ -29,7 +33,6 @@ def downfile(filename,url,start,end,total):
             print('{:.2%}'.format((s-start)/total), end="\r")
 
 
-
 def query_file_head(url):
     headers = {"User-Agent": "pan.baidu.com"}
     res = requests.head(url, headers=headers)
@@ -39,6 +42,18 @@ def query_file_head(url):
     print("md5_val:", md5_val)
     print("status_code:", res.status_code)
 
+
+def load_pan_acc(file_name):
+    from controller.service import pan_service
+    obj = DataDao.get_data_item_by_filename(file_name)
+    print("item:", obj)
+    if obj:
+        rs = DataDao.pan_account_by_id(obj['panacc'])
+        if rs:
+            params = pan_service.query_file(obj['id'])
+            print(rs)
+            print("file info:", params)
+            print("file dlink:", params['item']['dlink'])
 
 if __name__ == '__main__':
 
@@ -79,9 +94,12 @@ if __name__ == '__main__':
 
     url = "https://d.pcs.baidu.com/file/b89838f4a6fa0bc070dd0965c9f06fd6?fid=3090991555-250528-818025613027874&rt=pr&sign=FDtAER-DCb740ccc5511e5e8fedcff06b081203-uAgKvcQZy62wK0RbdvRetk0f0wI%3D&expires=8h&chkbd=0&chkv=0&dp-logid=3880469753250037717&dp-callid=0&dstime=1574573811&r=559971058&access_token=21.9cdf793f6dd80111a4d9263f525f2586.2592000.1576903342.3090991555-9850001"
     url = "https://d.pcs.baidu.com/file/663fec067c9cf9e9266a09082c81ec00?fid=721132532-250528-827322491135924&rt=pr&sign=FDtAER-DCb740ccc5511e5e8fedcff06b081203-CQdFVJLc%2FsLT34HevItBBJvIv88%3D&expires=8h&chkbd=0&chkv=0&dp-logid=3897204685888635360&dp-callid=0&dstime=1574573974&r=239020143&access_token=21.7d80c6dd344936851435bf6fb99ae07a.2592000.1576903343.721132532-9850001"
+
+    # load_pan_acc("1Q84（全集）.epub")
+    url = "https://d.pcs.baidu.com/file/094d0617bfcbc7ed25b0159a621e8009?fid=3090991555-250528-158531883966813&rt=pr&sign=FDtAERV-DCb740ccc5511e5e8fedcff06b081203-veknT6jyEkCB2m95dCyqlVHSmzw%3D&expires=8h&chkbd=0&chkv=2&dp-logid=4060082492992274496&dp-callid=0&dstime=1593172816&r=263495965&access_token=121.87033f1a9b45594adc671f90ab101219.Y37JZ9tujQTiU-Hmhe-pOoRkLB8pjf6VBtlOTPY.R7ap-Q"
     query_file_head(_url)
     """ """
-    _url = "http://qdall01.baidupcs.com/file/c13da89e2993c6945b3c6bdbf3515378?bkt=en-06f5c65000af0ed6091c56bb2ed1af7f2b9aae899ab9bbe07476d89f8050d2f5ff7019d139a04654&fid=2717926781-250528-436166430879136&time=1572579078&sign=FDTAXGERLQBHSKfWa-DCb740ccc5511e5e8fedcff06b081203-CT9Rh9vlBNZZNaSfHm2aR5V8YMI%3D&to=34&size=157388238&sta_dx=157388238&sta_cs=1066&sta_ft=mp4&sta_ct=7&sta_mt=3&fm2=MH%2CYangquan%2CAnywhere%2C%2Cheilongjiang%2Ccnc&ctime=1527591637&mtime=1571452783&resv0=cdnback&resv1=0&resv2=&resv3=&resv4=157388238&vuk=2717926781&iv=-2&htype=&randtype=&newver=1&newfm=1&secfm=1&flow_ver=3&pkey=en-c120475f739ea46fd8e6061e0c03bf24236d23007dbed21a846c244c8d0295435ba1225035cce4ee&sl=80740430&expires=8h&rt=pr&r=352462039&vbdid=-&fin=1.%E8%AF%A6%E8%A7%A3%E6%9D%8E%E7%99%BD%E3%80%8A%E6%B8%A1%E8%8D%86%E9%97%A8%E9%80%81%E5%88%AB%E3%80%8B%E3%80%90%E8%A7%86%E9%A2%91%E5%85%AC%E5%BC%80%E8%AF%BE%E3%80%91.mp4&rtype=1&dp-logid=340225413102246347&dp-callid=0.1&tsl=15&csl=78&csign=7rHoPlXj4i5S0GSHpz5yFNKP3z8%3D&so=1&ut=8&uter=0&serv=1&uc=1559654663&ti=ac918a9d760b19a8067c30781520bbbac129d989f0e1671d&reqlabel=250528_f&by=themis"
+    # _url = "http://qdall01.baidupcs.com/file/c13da89e2993c6945b3c6bdbf3515378?bkt=en-06f5c65000af0ed6091c56bb2ed1af7f2b9aae899ab9bbe07476d89f8050d2f5ff7019d139a04654&fid=2717926781-250528-436166430879136&time=1572579078&sign=FDTAXGERLQBHSKfWa-DCb740ccc5511e5e8fedcff06b081203-CT9Rh9vlBNZZNaSfHm2aR5V8YMI%3D&to=34&size=157388238&sta_dx=157388238&sta_cs=1066&sta_ft=mp4&sta_ct=7&sta_mt=3&fm2=MH%2CYangquan%2CAnywhere%2C%2Cheilongjiang%2Ccnc&ctime=1527591637&mtime=1571452783&resv0=cdnback&resv1=0&resv2=&resv3=&resv4=157388238&vuk=2717926781&iv=-2&htype=&randtype=&newver=1&newfm=1&secfm=1&flow_ver=3&pkey=en-c120475f739ea46fd8e6061e0c03bf24236d23007dbed21a846c244c8d0295435ba1225035cce4ee&sl=80740430&expires=8h&rt=pr&r=352462039&vbdid=-&fin=1.%E8%AF%A6%E8%A7%A3%E6%9D%8E%E7%99%BD%E3%80%8A%E6%B8%A1%E8%8D%86%E9%97%A8%E9%80%81%E5%88%AB%E3%80%8B%E3%80%90%E8%A7%86%E9%A2%91%E5%85%AC%E5%BC%80%E8%AF%BE%E3%80%91.mp4&rtype=1&dp-logid=340225413102246347&dp-callid=0.1&tsl=15&csl=78&csign=7rHoPlXj4i5S0GSHpz5yFNKP3z8%3D&so=1&ut=8&uter=0&serv=1&uc=1559654663&ti=ac918a9d760b19a8067c30781520bbbac129d989f0e1671d&reqlabel=250528_f&by=themis"
     page_cnt = 3
     total = 157388238
     filesize=total//page_cnt  #5590000，文件大小

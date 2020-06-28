@@ -4,15 +4,13 @@ Created by susy at 2019/12/24
 """
 from controller.action import BaseHandler
 from dao.community_dao import CommunityDao
-from dao.dao import DataDao
+from dao.mdao import DataDao
 from tornado.web import authenticated
 from utils import compare_dt_by_now, decrypt_id, log as logger
 from controller.mpan_service import mpan_service
 from controller.sync_service import sync_pan_service
 from controller.service import pan_service
 from dao.models import DataItem
-from cfg import MASTER_ACCOUNT_ID
-from utils.constant import USER_TYPE
 
 
 class ManageHandler(BaseHandler):
@@ -49,7 +47,7 @@ class ManageHandler(BaseHandler):
                 if not '#' == node_id:
                     node_id_val = decrypt_id(node_id)
                     parent_id = int(node_id_val)
-                    params = mpan_service.query_file_list(parent_id)
+                    params, _ = mpan_service.query_file_list(parent_id)
                 else:
                     params = mpan_service.fetch_root_item_by_user(self.user_id)
 
@@ -83,7 +81,7 @@ class ManageHandler(BaseHandler):
         elif path.endswith("/show"):
             source = self.get_argument("source", "")
             parent = self.get_argument("parent", "")
-            node_id = self.get_argument("id")
+            node_id = int(self.get_argument("id"))
             logger.info("source:{},parent:{},node_id:{}".format(source, parent, node_id))
             if "local" == source:
                 if parent:
@@ -99,8 +97,9 @@ class ManageHandler(BaseHandler):
         elif path.endswith("/hide"):
             source = self.get_argument("source", "")
             parent = self.get_argument("parent", "")
-            node_fuzzy_id = self.get_argument("id")
-            node_id = decrypt_id(node_fuzzy_id)
+            # node_fuzzy_id = self.get_argument("id")
+            # node_id = decrypt_id(node_fuzzy_id)
+            node_id = int(self.get_argument("id"))
             logger.info("hide source:{},parent:{},node_id:{}".format(source, parent, node_id))
             if "local" == source:
                 if parent:
@@ -191,8 +190,15 @@ class ManageHandler(BaseHandler):
         elif path.endswith("/batchupdate"):
             pan_id = self.get_argument("panid", "0")
             pan_acc = pan_service.get_pan_account(pan_id, self.user_id)
-            cls = [fn for fn in DataItem.field_names() if fn not in ["id", "created_at", "updated_at", "pan_acc", "account_id"]]
-            params = {"pan_id": int(pan_id), "name": pan_acc.name, "columns": cls}
+            # "server_ctime",
+            #                                              "account_id", "panacc", "sized", "synced", "thumb"
+            cls = [fn for fn in DataItem.field_names() if fn not in ["id", "created_at",
+                                                                     "updated_at", "pan_acc",
+                                                                     "account_id", "dlink_updated_at",
+                                                                     "server_ctime", "account_id",
+                                                                     "panacc"]]
+            params = {"pan_id": int(pan_id), "name": pan_acc.name, "columns": cls, "tablename": ""}
+
             self.render('batchupdate.html', **params)
         elif path.endswith("/batchupdatedo"):
             pan_id = self.get_argument("panid", "0")
@@ -211,6 +217,17 @@ class ManageHandler(BaseHandler):
             rs = {"state": 0, "cnt": cnt, "lines_cnt": len(lines), "cname": cname}
             # print("kv:", kv)
             # print("cnt:", cnt, ",lines cnt:", len(lines), "cname:", cname, "pan_id:", pan_id)
+            self.to_write_json(rs)
+        elif path.endswith("/updateitem"):
+            fs_id = self.get_argument("fs_id", "")
+            source = self.get_argument("source", "")
+            cname = self.get_argument("cname")
+            value = self.get_argument("value")
+            _params = {cname: value}
+            rs = mpan_service.update_item_fields(source, fs_id, _params)
+            rs["params"] = _params
+            rs["source"] = source
+            rs["fs_id"] = fs_id
             self.to_write_json(rs)
         else:
             self.to_write_json({})

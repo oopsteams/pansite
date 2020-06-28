@@ -5,11 +5,11 @@ Created by susy at 2020/1/6
 from controller.base_service import BaseService
 from utils import singleton, log, guess_file_type, obfuscate_id
 from dao.community_dao import CommunityDao
-from dao.dao import DataDao
+from dao.mdao import DataDao
 from dao.man_dao import ManDao
 from utils.utils_es import SearchParams, build_query_item_es_body
 from dao.es_dao import es_dao_share, es_dao_local
-from dao.models import DataItem, UserRootCfg, PanAccounts
+from dao.models import DataItem, UserRootCfg, PanAccounts, CommunityDataItem
 from utils.constant import TOP_DIR_FILE_NAME, SHARE_ES_TOP_POS, PRODUCT_TAG, ES_TAG_MAP
 from utils import scale_size, split_filename
 from cfg import MASTER_ACCOUNT_ID
@@ -74,8 +74,9 @@ class MPanService(BaseService):
     def query_file_list(self, parent_item_id):
         # item_list = CommunityDao.query_data_item_by_parent(parent_item_id, True, pan_id, limit=1000)
         params = []
-
-        sp: SearchParams = SearchParams.build_params(0, 1000)
+        offset = 0
+        size = 1000
+        sp: SearchParams = SearchParams.build_params(offset, size)
         # sp.add_must(is_match=False, field="path", value=parent_path)
 
         sp.add_must(is_match=False, field="parent", value=parent_item_id)
@@ -156,7 +157,9 @@ class MPanService(BaseService):
             if a_attr:
                 node_param['a_attr'] = a_attr
             params.append(node_param)
-        return params
+        has_next = offset + size < total
+        meta = {"has_next": has_next, "total": total, "pagesize": size}
+        return params, meta
 
     def query_share_list(self, parent_item_id):
         params = []
@@ -240,6 +243,20 @@ class MPanService(BaseService):
         if doc_id:
             CommunityDao.new_community_visible(doc_id, params['pin'])
             es_dao_share().update_fields(doc_id, **params)
+
+    def update_item_fields(self, source, fs_id, params):
+        rs = {"state": 0}
+        if "local" == source:
+            di: DataItem = DataDao.query_data_item_by_fs_id(fs_id)
+            if di:
+                DataDao.update_data_item(di.id, params)
+        elif "shared" == source:
+            cdi: CommunityDataItem = CommunityDao.get_community_item_by_fs_id(fs_id)
+            if cdi:
+                CommunityDao.update_data_item(cdi.id, params)
+        else:
+            rs["err"] = "not found fs_id:{}".format(fs_id)
+        return rs
 
     def update_shared_sub_dir(self, parent_id, params):
         if parent_id:

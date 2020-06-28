@@ -12,7 +12,7 @@ from datetime import datetime, date
 from hashids import Hashids
 import jwt
 import random
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 from cfg import HASH_ID_MIN_LENGTH, HASH_ID_SALT, JWT_SECRET_KEY
 
 default_tz = pytz.timezone('Asia/Chongqing')
@@ -60,6 +60,10 @@ def url_encode(s):
     return quote(s)
 
 
+def url_decode(s):
+    return unquote(s)
+
+
 def object_to_dict(instance, fields=[], excludes=[]):
     info = {}
 
@@ -86,6 +90,7 @@ def split_filename(filename):
         suffix = filename[__idx+1:]
 
     return name, suffix
+
 
 def compare_dt(dt1, dt2) -> int:
     arrow_dt1 = arrow.get(dt1).replace(tzinfo=default_tz)
@@ -127,6 +132,13 @@ def get_now_datetime(offset=0):
     arrow_now = arrow.now(default_tz)
     if offset:
         arrow_now = arrow_now.shift(seconds=offset)
+    return arrow_now.datetime
+
+
+def get_today_zero_datetime(days=0):
+    arrow_now = arrow.now(default_tz).replace(hour=0, minute=0, second=0, microsecond=0)
+    if days:
+        arrow_now = arrow_now.shift(days=days)
     return arrow_now.datetime
 
 

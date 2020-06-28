@@ -3,18 +3,21 @@
 Created by susy at 2019/12/18
 """
 from controller.base_service import BaseService
-from utils import singleton, log as logger, compare_dt_by_now, get_now_datetime_format, scale_size, split_filename
-from dao.models import CommunityDataItem, DataItem, ShareLogs, ShareFr, ShareApp, AppCfg
+from utils import singleton, log as logger, compare_dt_by_now, get_now_datetime_format, scale_size, split_filename, \
+    obfuscate_id
+from dao.models import Accounts, DataItem, ShareLogs, ShareFr, ShareApp, AppCfg, AuthUser, BASE_FIELDS
 from utils.utils_es import SearchParams, build_query_item_es_body
 from dao.es_dao import es_dao_share, es_dao_local
 from dao.community_dao import CommunityDao
-from dao.dao import DataDao
+from dao.mdao import DataDao
+from dao.auth_dao import AuthDao
 from utils.caches import cache_data, cache_service
 from utils.constant import shared_format, SHARED_FR_MINUTES_CNT, SHARED_FR_HOURS_CNT, SHARED_FR_DAYS_CNT, \
     SHARED_FR_DAYS_ERR, SHARED_FR_HOURS_ERR, SHARED_FR_MINUTES_ERR, MAX_RESULT_WINDOW, SHARED_BAN_ERR, \
     SHARED_NOT_EXISTS_ERR
 from controller.sync_service import sync_pan_service
 from controller.service import pan_service
+from controller.auth_service import auth_service
 import time
 ONE_DAY_SECONDS_TOTAL = 24 * 60 * 60
 
@@ -46,7 +49,7 @@ class OpenService(BaseService):
                 if not sl.link:
                     sync_pan_service.clear_share_log(sl.id)
                     continue
-                if abs(compare_dt_by_now(sl.created_at)) < 24*60*60:
+                if abs(compare_dt_by_now(sl.created_at)) < ONE_DAY_SECONDS_TOTAL:
                     share_log = sl
                     rs = {'state': 0, 'info': shared_format(sl.link, sl.password)}
                     break
@@ -84,13 +87,41 @@ class OpenService(BaseService):
 
         return rs, share_log
 
-    def fetch_shared(self, fs_id):
-        # print('fs_id:', fs_id)
+    @cache_data("check_free_permit_{1}", timeout_seconds=ONE_DAY_SECONDS_TOTAL)
+    def check_free_item_permit(self, fs_id):
         item: DataItem = DataDao.query_data_item_by_fs_id(fs_id)
         if item:
-            if not CommunityDao.local_check_free_by_id(item.id):
-                return {'state': -1, 'err': SHARED_BAN_ERR}, None
-        rs, share_log = self.build_shared_log(item)
+            if not CommunityDao.local_check_free_by_id(item):
+                return {'state': -1, 'err': SHARED_BAN_ERR}
+            else:
+                rs = DataItem.to_dict(item, BASE_FIELDS + DataItem.field_names() -
+                                      ["id", "fs_id", "parent", "account_id", "panacc"])
+                rs['state'] = 0
+                return rs
+        else:
+            return {'state': -1, 'err': SHARED_NOT_EXISTS_ERR}
+
+    def fetch_shared(self, fs_id):
+        # print('fs_id:', fs_id)
+        # item: DataItem = DataDao.query_data_item_by_fs_id(fs_id)
+        # if item:
+        #     if not CommunityDao.local_check_free_by_id(item):
+        #         return {'state': -1, 'err': SHARED_BAN_ERR}
+        item_dict = self.check_free_item_permit(fs_id)
+        if item_dict['state'] == 0:
+            item = DataItem(id=item_dict['id'], fs_id=item_dict['fs_id'], panacc=item_dict['panacc'],
+                            parent=item_dict['parent'], account_id=item_dict['account_id'])
+            rs, share_log = self.build_shared_log(item)
+        else:
+            rs = item_dict
+        return rs
+
+    def fetch_shared_skip_visible(self, fs_id):
+        # print('fs_id:', fs_id)
+        item: DataItem = DataDao.query_data_item_by_fs_id(fs_id)
+        if not item:
+            return {'state': -1, 'err': SHARED_NOT_EXISTS_ERR}
+        rs, _ = self.build_shared_log(item)
         return rs
 
     def fetch_shared_skip_visible(self, fs_id):
@@ -138,7 +169,7 @@ class OpenService(BaseService):
 
         return None
 
-    def search(self, path_tag, tag, keyword, source, page):
+    def search(self, path_tag, tag, keyword, source, pid, page, size=50, lvl_pos=2):
         _app_map_cache = {}
         if not source:
             source = 'shared'
@@ -170,7 +201,7 @@ class OpenService(BaseService):
             new_keyword = keyword
         kw = new_keyword
         # print("kw:", kw)
-        size = 15
+        # size = 50
         offset = int(page) * size
         if offset > MAX_RESULT_WINDOW - size:
             offset = MAX_RESULT_WINDOW - size
@@ -188,7 +219,18 @@ class OpenService(BaseService):
                 _sort_fields = [{"pin": {"order": "desc"}}]
             else:
                 sp.add_must(field='source', value=source)
-                sp.add_must(field='pin', value=1)
+                # sp.add_must(field='pin', value=1)
+                if pid:
+                    sp.add_must(field='parent', value=pid)
+                    _sort_fields = [{"filename": {"order": "asc"}}]
+                else:
+                    # if not path_tag and not kw:
+                    if not path_tag:
+                        if lvl_pos and lvl_pos > 0:
+                            sp.add_must(field='pos', value=lvl_pos)
+                        _sort_fields = [{"parent": {"order": "desc"}}, {"filename": {"order": "asc"}}]
+                    else:
+                        _sort_fields = [{"pos": {"order": "asc"}}, {"filename": {"order": "asc"}}]
                 es_dao_fun = es_dao_share
         # if tag and "local" != source:
         #     sp.add_must(field='all', value=tag)
@@ -197,8 +239,10 @@ class OpenService(BaseService):
             sp.add_must(False, field='query_string', value="%s" % tag)
         if path_tag:
             sp.add_must(field='path', value="%s" % path_tag)
-
-        es_body = build_query_item_es_body(sp, sort_fields=_sort_fields)
+        if kw:
+            es_body = build_query_item_es_body(sp)
+        else:
+            es_body = build_query_item_es_body(sp, sort_fields=_sort_fields)
         logger.info("es_body:{}".format(es_body))
         es_result = es_dao_fun().es_search_exec(es_body)
         total = 0
@@ -257,7 +301,18 @@ class OpenService(BaseService):
         return tag_list
 
     def guest_user(self):
-        return CommunityDao.default_guest_account()
+        guest: Accounts = CommunityDao.default_guest_account()
+        if guest:
+            if not guest.fuzzy_id or not guest.login_token:
+                fuzzy_id = obfuscate_id(guest.id)
+                guest.fuzzy_id = fuzzy_id
+                login_token, _ = auth_service.build_user_payload(guest)
+                guest.login_token = login_token
+                DataDao.update_account_by_pk(guest.id, {"fuzzy_id": fuzzy_id, "login_token": login_token})
+            au: AuthUser = AuthDao.query_account_auth(guest.id)
+            guest.auth_user = au
+
+        return guest
 
     def load_tags(self):
         tag_list = cache_service.get('sys_tags')

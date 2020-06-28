@@ -26,7 +26,9 @@ class CacheService:
             if type(val) is dict and type(_val) is dict:
                 for k in val:
                     _val[k] = val[k]
-            return False
+            else:
+                self.SYNC_PAN_DIR_CACHES[key] = val
+            return True
         else:
             self.SYNC_PAN_DIR_CACHES[key] = val
             return True
@@ -55,21 +57,45 @@ def _clear_cache():
     if get_now_ts() - LAST_CLEAR_CACHE_CONST['tm'] > LAST_CLEAR_CACHE_CONST['timeout']:
         _l = len(DATA_CACHES_TIMEOUT_KEYS_INDEX)
         idx = 0
+        find_target = False
         for idx in range(_l, 0, -1):
             data_obj = DATA_CACHES_TIMEOUT_KEYS_INDEX[idx-1]
             tm = data_obj.get('tm', 0)
             time_out = data_obj.get('to', 0)
             if time_out and get_now_ts() - tm > time_out:
-                print("find timeout idx:", idx)
+                log.warn("find timeout idx:{}".format(idx))
+                find_target = True
                 break
-        if idx > 0:
-            print("clear cache by idx:", idx)
+        if find_target and idx > 0:
+            log.warn("clear cache by idx:{}".format(idx))
             for i in range(idx, 0, -1):
                 d = DATA_CACHES_TIMEOUT_KEYS_INDEX.pop(i-1)
                 k = d['key']
                 _get_from_cache(k)
 
         LAST_CLEAR_CACHE_CONST['tm'] = get_now_ts()
+
+
+def clear_cache(key):
+    idx = 0
+    _l = len(DATA_CACHES_TIMEOUT_KEYS_INDEX)
+    find_target = False
+    for idx in range(_l, 0, -1):
+        data_obj = DATA_CACHES_TIMEOUT_KEYS_INDEX[idx - 1]
+        _key = data_obj.get('key', None)
+        if _key and _key == key:
+            log.debug("clear_cache find target keys_index:{}, index:{}".format(data_obj, idx-1))
+            find_target = True
+            break
+    if find_target and idx > 0:
+        log.warn("clear cache by find [{}][index:{}], will remove it!".format(key, idx-1))
+        keys_index = DATA_CACHES_TIMEOUT_KEYS_INDEX.pop(idx - 1)
+        log.debug("keys_index:{}".format(keys_index))
+        DATA_CACHES.pop(key)
+    if not find_target:
+        if key in DATA_CACHES:
+            log.warn("clear cache, timeout is 0, [{}][index:{}], will remove it!".format(key, idx - 1))
+            DATA_CACHES.pop(key)
 
 
 def _get_from_cache(key):
@@ -79,10 +105,11 @@ def _get_from_cache(key):
     tm = data_obj.get('tm', 0)
     time_out = data_obj.get('to', 0)
     if time_out and get_now_ts() - tm > time_out:
-        DATA_CACHES.pop(key)
+        # DATA_CACHES.pop(key)
+        clear_cache(key)
         return None
     else:
-        print("_get_from_cache hit ok! key:", key)
+        log.info("_get_from_cache hit ok! [{}]".format(key))
         return data_obj.get('data', None)
 
 
@@ -91,6 +118,7 @@ def get_from_cache(key):
 
 
 def _put_to_cache(key, val, timeout_seconds=0):
+
     data_obj = {'data': val, 'tm': get_now_ts(), 'to': timeout_seconds, 'key': key}
     print("_put_to_cache key:", key)
     DATA_CACHES[key] = data_obj
@@ -101,20 +129,8 @@ def _put_to_cache(key, val, timeout_seconds=0):
     _clear_cache()
 
 
-def clear_cache(key):
-    idx = 0
-    _l = len(DATA_CACHES_TIMEOUT_KEYS_INDEX)
-    for idx in range(_l, 0, -1):
-        data_obj = DATA_CACHES_TIMEOUT_KEYS_INDEX[idx - 1]
-        _key = data_obj.get('key', '')
-        if _key == key:
-            break
-    if idx > 0:
-        DATA_CACHES_TIMEOUT_KEYS_INDEX.pop(idx - 1)
-        DATA_CACHES.pop(key)
+def cache_data(cache_key, timeout_seconds=None, verify_key=None):
 
-
-def cache_data(cache_key, timeout_seconds=0, verify_key=None):
     def cache_decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -138,7 +154,15 @@ def cache_data(cache_key, timeout_seconds=0, verify_key=None):
             result = func(*args, **kwargs)
             if not result:
                 return result
-            _put_to_cache(key, result, timeout_seconds)
+            if callable(timeout_seconds):
+                to = timeout_seconds(*args, result)
+            elif isinstance(timeout_seconds, str):
+                to = int(timeout_seconds)
+            elif timeout_seconds:
+                to = timeout_seconds
+            else:
+                to = 0
+            _put_to_cache(key, result, to)
             return result
         return wrapper
     return cache_decorator

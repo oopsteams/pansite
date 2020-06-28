@@ -7,7 +7,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(), ".")))
 
 from dao.models import db, DataItem, Accounts, CommunityDataItem, CommunityVisible
-from dao.dao import DataDao
+from dao.mdao import DataDao
 from dao.community_dao import CommunityDao
 from dao.es_dao import es_dao_local, EsDao, es_dao_test, es_dao_share
 from utils import utils_es

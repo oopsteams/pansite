@@ -6,6 +6,16 @@ import arrow
 from utils import log as logger
 
 
+def build_query_string(q):
+    if q:
+        idx = q.find(":")
+        if idx >= 0:
+            return {"query_string": {"query": q}}
+        else:
+            return {"query_string": {"default_field": "all", "query": q}}
+    pass
+
+
 class ShouldParams(object):
 
     def __init__(self, is_match=True, field=None, value=None):
@@ -40,7 +50,7 @@ class ShouldParams(object):
         else:
             if self.field and self.value:
                 if "query_string" == self.field:
-                    should_body.append({"query_string": {"default_field": "all", "query": self.value}})
+                    should_body.append(build_query_string(self.value))
                 else:
                     should_body.append({"term": {self.field: self.value}})
             else:
@@ -66,7 +76,7 @@ class MustParams(ShouldParams):
             print("MustParams to_es_params field:", self.field, self.value)
             if self.field and self.value is not None:
                 if "query_string" == self.field:
-                    must_body.append({"query_string": {"default_field": "all", "query": self.value}})
+                    must_body.append(build_query_string(self.value))
                 else:
                     must_body.append({"term": {self.field: self.value}})
             else:
@@ -91,7 +101,7 @@ class MustNotParams(ShouldParams):
         else:
             if self.field and self.value:
                 if "query_string" == self.field:
-                    must_not_body.append({"query_string": {"default_field": "all", "query": self.value}})
+                    must_not_body.append(build_query_string(self.value))
                 else:
                     must_not_body.append({"term": {self.field: self.value}})
             else:

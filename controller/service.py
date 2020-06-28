@@ -3,7 +3,7 @@
 Created by susy at 2019/11/2
 """
 import requests
-from dao.dao import DataDao
+from dao.mdao import DataDao
 from dao.client_data_dao import ClientDataDao
 from dao.models import Accounts, PanAccounts, ShareLogs, DataItem, TransferLogs, CommunityDataItem, ClientDataItem, \
     AccountExt
@@ -22,6 +22,7 @@ PAN_ACCESS_TOKEN_TIMEOUT = constant.PAN_ACCESS_TOKEN_TIMEOUT
 DLINK_TIMEOUT = constant.DLINK_TIMEOUT
 # PAN_ACC_CACHE_TIMEOUT = 24 * 60 * 60
 ACCOUNT_PAN_ACC_CACHE_CNT = 5
+MAX_RESULT_WINDOW = 10000
 
 
 @singleton
@@ -386,30 +387,37 @@ class PanService(BaseService):
                                     "isdir": _s["_source"]["isdir"], "source": "shared"}, "children": True, "icon": "folder"})
         return params
 
-    def query_file_list(self, parent_item_id):
-        size = 200
-        item_list = DataDao.query_data_item_by_parent(parent_item_id, True, limit=size)
-        params = []
-        for item in item_list:
-            _item_path = item.path
-            txt = item.filename
-            if item.aliasname:
-                txt = item.aliasname
-            item_fuzzy_id = obfuscate_id(item.id)
-            format_size = scale_size(item.size)
-            # print("id:", item.id, ",item_fuzzy_id:", item_fuzzy_id)
-            params.append({"id": item_fuzzy_id, "text": txt, "data": {"path": _item_path, "_id": item_fuzzy_id,
-                                                                      "format_size": format_size, "fs_id": item.fs_id,
-                                                                      "category": item.category, "source": "local",
-                                                                      "isdir": item.isdir},
-                           "children": True, "icon": "folder"})
-        # print("dirs total:", len(params))
+    def query_file_list(self, parent_item_id, page, size):
+        offset = int(page) * size
+        if offset > MAX_RESULT_WINDOW - size:
+            offset = MAX_RESULT_WINDOW - size
 
-        sp: SearchParams = SearchParams.build_params(0, size)
+        parent_item_fuzzy_id = obfuscate_id(parent_item_id)
+
+        # item_list = DataDao.query_data_item_by_parent(parent_item_id, True, limit=1000)
+        # params = []
+        # for item in item_list:
+        #     _item_path = item.path
+        #     txt = item.filename
+        #     if item.aliasname:
+        #         txt = item.aliasname
+        #     item_fuzzy_id = obfuscate_id(item.id)
+        #     format_size = scale_size(item.size)
+        #     # print("id:", item.id, ",item_fuzzy_id:", item_fuzzy_id)
+        #     params.append({"id": item_fuzzy_id, "text": txt, "data": {"path": _item_path, "_id": item_fuzzy_id,
+        #                                                               "format_size": format_size, "fs_id": item.fs_id,
+        #                                                               "category": item.category, "source": "local",
+        #                                                               "isdir": item.isdir},
+        #                    "children": True, "icon": "folder"})
+        # print("dirs total:", len(params))
+        params = []
+        # sp: SearchParams = SearchParams.build_params(0, 1000)
+        sp: SearchParams = SearchParams.build_params(offset, size)
         # sp.add_must(is_match=False, field="path", value=parent_path)
         sp.add_must(is_match=False, field="parent", value=parent_item_id)
-        sp.add_must(is_match=False, field="isdir", value=0)
-        es_body = build_query_item_es_body(sp)
+        # sp.add_must(is_match=False, field="isdir", value=0)
+        _sort_fields = [{"isdir": {"order": "desc"}}, {"filename": {"order": "asc"}}]
+        es_body = build_query_item_es_body(sp, sort_fields=_sort_fields)
         # logger.info("es_body:{}".format(es_body))
         es_result = es_dao_local().es_search_exec(es_body)
         hits_rs = es_result["hits"]
@@ -435,17 +443,23 @@ class PanService(BaseService):
                 # if __idx > 0:
                 #     fn_name = fn_name[0:__idx]
                 txt = "[{}]{}".format(fn_name, aliasname)
-            f_type = guess_file_type(txt)
-            if f_type:
-                icon_val = "file file-%s" % f_type
+            if _s["_source"]["isdir"] == 1:
+                icon_val = "folder"
+            else:
+                f_type = guess_file_type(txt)
+                if f_type:
+                    icon_val = "file file-%s" % f_type
             item_fuzzy_id = obfuscate_id(_s["_source"]["id"])
-            params.append({"id": obfuscate_id(_s["_source"]["id"]), "text": txt,
+            params.append({"id": item_fuzzy_id, "text": txt,
                            "data": {"path": _s["_source"]["path"], "isdir": _s["_source"]["isdir"], "source": "local",
                                     "media_type": media_type, "format_size": format_size, "category": category,
-                                    "fs_id": _s["_source"]["fs_id"], "_id": item_fuzzy_id
+                                    "fs_id": _s["_source"]["fs_id"], "_id": item_fuzzy_id,
+                                    "parent_id": parent_item_fuzzy_id, "price": self.get_price(_s["_source"]["fs_id"])
                                     },
                            "children": False, "icon": icon_val})
-        return params
+        has_next = offset + size < total
+        meta = {"has_next": has_next, "total": total, "pagesize": size}
+        return params, meta
 
     # 分享文件
     def share_folder(self, fs_id):
