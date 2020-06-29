@@ -5,13 +5,13 @@ Created by susy at 2019/10/17
 import logging
 import os
 import sys
-TAG = "goods"
 env = os.getenv('env', None)
 if not env and len(sys.argv) > 1:
     env = sys.argv[-1]
 if not env:
     env = 'PROD'
-
+TAG = env
+print("TAG:", TAG)
 redis_config = {
     # "host":"172.31.140.253",
     "host": "127.0.0.1",
