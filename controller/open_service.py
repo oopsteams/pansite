@@ -357,6 +357,7 @@ class OpenService(BaseService):
                 dest_dir = os.path.join(base_dir, EPUB["dest"])
             else:
                 dest_dir = EPUB["dest"]
+            print("unzip epub in...")
             if books:
                 sb: StudyBook = None
                 need_up_unziped = []
@@ -393,6 +394,7 @@ class OpenService(BaseService):
                             need_up_unziped.append(sb.code)
 
                 if need_up_unziped:
+                    print("will batch_update_books_by_codes:", need_up_unziped)
                     StudyDao.batch_update_books_by_codes({"pin": 2, "unziped": 1}, need_up_unziped)
 
             pass
