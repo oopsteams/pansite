@@ -3,12 +3,11 @@
 Created by susy at 2019/10/17
 """
 import os
-
 from apscheduler.schedulers.tornado import TornadoScheduler
 from tornado.ioloop import IOLoop
 from tornado.web import Application, StaticFileHandler
 from tornado.httpserver import HTTPServer
-from cfg import service, TAG
+
 from controller.action import *
 from controller.open_action import *
 from controller.pan_manage_action import *
@@ -23,6 +22,11 @@ from controller.wx.wxpush import WXAppPush
 from controller.wx.wxkf import WXAppKf
 from controller.wx.wxupload import WXAppUpload
 from utils import log as logger
+if len(sys.argv) > 1:
+    env = sys.argv[1]
+    os.putenv('env', env)
+    os.environ['env'] = env
+
 scheduler = TornadoScheduler()
 scheduler.start()
 
@@ -59,7 +63,7 @@ def scheduler_clear_all_expired_share_log():
 
 def update_access_token():
     try:
-        if TAG == 'dev':
+        if env == 'dev':
             from dao.models import PanAccounts
             # sync_pan_service.clear_all_expired_share_log()
             pan_acc_list = PanAccounts.select().where(PanAccounts.user_id == 1)
@@ -123,7 +127,7 @@ if __name__ == "__main__":
         (r"/(.*\.txt)", StaticFileHandler, dict(url=settings['source'])),
         # (r"/(apple-touch-icon\.png)",StaticFileHandler,dict(path=settings['static_path'])),
     ], **settings)
-
+    from cfg import service
     port = service['port']
 
     # server = HTTPServer(application, ssl_options=ssl_ctx)
