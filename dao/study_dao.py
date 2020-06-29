@@ -25,6 +25,11 @@ class StudyDao(object):
 
     @classmethod
     @query_wrap_db
+    def check_out_study_books(cls, codes):
+        return StudyBook.select().where(StudyBook.code.in_(codes))
+
+    @classmethod
+    @query_wrap_db
     def query_study_books_count_by_pin(cls, pin, unziped):
         model_rs = StudyBook.select(fn.count(StudyBook.id).alias('count')).where(StudyBook.pin == pin, StudyBook.unziped == unziped)
         if model_rs:

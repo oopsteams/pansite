@@ -360,6 +360,8 @@ class OpenService(BaseService):
             epub_new_books = []
             au: AuthUser = guest.auth_user
             print("time:", time.time())
+            code_map = {}
+            code_list = []
             for root, sub_dirs, files in os.walk(epub_dir):
                 for special_file in files:
                     if special_file.endswith(".epub"):
@@ -369,24 +371,62 @@ class OpenService(BaseService):
                         if len(gen_code_nm) > 25:
                             gen_code_nm = gen_code_nm[-25:]
                         code = "".join(lazy_pinyin(gen_code_nm, style=Style.TONE3))
-                        sb = StudyDao.check_out_study_book(code)
-                        # print("sb:", sb)
-                        if sb and sb.name == nm:
-                            continue
-                        dog = 100
-                        while sb and not (sb.name == nm) and dog > 0:
-                            dog = dog - 1
-                            code = "{}_{}".format(code, random.randint(1, 10))
-                            sb = StudyDao.check_out_study_book(code)
-
-                        epub_new_books.append(
-                            {"code": code, "name": nm, "price": default_price, "pin": 0, "account_id": guest.id,
-                             "ref_id": au.ref_id, "unziped": 0})
-
-                        print("file:", special_file, ",nm:", nm, ", dog:", dog)
+                        # sb = StudyDao.check_out_study_book(code)
+                        # if sb and sb.name == nm:
+                        #     continue
+                        # dog = 100
+                        # while sb and not (sb.name == nm) and dog > 0:
+                        #     dog = dog - 1
+                        #     code = "{}_{}".format(code, random.randint(1, 10))
+                        #     sb = StudyDao.check_out_study_book(code)
+                        code_map[code] = {"code": code, "name": nm, "price": default_price, "pin": 0, "account_id": guest.id,
+                             "ref_id": au.ref_id, "unziped": 0}
+                        code_list.append(code)
+                        # epub_new_books.append(
+                        #     {"code": code, "name": nm, "price": default_price, "pin": 0, "account_id": guest.id,
+                        #      "ref_id": au.ref_id, "unziped": 0})
+                        #
+                        # print("file:", special_file, ",nm:", nm, ", dog:", dog)
             print("time:", time.time())
             if epub_new_books:
-                StudyDao.batch_insert_books(epub_new_books)
+                tl = len(code_list)
+                size = 50
+                page = 0
+                offset = page * size
+                while offset < tl:
+                    sub_codes = code_list[offset: offset + size]
+                    sb_list = StudyDao.check_out_study_books(sub_codes)
+                    sub_new_books = []
+                    db_sb_list_map = {}
+                    if sb_list:
+                        for sb in sb_list:
+                            db_sb_list_map[sb.code] = sb
+                    for code in sub_codes:
+                        sb_dict = code_map[code]
+                        sb = None
+                        if code in db_sb_list_map:
+                            sb = db_sb_list_map[code]
+                            nm = sb_dict['name']
+                            if sb.name == nm:
+                                continue
+                            else:
+                                dog = 10
+                                code = "{}_{}".format(code, random.randint(1, 10))
+                                _sb = StudyDao.check_out_study_book(code)
+                                while _sb and not (_sb.name == nm) and dog > 0:
+                                    dog = dog - 1
+                                    code = "{}_{}".format(code, random.randint(1, 10))
+                                    _sb = StudyDao.check_out_study_book(code)
+                                if not _sb:
+                                    sb_dict["code"] = code
+                                    sub_new_books.append(sb_dict)
+                        else:
+                            sub_new_books.append(sb_dict)
+                    if sub_new_books:
+                        StudyDao.batch_insert_books(sub_new_books)
+                    page = page + 1
+                    offset = page * size
+            # check_ziped_books
             StudyDao.check_ziped_books(0, 0, callback=unzip_epub)
             # print("epub_new_books:", epub_new_books)
             return _result
