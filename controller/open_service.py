@@ -378,74 +378,75 @@ class OpenService(BaseService):
                     break
         return cover_file_path
 
+    def unzip_epub(self, ctx, books: list):
+        import os
+        epub_dir = EPUB["dir"]
+        base_dir = ctx["basepath"]
+        if base_dir:
+            dest_dir = os.path.join(base_dir, EPUB["dest"])
+        else:
+            dest_dir = EPUB["dest"]
+        print("unzip epub in...")
+        if books:
+            sb: StudyBook = None
+            need_up_unziped = []
+            for sb in books:
+                file_name = "{}{}".format(sb.name, ".epub")
+                file_path = os.path.join(epub_dir, file_name)
+
+                if os.path.exists(file_path):
+                    # print("exist file_path:", file_path)
+                    current_dest_dir = os.path.join(dest_dir, sb.code)
+                    if not os.path.exists(current_dest_dir):
+                        os.makedirs(current_dest_dir)
+
+                        try:
+                            self.unzip_single(file_path, current_dest_dir)
+                            ops_dir = os.path.join(current_dest_dir, "OPS/")
+                            if not os.path.exists(ops_dir):
+                                ops_dir = os.path.join(current_dest_dir, "OEBPS/")
+                            if os.path.exists(ops_dir):
+
+                                cover_dir = os.path.join(ops_dir, "images/")
+                                cover_file_path = self.find_file(["cover.j", "cover.png"], cover_dir)
+                                if not cover_file_path:
+                                    cover_file_path = self.find_file(["cover.j", "cover.png"], ops_dir)
+                                    if not cover_file_path:
+                                        cover_file_path = self.find_file(["cover.j", "cover.png"], current_dest_dir)
+                                opf_file_path = self.find_file_by_end(".opf", ops_dir)
+                                if not opf_file_path:
+                                    opf_file_path = self.find_file_by_end(".opf", current_dest_dir)
+                                params = {"pin": 1, "unziped": 1}
+                                if cover_file_path:
+                                    params["cover"] = cover_file_path
+                                if opf_file_path:
+                                    params["opf"] = opf_file_path
+                                print("unzip ok, name:", sb.name)
+                                StudyDao.update_books_by_id(params, sb.id)
+                                # del file
+                                # os.remove(file_path)
+                            else:
+                                StudyDao.update_books_by_id({"pin": 3}, sb.id)
+                        except Exception:
+                            need_up_unziped.append(sb.code)
+                            # os.remove(file_path)
+                            try:
+                                if os.path.exists(current_dest_dir):
+                                    os.rmdir(current_dest_dir)
+                            except Exception:
+                                logger.error("remove err epud extract dir [{}] failed!".format(current_dest_dir),
+                                             exec_info=True)
+
+            if need_up_unziped:
+                print("will batch_update_books_by_codes:", need_up_unziped)
+                StudyDao.batch_update_books_by_codes({"pin": 2, "unziped": 1}, need_up_unziped)
+
     def scan_epub(self, ctx, guest: Accounts):
         def final_do():
             pass
 
         def unzip_epub(books: list):
-            import os
-            epub_dir = EPUB["dir"]
-            base_dir = ctx["basepath"]
-            if base_dir:
-                dest_dir = os.path.join(base_dir, EPUB["dest"])
-            else:
-                dest_dir = EPUB["dest"]
-            print("unzip epub in...")
-            if books:
-                sb: StudyBook = None
-                need_up_unziped = []
-                for sb in books:
-                    file_name = "{}{}".format(sb.name, ".epub")
-                    file_path = os.path.join(epub_dir, file_name)
-
-                    if os.path.exists(file_path):
-                        print("exist file_path:", file_path)
-                        current_dest_dir = os.path.join(dest_dir, sb.code)
-                        if not os.path.exists(current_dest_dir):
-                            os.makedirs(current_dest_dir)
-
-                            try:
-                                self.unzip_single(file_path, current_dest_dir)
-                                ops_dir = os.path.join(current_dest_dir, "OPS/")
-                                if not os.path.exists(ops_dir):
-                                    ops_dir = os.path.join(current_dest_dir, "OEBPS/")
-                                if os.path.exists(ops_dir):
-
-                                    cover_dir = os.path.join(ops_dir, "images/")
-                                    cover_file_path = self.find_file(["cover.j", "cover.png"], cover_dir)
-                                    if not cover_file_path:
-                                        cover_file_path = self.find_file(["cover.j", "cover.png"], ops_dir)
-                                        if not cover_file_path:
-                                            cover_file_path = self.find_file(["cover.j", "cover.png"], current_dest_dir)
-                                    opf_file_path = self.find_file_by_end(".opf", ops_dir)
-                                    if not opf_file_path:
-                                        opf_file_path = self.find_file_by_end(".opf", current_dest_dir)
-                                    params = {"pin": 1, "unziped": 1}
-                                    if cover_file_path:
-                                        params["cover"] = cover_file_path
-                                    if opf_file_path:
-                                        params["opf"] = opf_file_path
-                                    print("unzip ok, name:", sb.name)
-                                    StudyDao.update_books_by_id(params, sb.id)
-                                    # del file
-                                    os.remove(file_path)
-                                else:
-                                    StudyDao.update_books_by_id({"pin": 3}, sb.id)
-                            except Exception:
-                                need_up_unziped.append(sb.code)
-                                os.remove(file_path)
-                                try:
-                                    if os.path.exists(current_dest_dir):
-                                        os.rmdir(current_dest_dir)
-                                except Exception:
-                                    logger.error("remove err epud extract dir [{}] failed!".format(current_dest_dir),
-                                                 exec_info=True)
-
-                if need_up_unziped:
-                    print("will batch_update_books_by_codes:", need_up_unziped)
-                    StudyDao.batch_update_books_by_codes({"pin": 2, "unziped": 1}, need_up_unziped)
-
-            pass
+            self.unzip_epub(ctx, books)
 
         def to_do(key, rs_key):
             import os
