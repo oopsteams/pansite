@@ -424,6 +424,7 @@ class OpenService(BaseService):
                             os.remove(file_path)
                         except Exception:
                             need_up_unziped.append(sb.code)
+                            os.remove(file_path)
                             try:
                                 if os.path.exists(current_dest_dir):
                                     os.rmdir(current_dest_dir)
