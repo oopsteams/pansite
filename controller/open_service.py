@@ -365,8 +365,10 @@ class OpenService(BaseService):
                     if os.path.exists(file_path):
                         print("exist file_path:", file_path)
                         current_dest_dir = os.path.join(dest_dir, sb.code)
+                        if not os.path.exists(current_dest_dir):
+                            os.makedirs(current_dest_dir)
                         try:
-                            self.unzip_single(file_path, dest_dir)
+                            self.unzip_single(file_path, current_dest_dir)
                             cover_dir = os.path.join(current_dest_dir, "OPS/images/")
                             cover_file_path = None
                             if os.path.exists(cover_dir):
@@ -382,12 +384,12 @@ class OpenService(BaseService):
                             params = {"pin": 1, "unziped": 1}
                             if cover_file_path:
                                 params["cover"] = cover_file_path
-                            StudyDao.batch_update_books_by_id(params, sb.id)
+                            StudyDao.update_books_by_id(params, sb.id)
                             # del file
                             # os.remove(file_path)
                         except Exception:
                             need_up_unziped.append(sb.code)
-                            pass
+
                 if need_up_unziped:
                     StudyDao.batch_update_books_by_codes({"pin": 2, "unziped": 1}, need_up_unziped)
 
