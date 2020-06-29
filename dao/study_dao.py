@@ -30,8 +30,9 @@ class StudyDao(object):
         if model_rs:
             print("query_study_books_count_by_pin:", model_rs)
             model_dict = model_rs.dicts()
-            print("model_dict:", model_dict)
+
             if model_dict:
+                print("model_dict item:", model_dict[0])
                 v = model_dict[0].get('count')
                 if v:
                     return v
