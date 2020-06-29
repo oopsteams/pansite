@@ -387,6 +387,7 @@ class OpenService(BaseService):
                             params = {"pin": 1, "unziped": 1}
                             if cover_file_path:
                                 params["cover"] = cover_file_path
+                            print("unzip ok, name:", sb.name)
                             StudyDao.update_books_by_id(params, sb.id)
                             # del file
                             # os.remove(file_path)
