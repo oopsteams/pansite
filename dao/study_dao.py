@@ -20,4 +20,8 @@ class StudyDao(object):
     @classmethod
     @query_wrap_db
     def check_out_study_book(cls, code):
-        return StudyBook.select().where(StudyBook.code == code).first()
+        ms = StudyBook.select().where(StudyBook.code == code)
+        print("check_out_study_book ms:", ms)
+        if ms:
+            return ms[0]
+        return None
