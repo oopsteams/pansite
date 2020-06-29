@@ -434,8 +434,7 @@ class OpenService(BaseService):
                                 if os.path.exists(current_dest_dir):
                                     os.rmdir(current_dest_dir)
                             except Exception:
-                                logger.error("remove err epud extract dir [{}] failed!".format(current_dest_dir),
-                                             exec_info=True)
+                                logger.error("remove err epud extract dir [{}] failed!".format(current_dest_dir))
 
             if need_up_unziped:
                 print("will batch_update_books_by_codes:", need_up_unziped)
