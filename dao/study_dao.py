@@ -43,25 +43,6 @@ class StudyDao(object):
                     return v
         return 0
 
-    # update
-    @classmethod
-    def batch_update_books_by_codes(cls, params, codes):
-        _params = {p: params[p] for p in params if p in StudyBook.field_names()}
-        with db:
-            StudyBook.update(**_params).where(StudyBook.code.in_(codes))
-
-    @classmethod
-    def update_books_by_id(cls, params, pk_id):
-        _params = {p: params[p] for p in params if p in StudyBook.field_names()}
-        with db:
-            StudyBook.update(**_params).where(StudyBook.id == pk_id)
-
-    # insert datas
-    @classmethod
-    def batch_insert_books(cls, book_list):
-        with db:
-            StudyBook.insert_many(book_list).execute()
-
     @classmethod
     @query_wrap_db
     def check_ziped_books(cls, pin, unziped, size=10, callback=None):
@@ -71,9 +52,31 @@ class StudyDao(object):
             page = 0
             offset = page * size
             while offset < total:
-                book_list = StudyBook.select().where(StudyBook.pin == pin, StudyBook.unziped == unziped).offset(offset).limit(size)
+                book_list = StudyBook.select().where(StudyBook.pin == pin, StudyBook.unziped == unziped).offset(
+                    offset).limit(size)
                 if callback:
                     callback(book_list)
                 page = page + 1
                 offset = page * size
+
+    # update
+    @classmethod
+    def batch_update_books_by_codes(cls, params, codes):
+        _params = {p: params[p] for p in params if p in StudyBook.field_names()}
+        with db:
+            StudyBook.update(**_params).where(StudyBook.code.in_(codes)).execute()
+
+    @classmethod
+    def update_books_by_id(cls, params, pk_id):
+        _params = {p: params[p] for p in params if p in StudyBook.field_names()}
+        with db:
+            StudyBook.update(**_params).where(StudyBook.id == pk_id).execute()
+
+    # insert datas
+    @classmethod
+    def batch_insert_books(cls, book_list):
+        with db:
+            StudyBook.insert_many(book_list).execute()
+
+
 
