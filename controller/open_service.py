@@ -352,12 +352,14 @@ class OpenService(BaseService):
         def to_do(key, rs_key):
             import os
             import random
+            import time
             from pypinyin import lazy_pinyin, Style
             _result = {'state': 0}
             default_price = 2
             epub_dir = EPUB["dir"]
             epub_new_books = []
             au: AuthUser = guest.auth_user
+            print("time:", time.time())
             for root, sub_dirs, files in os.walk(epub_dir):
                 for special_file in files:
                     if special_file.endswith(".epub"):
@@ -381,7 +383,8 @@ class OpenService(BaseService):
                             {"code": code, "name": nm, "price": default_price, "pin": 0, "account_id": guest.id,
                              "ref_id": au.ref_id, "unziped": 0})
 
-                        # print("file:", special_file, ",nm:", nm)
+                        print("file:", special_file, ",nm:", nm, ", dog:", dog)
+            print("time:", time.time())
             if epub_new_books:
                 StudyDao.batch_insert_books(epub_new_books)
             StudyDao.check_ziped_books(0, 0, callback=unzip_epub)
