@@ -348,7 +348,7 @@ class OpenService(BaseService):
                             gen_code_nm = gen_code_nm[-25:]
                         code = "".join(lazy_pinyin(gen_code_nm, style=Style.TONE3))
                         sb = StudyDao.check_out_study_book(code)
-                        print("sb:", sb)
+                        # print("sb:", sb)
                         if sb and sb.name == nm:
                             continue
                         dog = 100
@@ -359,11 +359,12 @@ class OpenService(BaseService):
 
                         epub_new_books.append({"code": code, "name": nm, "price": default_price, "pin": 0, "account_id": guest.id, "ref_id": au.ref_id, "unziped": 0})
 
-                        print("file:", special_file, ",nm:", nm)
-
-            print("epub_new_books:", epub_new_books)
-            pass
+                        # print("file:", special_file, ",nm:", nm)
+            if epub_new_books:
+                StudyDao.batch_insert_books(epub_new_books)
+            # print("epub_new_books:", epub_new_books)
         to_do()
+
         pass
 
 

@@ -20,8 +20,9 @@ class StudyDao(object):
     @classmethod
     @query_wrap_db
     def check_out_study_book(cls, code):
-        ms = StudyBook.select().where(StudyBook.code == code)
-        print("check_out_study_book ms:", ms)
-        if ms:
-            return ms[0]
-        return None
+        return StudyBook.select().where(StudyBook.code == code).first()
+
+    @classmethod
+    def batch_insert_books(cls, book_list):
+        with db:
+            StudyBook.insert_many(book_list).execute()
