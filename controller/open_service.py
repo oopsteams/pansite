@@ -22,6 +22,7 @@ from controller.service import pan_service
 from controller.auth_service import auth_service
 from cfg import EPUB
 import time
+import zipfile
 
 ONE_DAY_SECONDS_TOTAL = 24 * 60 * 60
 
@@ -331,6 +332,16 @@ class OpenService(BaseService):
                     rs.append(cfg)
         return rs
 
+    def unzip_single(self, src_file, dest_dir):
+
+        zf = zipfile.ZipFile(src_file)
+        try:
+            zf.extractall(path=dest_dir)
+        except RuntimeError as e:
+            raise e
+        finally:
+            zf.close()
+
     def scan_epub(self, ctx, guest: Accounts):
         def final_do():
             pass
@@ -338,15 +349,45 @@ class OpenService(BaseService):
         def unzip_epub(books: list):
             import os
             epub_dir = EPUB["dir"]
-
+            base_dir = ctx["base_dir"]
+            if base_dir:
+                dest_dir = os.path.join(base_dir, EPUB["dest"])
+            else:
+                dest_dir = EPUB["dest"]
             if books:
                 sb: StudyBook = None
+                need_up_unziped = []
                 for sb in books:
                     file_name = "{}{}".format(sb.name, ".epub")
-                    file_path = "{}{}".format(epub_dir, file_name)
+                    file_path = os.path.join(epub_dir, file_name)
+
                     if os.path.exists(file_path):
                         print("exist file_path:", file_path)
-                    pass
+                        current_dest_dir = os.path.join(dest_dir, sb.code)
+                        try:
+                            self.unzip_single(file_path, dest_dir)
+                            cover_dir = os.path.join(current_dest_dir, "OPS/images/")
+                            cover_file_path = None
+                            if os.path.exists(cover_dir):
+                                find = False
+                                for root, sub_dirs, files in os.walk(cover_dir):
+                                    for special_file in files:
+                                        if special_file.startswith("cover."):
+                                            cover_file_path = os.path.join(cover_dir, special_file)
+                                            find = True
+                                            break
+                                    if find:
+                                        break
+                            params = {"pin": 1, "unziped": 1}
+                            if cover_file_path:
+                                params["cover"] = cover_file_path
+                            StudyDao.batch_update_books_by_id(params, sb.id)
+                        except RuntimeError:
+                            need_up_unziped.append(sb.code)
+                            pass
+                if need_up_unziped:
+                    StudyDao.batch_update_books_by_codes({"pin": 2, "unziped": 1}, need_up_unziped)
+
             pass
 
         def to_do(key, rs_key):
@@ -371,7 +412,7 @@ class OpenService(BaseService):
                             gen_code_nm = gen_code_nm[-25:]
                         code = "".join(lazy_pinyin(gen_code_nm, style=Style.TONE3))
                         code_map[code] = {"code": code, "name": nm, "price": default_price, "pin": 0,
-                                          "account_id": guest.id, "ref_id": au.ref_id, "unziped": 0}
+                                          "account_id": guest.id, "ref_id": au.ref_id, "unziped": 0, "cover": 0}
                         code_list.append(code)
 
             if code_list:

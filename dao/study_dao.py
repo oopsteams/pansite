@@ -43,7 +43,20 @@ class StudyDao(object):
                     return v
         return 0
 
-    # inert datas
+    # update
+    @classmethod
+    def batch_update_books_by_codes(cls, params, codes):
+        _params = {p: params[p] for p in params if p in StudyBook.field_names()}
+        with db:
+            StudyBook.update(**_params).where(StudyBook.code.in_(codes))
+
+    @classmethod
+    def batch_update_books_by_id(cls, params, pk_id):
+        _params = {p: params[p] for p in params if p in StudyBook.field_names()}
+        with db:
+            StudyBook.update(**_params).where(StudyBook.id == pk_id)
+
+    # insert datas
     @classmethod
     def batch_insert_books(cls, book_list):
         with db:

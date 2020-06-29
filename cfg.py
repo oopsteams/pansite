@@ -96,7 +96,8 @@ if TAG == "dev":
 NEW_USER_DEFAULT = dict(org_id=5, role_id=1)
 
 EPUB = dict(
-    dir="/home/app/www/epub/"
+    dir="/home/app/www/epub/",
+    dest="static/bk/"
 )
 
 
