@@ -25,8 +25,8 @@ class StudyDao(object):
 
     @classmethod
     @query_wrap_db
-    def query_study_books_count_by_pin(cls, pin):
-        model_rs = StudyBook.select(fn.count(StudyBook.id)).where(StudyBook.pin == pin).alias('count')
+    def query_study_books_count_by_pin(cls, pin, unziped):
+        model_rs = StudyBook.select(fn.count(StudyBook.id)).where(StudyBook.pin == pin, StudyBook.unziped == unziped).alias('count')
         if model_rs:
             model_dict = model_rs.dicts()
             if model_dict:
@@ -43,13 +43,14 @@ class StudyDao(object):
 
     @classmethod
     @query_wrap_db
-    def check_expired_pan_account(cls, pin, size=10, callback=None):
-        total = cls.query_study_books_count_by_pin(pin)
+    def check_ziped_books(cls, pin, unziped, size=10, callback=None):
+        total = cls.query_study_books_count_by_pin(pin, unziped)
+        print("total:", total)
         if total:
             page = 0
             offset = page * size
             while offset < total:
-                book_list = StudyBook.select().where(StudyBook.pin == 0).offset(offset).limit(size)
+                book_list = StudyBook.select().where(StudyBook.pin == pin, StudyBook.unziped == unziped).offset(offset).limit(size)
                 if callback:
                     callback(book_list)
                 page = page + 1

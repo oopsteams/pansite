@@ -384,7 +384,7 @@ class OpenService(BaseService):
                         # print("file:", special_file, ",nm:", nm)
             if epub_new_books:
                 StudyDao.batch_insert_books(epub_new_books)
-            StudyDao.check_expired_pan_account(0, callback=unzip_epub)
+            StudyDao.check_ziped_books(0, 0, callback=unzip_epub)
             # print("epub_new_books:", epub_new_books)
             return _result
 
