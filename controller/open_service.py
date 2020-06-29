@@ -357,9 +357,8 @@ class OpenService(BaseService):
             _result = {'state': 0}
             default_price = 2
             epub_dir = EPUB["dir"]
-            epub_new_books = []
             au: AuthUser = guest.auth_user
-            print("time:", time.time())
+
             code_map = {}
             code_list = []
             for root, sub_dirs, files in os.walk(epub_dir):
@@ -371,24 +370,12 @@ class OpenService(BaseService):
                         if len(gen_code_nm) > 25:
                             gen_code_nm = gen_code_nm[-25:]
                         code = "".join(lazy_pinyin(gen_code_nm, style=Style.TONE3))
-                        # sb = StudyDao.check_out_study_book(code)
-                        # if sb and sb.name == nm:
-                        #     continue
-                        # dog = 100
-                        # while sb and not (sb.name == nm) and dog > 0:
-                        #     dog = dog - 1
-                        #     code = "{}_{}".format(code, random.randint(1, 10))
-                        #     sb = StudyDao.check_out_study_book(code)
-                        code_map[code] = {"code": code, "name": nm, "price": default_price, "pin": 0, "account_id": guest.id,
-                             "ref_id": au.ref_id, "unziped": 0}
+                        code_map[code] = {"code": code, "name": nm, "price": default_price, "pin": 0,
+                                          "account_id": guest.id, "ref_id": au.ref_id, "unziped": 0}
                         code_list.append(code)
-                        # epub_new_books.append(
-                        #     {"code": code, "name": nm, "price": default_price, "pin": 0, "account_id": guest.id,
-                        #      "ref_id": au.ref_id, "unziped": 0})
-                        #
-                        # print("file:", special_file, ",nm:", nm, ", dog:", dog)
-            print("time:", time.time())
+
             if code_list:
+                print("insert new book start time:", time.time())
                 tl = len(code_list)
                 size = 50
                 page = 0
@@ -426,6 +413,7 @@ class OpenService(BaseService):
                         StudyDao.batch_insert_books(sub_new_books)
                     page = page + 1
                     offset = page * size
+                print("insert new book end time:", time.time())
             # check_ziped_books
             StudyDao.check_ziped_books(0, 0, callback=unzip_epub)
             # print("epub_new_books:", epub_new_books)
