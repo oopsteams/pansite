@@ -331,6 +331,7 @@ class OpenService(BaseService):
         def to_do():
             print("ctx:", ctx)
             pass
+        to_do()
         pass
 
 
