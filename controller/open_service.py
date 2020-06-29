@@ -333,14 +333,15 @@ class OpenService(BaseService):
         return rs
 
     def unzip_single(self, src_file, dest_dir):
-
-        zf = zipfile.ZipFile(src_file)
+        zf = None
         try:
+            zf = zipfile.ZipFile(src_file)
             zf.extractall(path=dest_dir)
-        except RuntimeError as e:
+        except Exception as e:
             raise e
         finally:
-            zf.close()
+            if zf:
+                zf.close()
 
     def scan_epub(self, ctx, guest: Accounts):
         def final_do():
@@ -384,7 +385,7 @@ class OpenService(BaseService):
                             StudyDao.batch_update_books_by_id(params, sb.id)
                             # del file
                             # os.remove(file_path)
-                        except RuntimeError:
+                        except Exception:
                             need_up_unziped.append(sb.code)
                             pass
                 if need_up_unziped:
