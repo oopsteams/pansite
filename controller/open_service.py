@@ -334,9 +334,10 @@ class OpenService(BaseService):
             epub_dir = EPUB["dir"]
             for root, sub_dirs, files in os.walk(epub_dir):
                 for special_file in files:
-                    if special_file.endswith("epub"):
+                    if special_file.endswith(".epub"):
                         # check
-                        print("file:", special_file)
+                        nm = special_file[:-5]
+                        print("file:", special_file, ",nm:", nm)
             print("ctx:", ctx)
             pass
         to_do()
