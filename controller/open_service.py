@@ -345,6 +345,36 @@ class OpenService(BaseService):
             if zf:
                 zf.close()
 
+    def find_file(self, file_start, root_dir):
+        import os
+        cover_file_path = None
+        if os.path.exists(root_dir):
+            find = False
+            for root, sub_dirs, files in os.walk(root_dir):
+                for special_file in files:
+                    if special_file.startswith(file_start):
+                        cover_file_path = os.path.join(root_dir, special_file)
+                        find = True
+                        break
+                if find:
+                    break
+        return cover_file_path
+
+    def find_file_by_end(self, file_end, root_dir):
+        import os
+        cover_file_path = None
+        if os.path.exists(root_dir):
+            find = False
+            for root, sub_dirs, files in os.walk(root_dir):
+                for special_file in files:
+                    if special_file.endswith(file_end):
+                        cover_file_path = os.path.join(root_dir, special_file)
+                        find = True
+                        break
+                if find:
+                    break
+        return cover_file_path
+
     def scan_epub(self, ctx, guest: Accounts):
         def final_do():
             pass
@@ -373,20 +403,21 @@ class OpenService(BaseService):
                         try:
                             self.unzip_single(file_path, current_dest_dir)
                             cover_dir = os.path.join(current_dest_dir, "OPS/images/")
-                            cover_file_path = None
-                            if os.path.exists(cover_dir):
-                                find = False
-                                for root, sub_dirs, files in os.walk(cover_dir):
-                                    for special_file in files:
-                                        if special_file.startswith("cover."):
-                                            cover_file_path = os.path.join(cover_dir, special_file)
-                                            find = True
-                                            break
-                                    if find:
-                                        break
+                            cover_file_path = self.find_file("cover.", cover_dir)
+                            if not cover_file_path:
+                                cover_dir = os.path.join(current_dest_dir, "OPS/")
+                                cover_file_path = self.find_file("cover.", cover_dir)
+                                if not cover_file_path:
+                                    cover_file_path = self.find_file("cover.", current_dest_dir)
+                            opf_dir = os.path.join(current_dest_dir, "OPS/")
+                            opf_file_path = self.find_file_by_end(".opf", opf_dir)
+                            if not opf_file_path:
+                                opf_file_path = self.find_file_by_end(".opf", current_dest_dir)
                             params = {"pin": 1, "unziped": 1}
                             if cover_file_path:
                                 params["cover"] = cover_file_path
+                            if opf_file_path:
+                                params["opf"] = opf_file_path
                             print("unzip ok, name:", sb.name)
                             StudyDao.update_books_by_id(params, sb.id)
                             # del file
@@ -428,7 +459,7 @@ class OpenService(BaseService):
                             gen_code_nm = gen_code_nm[-25:]
                         code = "".join(lazy_pinyin(gen_code_nm, style=Style.TONE3))
                         code_map[code] = {"code": code, "name": nm, "price": default_price, "pin": 0,
-                                          "account_id": guest.id, "ref_id": au.ref_id, "unziped": 0, "cover": 0}
+                                          "account_id": guest.id, "ref_id": au.ref_id, "unziped": 0}
                         code_list.append(code)
 
             if code_list:
