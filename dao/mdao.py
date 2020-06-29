@@ -42,8 +42,8 @@ class DataDao(object):
     @classmethod
     @query_wrap_db
     def query_pan_acc_count_by_acc_id(cls, acc_id):
-        model_rs: ModelSelect = PanAccounts.select(fn.count(PanAccounts.id)).where(
-            PanAccounts.user_id == acc_id).alias('count')
+        model_rs: ModelSelect = PanAccounts.select(fn.count(PanAccounts.id).alias('count')).where(
+            PanAccounts.user_id == acc_id)
         if model_rs:
             model_dict = model_rs.dicts()
             if model_dict:

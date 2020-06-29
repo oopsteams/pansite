@@ -26,7 +26,7 @@ class StudyDao(object):
     @classmethod
     @query_wrap_db
     def query_study_books_count_by_pin(cls, pin, unziped):
-        model_rs = StudyBook.select(fn.count(StudyBook.id)).where(StudyBook.pin == pin, StudyBook.unziped == unziped).alias('count')
+        model_rs = StudyBook.select(fn.count(StudyBook.id).alias('count')).where(StudyBook.pin == pin, StudyBook.unziped == unziped)
         if model_rs:
             print("query_study_books_count_by_pin:", model_rs)
             model_dict = model_rs.dicts()

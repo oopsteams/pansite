@@ -12,8 +12,8 @@ class StudyBook(BaseModel):
     account_id = IntegerField(null=False, index=True)
     ref_id = IntegerField(null=False, index=True)
     price = IntegerField(null=False, default=0)  # 价格/评分，分
-    name = CharField(max_length=128, null=False)
-    code = CharField(max_length=64, null=False, index=True)
+    name = CharField(max_length=64, null=False)
+    code = CharField(max_length=128, null=False, index=True)
     cover = CharField(max_length=64)
     unziped = IntegerField(null=False, default=0)
     idx = IntegerField(null=False, default=0, index=True)
