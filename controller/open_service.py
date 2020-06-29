@@ -343,7 +343,10 @@ class OpenService(BaseService):
                     if special_file.endswith(".epub"):
                         # check
                         nm = special_file[:-5]
-                        code = lazy_pinyin(nm, style=Style.TONE3)
+                        gen_code_nm = nm
+                        if len(gen_code_nm) > 25:
+                            gen_code_nm = gen_code_nm[-25:]
+                        code = "".join(lazy_pinyin(gen_code_nm, style=Style.TONE3))
                         sb = StudyDao.check_out_study_book(code)
                         print("sb:", sb)
                         if sb and sb.name == nm:
