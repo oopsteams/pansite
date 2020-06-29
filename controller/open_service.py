@@ -388,7 +388,7 @@ class OpenService(BaseService):
                         #
                         # print("file:", special_file, ",nm:", nm, ", dog:", dog)
             print("time:", time.time())
-            if epub_new_books:
+            if code_list:
                 tl = len(code_list)
                 size = 50
                 page = 0
