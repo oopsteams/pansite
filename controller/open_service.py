@@ -18,6 +18,7 @@ from utils.constant import shared_format, SHARED_FR_MINUTES_CNT, SHARED_FR_HOURS
 from controller.sync_service import sync_pan_service
 from controller.service import pan_service
 from controller.auth_service import auth_service
+from cfg import EPUB
 import time
 ONE_DAY_SECONDS_TOTAL = 24 * 60 * 60
 
@@ -329,6 +330,13 @@ class OpenService(BaseService):
 
     def scan_epub(self, ctx):
         def to_do():
+            import os
+            epub_dir = EPUB["dir"]
+            for root, sub_dirs, files in os.walk(epub_dir):
+                for special_file in files:
+                    if special_file.endswith("epub"):
+                        # check
+                        print("file:", special_file)
             print("ctx:", ctx)
             pass
         to_do()

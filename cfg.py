@@ -95,6 +95,10 @@ if TAG == "dev":
 
 NEW_USER_DEFAULT = dict(org_id=5, role_id=1)
 
+EPUB = dict(
+    dir="/home/app/www/epub/"
+)
+
 
 def bd_auth_path(redirect_uri='oob', display='pad', skip_login=False):
     client_id = PAN_SERVICE['client_id']
