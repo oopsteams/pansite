@@ -403,30 +403,34 @@ class OpenService(BaseService):
                         current_dest_dir = os.path.join(dest_dir, sb.code)
                         if not os.path.exists(current_dest_dir):
                             os.makedirs(current_dest_dir)
-                        ops_dir = os.path.join(current_dest_dir, "OPS/")
-                        if not os.path.exists(ops_dir):
-                            ops_dir = os.path.join(current_dest_dir, "OEBPS/")
-                        if os.path.exists(ops_dir):
+
                             try:
                                 self.unzip_single(file_path, current_dest_dir)
-                                cover_dir = os.path.join(ops_dir, "images/")
-                                cover_file_path = self.find_file(["cover.j", "cover.png"], cover_dir)
-                                if not cover_file_path:
-                                    cover_file_path = self.find_file(["cover.j", "cover.png"], ops_dir)
+                                ops_dir = os.path.join(current_dest_dir, "OPS/")
+                                if not os.path.exists(ops_dir):
+                                    ops_dir = os.path.join(current_dest_dir, "OEBPS/")
+                                if os.path.exists(ops_dir):
+
+                                    cover_dir = os.path.join(ops_dir, "images/")
+                                    cover_file_path = self.find_file(["cover.j", "cover.png"], cover_dir)
                                     if not cover_file_path:
-                                        cover_file_path = self.find_file(["cover.j", "cover.png"], current_dest_dir)
-                                opf_file_path = self.find_file_by_end(".opf", ops_dir)
-                                if not opf_file_path:
-                                    opf_file_path = self.find_file_by_end(".opf", current_dest_dir)
-                                params = {"pin": 1, "unziped": 1}
-                                if cover_file_path:
-                                    params["cover"] = cover_file_path
-                                if opf_file_path:
-                                    params["opf"] = opf_file_path
-                                print("unzip ok, name:", sb.name)
-                                StudyDao.update_books_by_id(params, sb.id)
-                                # del file
-                                os.remove(file_path)
+                                        cover_file_path = self.find_file(["cover.j", "cover.png"], ops_dir)
+                                        if not cover_file_path:
+                                            cover_file_path = self.find_file(["cover.j", "cover.png"], current_dest_dir)
+                                    opf_file_path = self.find_file_by_end(".opf", ops_dir)
+                                    if not opf_file_path:
+                                        opf_file_path = self.find_file_by_end(".opf", current_dest_dir)
+                                    params = {"pin": 1, "unziped": 1}
+                                    if cover_file_path:
+                                        params["cover"] = cover_file_path
+                                    if opf_file_path:
+                                        params["opf"] = opf_file_path
+                                    print("unzip ok, name:", sb.name)
+                                    StudyDao.update_books_by_id(params, sb.id)
+                                    # del file
+                                    os.remove(file_path)
+                                else:
+                                    StudyDao.update_books_by_id({"pin": 3}, sb.id)
                             except Exception:
                                 need_up_unziped.append(sb.code)
                                 os.remove(file_path)
@@ -436,8 +440,6 @@ class OpenService(BaseService):
                                 except Exception:
                                     logger.error("remove err epud extract dir [{}] failed!".format(current_dest_dir),
                                                  exec_info=True)
-                        else:
-                            StudyDao.update_books_by_id({"pin": 3}, sb.id)
 
                 if need_up_unziped:
                     print("will batch_update_books_by_codes:", need_up_unziped)
