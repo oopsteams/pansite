@@ -327,5 +327,12 @@ class OpenService(BaseService):
                     rs.append(cfg)
         return rs
 
+    def scan_epub(self, ctx):
+        def to_do():
+            print("ctx:", ctx)
+            pass
+        pass
+
+
 
 open_service = OpenService()

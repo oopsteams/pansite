@@ -426,7 +426,7 @@ class ProductService(BaseService):
                     return {"state": -5, "err": LOGIC_ERR_TXT['not_exists']}
             else:
                 async_service.init_state(key_prefix, user_id, {"state": 0, "pos": 0})
-                async_rs = async_service.async_checkout_client_item(key_prefix, user_id, to_do, final_do)
+                async_rs = async_service.async_checkout_thread_todo(key_prefix, user_id, to_do, final_do)
                 if async_rs['state'] == 'block':
                     result['state'] = -11
                     result['err'] = LOGIC_ERR_TXT['sys_lvl_down']
@@ -482,7 +482,7 @@ class ProductService(BaseService):
                 return {"state": -5, "err": LOGIC_ERR_TXT['not_exists']}
             else:
                 async_service.init_state(key_prefix, user_id, {"state": 0, "pos": 0})
-                async_rs = async_service.async_checkout_client_item(key_prefix, user_id, to_do, final_do)
+                async_rs = async_service.async_checkout_thread_todo(key_prefix, user_id, to_do, final_do)
                 if async_rs['state'] == 'block':
                     result['state'] = -11
                     result['err'] = LOGIC_ERR_TXT['sys_lvl_down']
@@ -587,7 +587,7 @@ class ProductService(BaseService):
 
         result = {'state': 0, 'pos': 0}
         async_service.init_state(key_prefix, user_id, {"state": 0, "pos": 0})
-        async_rs = async_service.async_checkout_client_item(key_prefix, user_id, to_do, final_do)
+        async_rs = async_service.async_checkout_thread_todo(key_prefix, user_id, to_do, final_do)
         if async_rs['state'] == 'block':
             result['state'] = -11
             result['err'] = LOGIC_ERR_TXT['sys_lvl_down']

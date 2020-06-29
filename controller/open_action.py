@@ -99,5 +99,9 @@ class OpenHandler(BaseHandler):
             rs = meta
             rs['data'] = params
             self.to_write_json(rs)
+        elif path.endswith("/scanepub"):
+            # scan
+            open_service.scan_epub(self.context)
+            self.to_write_json({})
         else:
             self.to_write_json({})
