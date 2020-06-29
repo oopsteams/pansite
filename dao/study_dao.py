@@ -19,5 +19,5 @@ class StudyDao(object):
 
     @classmethod
     @query_wrap_db
-    def check_out_study_book(cls, code) -> StudyBook:
+    def check_out_study_book(cls, code):
         return StudyBook.select().where(StudyBook.code == code).first()

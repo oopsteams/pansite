@@ -344,7 +344,8 @@ class OpenService(BaseService):
                         # check
                         nm = special_file[:-5]
                         code = lazy_pinyin(nm, style=Style.TONE3)
-                        sb: StudyBook = StudyDao.check_out_study_book(code)
+                        sb = StudyDao.check_out_study_book(code)
+                        print("sb:", sb)
                         if sb and sb.name == nm:
                             continue
                         dog = 100
