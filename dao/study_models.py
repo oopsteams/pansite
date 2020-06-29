@@ -14,8 +14,8 @@ class StudyBook(BaseModel):
     price = IntegerField(null=False, default=0)  # 价格/评分，分
     name = CharField(max_length=64, null=False)
     code = CharField(max_length=128, null=False, index=True)
-    cover = CharField(max_length=64)
-    opf = CharField(max_length=64)
+    cover = CharField(max_length=256)
+    opf = CharField(max_length=256)
     unziped = IntegerField(null=False, default=0)
     idx = IntegerField(null=False, default=0, index=True)
     pin = IntegerField(null=False, default=0, index=True)
