@@ -101,7 +101,7 @@ class OpenHandler(BaseHandler):
             self.to_write_json(rs)
         elif path.endswith("/scanepub"):
             # scan
-            open_service.scan_epub(self.context)
+            open_service.scan_epub(self.context, self.guest)
             self.to_write_json({})
         else:
             self.to_write_json({})

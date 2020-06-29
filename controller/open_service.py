@@ -5,12 +5,13 @@ Created by susy at 2019/12/18
 from controller.base_service import BaseService
 from utils import singleton, log as logger, compare_dt_by_now, get_now_datetime_format, scale_size, split_filename, \
     obfuscate_id
-from dao.models import Accounts, DataItem, ShareLogs, ShareFr, ShareApp, AppCfg, AuthUser, BASE_FIELDS
+from dao.models import Accounts, DataItem, ShareLogs, ShareFr, ShareApp, AppCfg, AuthUser, BASE_FIELDS, StudyBook
 from utils.utils_es import SearchParams, build_query_item_es_body
 from dao.es_dao import es_dao_share, es_dao_local
 from dao.community_dao import CommunityDao
 from dao.mdao import DataDao
 from dao.auth_dao import AuthDao
+from dao.study_dao import StudyDao
 from utils.caches import cache_data, cache_service
 from utils.constant import shared_format, SHARED_FR_MINUTES_CNT, SHARED_FR_HOURS_CNT, SHARED_FR_DAYS_CNT, \
     SHARED_FR_DAYS_ERR, SHARED_FR_HOURS_ERR, SHARED_FR_MINUTES_ERR, MAX_RESULT_WINDOW, SHARED_BAN_ERR, \
@@ -328,17 +329,35 @@ class OpenService(BaseService):
                     rs.append(cfg)
         return rs
 
-    def scan_epub(self, ctx):
+    def scan_epub(self, ctx, guest: Accounts):
         def to_do():
             import os
+            import random
+            from pypinyin import lazy_pinyin, Style
+            default_price = 2
             epub_dir = EPUB["dir"]
+            epub_new_books = []
+            au: AuthUser = guest.auth_user
             for root, sub_dirs, files in os.walk(epub_dir):
                 for special_file in files:
                     if special_file.endswith(".epub"):
                         # check
                         nm = special_file[:-5]
+                        code = lazy_pinyin(nm, style=Style.TONE3)
+                        sb: StudyBook = StudyDao.check_out_study_book(code)
+                        if sb and sb.name == nm:
+                            continue
+                        dog = 100
+                        while sb and not sb.name == nm and dog > 0:
+                            dog = dog - 1
+                            code = "{}_{}".format(code, random.randint(1, 10))
+                            sb = StudyDao.check_out_study_book(code)
+
+                        epub_new_books.append({"code": code, "name": nm, "price": default_price, "pin": 0, "account_id": guest.id, "ref_id": au.ref_id, "unziped": 0})
+
                         print("file:", special_file, ",nm:", nm)
-            print("ctx:", ctx)
+
+            print("epub_new_books:", epub_new_books)
             pass
         to_do()
         pass

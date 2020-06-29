@@ -16,3 +16,8 @@ class StudyDao(object):
         for sb in ms:
             rs.append(StudyBook.to_dict(sb, ['id']))
         return rs
+
+    @classmethod
+    @query_wrap_db
+    def check_out_study_book(cls, code) -> StudyBook:
+        return StudyBook.select().where(StudyBook.code == code).first()
