@@ -3,6 +3,7 @@
 Created by susy at 2019/12/18
 """
 from controller.base_service import BaseService
+from controller.async_service import async_service
 from utils import singleton, log as logger, compare_dt_by_now, get_now_datetime_format, scale_size, split_filename, \
     obfuscate_id
 from dao.models import Accounts, DataItem, ShareLogs, ShareFr, ShareApp, AppCfg, AuthUser, BASE_FIELDS, StudyBook
@@ -21,12 +22,12 @@ from controller.service import pan_service
 from controller.auth_service import auth_service
 from cfg import EPUB
 import time
+
 ONE_DAY_SECONDS_TOTAL = 24 * 60 * 60
 
 
 @singleton
 class OpenService(BaseService):
-
     apps_map = {}
 
     def sync_community_item_to_es(self, acc_id, datas):
@@ -269,10 +270,11 @@ class OpenService(BaseService):
                     alias_fn, alias_extname = split_filename(aliasname)
                     if not alias_extname:
                         alias_extname = extname
-                    aliasname = "{}{}".format(alias_fn, "."+alias_extname if alias_extname.strip() else "")
+                    aliasname = "{}{}".format(alias_fn, "." + alias_extname if alias_extname.strip() else "")
                     fn_name = "[{}]{}".format(fn_name, aliasname)
                 item = {'filename': "%s(%s)" % (fn_name, scale_size(_s["_source"]["size"])),
-                        'path': _s["_source"]["path"], 'source': _s["_source"]["source"], 'isdir': _s["_source"]["isdir"],
+                        'path': _s["_source"]["path"], 'source': _s["_source"]["source"],
+                        'isdir': _s["_source"]["isdir"],
                         'fs_id': _s["_source"]["fs_id"], 'pin': _s["_source"]["pin"],
                         'app_name': app_name}
                 datas.append(item)
@@ -330,6 +332,22 @@ class OpenService(BaseService):
         return rs
 
     def scan_epub(self, ctx, guest: Accounts):
+        def final_do():
+            pass
+
+        def unzip_epub(books: list):
+            import os
+            epub_dir = EPUB["dir"]
+            if books:
+                sb: StudyBook = None
+                for sb in books:
+                    file_name = "{}{}".format(sb.name, ".epub")
+                    file_path = "{}{}".format(epub_dir, file_name)
+                    if os.path.exists(file_path):
+                        print("exist file_path:", file_path)
+                    pass
+            pass
+
         def to_do():
             import os
             import random
@@ -357,16 +375,21 @@ class OpenService(BaseService):
                             code = "{}_{}".format(code, random.randint(1, 10))
                             sb = StudyDao.check_out_study_book(code)
 
-                        epub_new_books.append({"code": code, "name": nm, "price": default_price, "pin": 0, "account_id": guest.id, "ref_id": au.ref_id, "unziped": 0})
+                        epub_new_books.append(
+                            {"code": code, "name": nm, "price": default_price, "pin": 0, "account_id": guest.id,
+                             "ref_id": au.ref_id, "unziped": 0, "path": "{}".format(root, special_file)})
 
                         # print("file:", special_file, ",nm:", nm)
             if epub_new_books:
                 StudyDao.batch_insert_books(epub_new_books)
+            StudyDao.check_expired_pan_account(0, callback=unzip_epub)
             # print("epub_new_books:", epub_new_books)
-        to_do()
 
-        pass
-
+        # to_do()
+        key_prefix = "epud:ready:"
+        async_service.init_state(key_prefix, guest.id, {"state": 0, "pos": 0})
+        async_rs = async_service.async_checkout_thread_todo(key_prefix, guest.id, to_do, final_do)
+        return async_rs
 
 
 open_service = OpenService()
