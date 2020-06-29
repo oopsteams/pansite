@@ -348,7 +348,7 @@ class OpenService(BaseService):
                     pass
             pass
 
-        def to_do():
+        def to_do(key, rs_key):
             import os
             import random
             from pypinyin import lazy_pinyin, Style
