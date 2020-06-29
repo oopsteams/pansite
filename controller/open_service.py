@@ -338,6 +338,7 @@ class OpenService(BaseService):
         def unzip_epub(books: list):
             import os
             epub_dir = EPUB["dir"]
+
             if books:
                 sb: StudyBook = None
                 for sb in books:
@@ -352,6 +353,7 @@ class OpenService(BaseService):
             import os
             import random
             from pypinyin import lazy_pinyin, Style
+            _result = {'state': 0}
             default_price = 2
             epub_dir = EPUB["dir"]
             epub_new_books = []
@@ -384,6 +386,7 @@ class OpenService(BaseService):
                 StudyDao.batch_insert_books(epub_new_books)
             StudyDao.check_expired_pan_account(0, callback=unzip_epub)
             # print("epub_new_books:", epub_new_books)
+            return _result
 
         # to_do()
         key_prefix = "epud:ready:"
