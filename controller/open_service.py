@@ -370,14 +370,14 @@ class OpenService(BaseService):
                         if sb and sb.name == nm:
                             continue
                         dog = 100
-                        while sb and not sb.name == nm and dog > 0:
+                        while sb and not (sb.name == nm) and dog > 0:
                             dog = dog - 1
                             code = "{}_{}".format(code, random.randint(1, 10))
                             sb = StudyDao.check_out_study_book(code)
 
                         epub_new_books.append(
                             {"code": code, "name": nm, "price": default_price, "pin": 0, "account_id": guest.id,
-                             "ref_id": au.ref_id, "unziped": 0, "path": "{}".format(root, special_file)})
+                             "ref_id": au.ref_id, "unziped": 0})
 
                         # print("file:", special_file, ",nm:", nm)
             if epub_new_books:
