@@ -339,7 +339,7 @@ class OpenService(BaseService):
             zf = zipfile.ZipFile(src_file)
             zf.extractall(path=dest_dir)
         except Exception as e:
-            traceback.print_exc()
+            # traceback.print_exc()
             raise e
         finally:
             if zf:
@@ -421,7 +421,7 @@ class OpenService(BaseService):
                             print("unzip ok, name:", sb.name)
                             StudyDao.update_books_by_id(params, sb.id)
                             # del file
-                            # os.remove(file_path)
+                            os.remove(file_path)
                         except Exception:
                             need_up_unziped.append(sb.code)
                             try:
