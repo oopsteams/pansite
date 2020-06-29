@@ -124,14 +124,6 @@ class OpenService(BaseService):
         rs, _ = self.build_shared_log(item)
         return rs
 
-    def fetch_shared_skip_visible(self, fs_id):
-        # print('fs_id:', fs_id)
-        item: DataItem = DataDao.query_data_item_by_fs_id(fs_id)
-        if not item:
-            return {'state': -1, 'err': SHARED_NOT_EXISTS_ERR}
-        rs, _ = self.build_shared_log(item)
-        return rs
-
     def update_share_fr(self, m_val, h_val, d_val, pan_id, sharefr):
 
         if sharefr:

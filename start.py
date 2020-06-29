@@ -8,7 +8,7 @@ from apscheduler.schedulers.tornado import TornadoScheduler
 from tornado.ioloop import IOLoop
 from tornado.web import Application, StaticFileHandler
 from tornado.httpserver import HTTPServer
-from cfg import service
+from cfg import service, TAG
 from controller.action import *
 from controller.open_action import *
 from controller.pan_manage_action import *
@@ -59,12 +59,15 @@ def scheduler_clear_all_expired_share_log():
 
 def update_access_token():
     try:
-        from dao.models import PanAccounts
-        # sync_pan_service.clear_all_expired_share_log()
-        pan_acc_list = PanAccounts.select().where(PanAccounts.user_id == 1)
-        for pan_acc in pan_acc_list:
-            logger.info("will validation pan acc id:{}, name:{}".format(pan_acc.id, pan_acc.name))
-            auth_service.check_pan_token_validation(pan_acc)
+        if TAG == 'dev':
+            from dao.models import PanAccounts
+            # sync_pan_service.clear_all_expired_share_log()
+            pan_acc_list = PanAccounts.select().where(PanAccounts.user_id == 1)
+            for pan_acc in pan_acc_list:
+                logger.info("will validation pan acc id:{}, name:{}".format(pan_acc.id, pan_acc.name))
+                auth_service.check_pan_token_validation(pan_acc)
+        else:
+            logger.info("bj[goods] service will ignore [update_access_token] task.")
     except Exception as e:
         traceback.print_exc()
         print("update_access_token err:", e)
