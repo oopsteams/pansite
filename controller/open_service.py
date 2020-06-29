@@ -349,7 +349,7 @@ class OpenService(BaseService):
         def unzip_epub(books: list):
             import os
             epub_dir = EPUB["dir"]
-            base_dir = ctx["base_dir"]
+            base_dir = ctx["basepath"]
             if base_dir:
                 dest_dir = os.path.join(base_dir, EPUB["dest"])
             else:
@@ -382,6 +382,8 @@ class OpenService(BaseService):
                             if cover_file_path:
                                 params["cover"] = cover_file_path
                             StudyDao.batch_update_books_by_id(params, sb.id)
+                            # del file
+                            # os.remove(file_path)
                         except RuntimeError:
                             need_up_unziped.append(sb.code)
                             pass
