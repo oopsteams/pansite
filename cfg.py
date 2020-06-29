@@ -11,6 +11,7 @@ if not env and len(sys.argv) > 1:
 if not env:
     env = 'PROD'
 TAG = env
+print("TAG:", TAG)
 redis_config = {
     # "host":"172.31.140.253",
     "host": "127.0.0.1",
