@@ -23,6 +23,7 @@ from controller.auth_service import auth_service
 from cfg import EPUB
 import time
 import zipfile
+import traceback
 
 ONE_DAY_SECONDS_TOTAL = 24 * 60 * 60
 
@@ -338,6 +339,7 @@ class OpenService(BaseService):
             zf = zipfile.ZipFile(src_file)
             zf.extractall(path=dest_dir)
         except Exception as e:
+            traceback.print_exc()
             raise e
         finally:
             if zf:
