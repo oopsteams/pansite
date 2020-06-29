@@ -338,6 +338,11 @@ class OpenService(BaseService):
         try:
             zf = zipfile.ZipFile(src_file)
             zf.extractall(path=dest_dir)
+        except zipfile.BadZipFile as e:
+            if str(e).startswith("Bad CRC-32 for file"):
+                pass
+            else:
+                raise e
         except Exception as e:
             # traceback.print_exc()
             raise e
@@ -432,6 +437,7 @@ class OpenService(BaseService):
                             # os.remove(file_path)
                             try:
                                 if os.path.exists(current_dest_dir):
+                                    # os.removedirs(current_dest_dir)
                                     os.rmdir(current_dest_dir)
                             except Exception:
                                 logger.error("remove err epud extract dir [{}] failed!".format(current_dest_dir))
