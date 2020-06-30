@@ -412,8 +412,10 @@ class OpenService(BaseService):
                             if not os.path.exists(ops_dir):
                                 ops_dir = current_dest_dir
                             opf_file_path = self.find_file_by_end(".opf", ops_dir)
+                            ncx_file_path = self.find_file_by_end(".ncx", ops_dir)
                             if not opf_file_path:
                                 opf_file_path = self.find_file_by_end(".opf", current_dest_dir)
+                                ncx_file_path = self.find_file_by_end(".ncx", current_dest_dir)
 
                             if opf_file_path:
                                 cover_dir = os.path.join(ops_dir, "images/")
@@ -423,8 +425,19 @@ class OpenService(BaseService):
                                     if not cover_file_path:
                                         cover_file_path = self.find_file(["cover.j", "cover.png"], current_dest_dir)
 
-                                params = {"pin": 1, "unziped": 1, "opf": opf_file_path}
+                                if opf_file_path:
+                                    idx = opf_file_path.find(sb.code + "/")
+                                    if idx > 0:
+                                        opf_file_path = opf_file_path[idx + 1:]
+                                if ncx_file_path:
+                                    idx = ncx_file_path.find(sb.code + "/")
+                                    if idx > 0:
+                                        ncx_file_path = ncx_file_path[idx + 1:]
+                                params = {"pin": 1, "unziped": 1, "opf": opf_file_path, "ncx": ncx_file_path}
                                 if cover_file_path:
+                                    idx = cover_file_path.find(sb.code + "/")
+                                    if idx > 0:
+                                        cover_file_path = cover_file_path[idx + 1:]
                                     params["cover"] = cover_file_path
                                 # print("unzip ok, name:", sb.name)
                                 StudyDao.update_books_by_id(params, sb.id)

@@ -14,15 +14,16 @@ class StudyBook(BaseModel):
     price = IntegerField(null=False, default=0)  # 价格/评分，分
     name = CharField(max_length=64, null=False)
     code = CharField(max_length=128, null=False, index=True)
-    cover = CharField(max_length=256)
-    opf = CharField(max_length=256)
+    cover = CharField(max_length=64)
+    opf = CharField(max_length=64)
+    ncx = CharField(max_length=64)
     unziped = IntegerField(null=False, default=0)
     idx = IntegerField(null=False, default=0, index=True)
     pin = IntegerField(null=False, default=0, index=True)
 
     @classmethod
     def field_names(cls):
-        return ["id", "code", "account_id", "ref_id", "price", "name", "unziped", "idx", "cover", "pin", "opf"]
+        return ["id", "code", "account_id", "ref_id", "price", "name", "unziped", "idx", "cover", "pin", "opf", "ncx"]
 
     @classmethod
     def to_dict(cls, instance, excludes=[]):
