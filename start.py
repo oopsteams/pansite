@@ -7,7 +7,7 @@ from apscheduler.schedulers.tornado import TornadoScheduler
 from tornado.ioloop import IOLoop
 from tornado.web import Application, StaticFileHandler
 from tornado.httpserver import HTTPServer
-
+from controller.book.book_action import *
 from controller.action import *
 from controller.open_action import *
 from controller.pan_manage_action import *
@@ -118,6 +118,7 @@ if __name__ == "__main__":
 
         (r"/wx/put", WXAppPut, dict(middleware=middle_list, context=context)),
         (r"/wx/get", WXAppGet, dict(middleware=middle_list, context=context)),
+        (r"/wx/book", BookHandler, dict(middleware=middle_list, context=context)),
         (r"/wx/push", WXAppPush, dict(middleware=middle_list, context=context)),
         (r"/wx/kf", WXAppKf, dict(middleware=middle_list, context=context)),
         (r"/wx/upload", WXAppUpload, dict(middleware=middle_list, context=context)),
