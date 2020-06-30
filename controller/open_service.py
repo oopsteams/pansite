@@ -341,7 +341,6 @@ class OpenService(BaseService):
         except zipfile.BadZipFile as e:
             if str(e).startswith("Bad CRC-32 for file"):
                 print("Bad CRC-32 for file, so ignore this error![{}]".format(src_file))
-                pass
             else:
                 raise e
         except Exception as e:
@@ -429,6 +428,7 @@ class OpenService(BaseService):
                                     params["opf"] = opf_file_path
                                 print("unzip ok, name:", sb.name)
                                 StudyDao.update_books_by_id(params, sb.id)
+                                print("update pin=1 unziped=1 ok, name:", sb.name)
                                 # del file
                                 # os.remove(file_path)
                             else:
