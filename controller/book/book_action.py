@@ -14,8 +14,9 @@ class BookHandler(BaseHandler):
         rs = {"status": 0}
         # print("header", header)
         if "list" == cmd:
-            offset = int(params.get('offset', '0'))
+            page = self.get_argument("page", "0")
             size = int(params.get('size', '6'))
+            offset = int(page) * size
             bl = book_service.list(self.guest, offset, size)
             rs["hasnext"] = len(bl) == size
             rs["list"] = bl
