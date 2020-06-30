@@ -340,6 +340,7 @@ class OpenService(BaseService):
             zf.extractall(path=dest_dir)
         except zipfile.BadZipFile as e:
             if str(e).startswith("Bad CRC-32 for file"):
+                print("Bad CRC-32 for file, so ignore this error![{}]".format(src_file))
                 pass
             else:
                 raise e
@@ -396,7 +397,7 @@ class OpenService(BaseService):
             sb: StudyBook = None
             need_up_unziped = []
             for sb in books:
-                file_name = "{}{}".format(sb.name, ".epub")
+                file_name = sb.name  # "{}{}".format(sb.name, ".epub")
                 file_path = os.path.join(epub_dir, file_name)
 
                 if os.path.exists(file_path):
@@ -441,7 +442,8 @@ class OpenService(BaseService):
                                     os.rmdir(current_dest_dir)
                             except Exception:
                                 logger.error("remove err epud extract dir [{}] failed!".format(current_dest_dir))
-
+                else:
+                    print("not exist !!! file_path:", file_path)
             if need_up_unziped:
                 print("will batch_update_books_by_codes:", need_up_unziped)
                 StudyDao.batch_update_books_by_codes({"pin": 2, "unziped": 1}, need_up_unziped)
@@ -467,14 +469,14 @@ class OpenService(BaseService):
             code_list = []
             for root, sub_dirs, files in os.walk(epub_dir):
                 for special_file in files:
-                    if special_file.endswith(".epub"):
+                    if special_file.lower().endswith(".epub"):
                         # check
                         nm = special_file[:-5]
                         gen_code_nm = nm
                         if len(gen_code_nm) > 25:
                             gen_code_nm = gen_code_nm[-25:]
                         code = "".join(lazy_pinyin(gen_code_nm, style=Style.TONE3))
-                        code_map[code] = {"code": code, "name": nm, "price": default_price, "pin": 0,
+                        code_map[code] = {"code": code, "name": special_file, "price": default_price, "pin": 0,
                                           "account_id": guest.id, "ref_id": au.ref_id, "unziped": 0}
                         code_list.append(code)
 
