@@ -415,8 +415,7 @@ class OpenService(BaseService):
                             if not opf_file_path:
                                 opf_file_path = self.find_file_by_end(".opf", current_dest_dir)
 
-                            if not opf_file_path:
-
+                            if opf_file_path:
                                 cover_dir = os.path.join(ops_dir, "images/")
                                 cover_file_path = self.find_file(["cover.j", "cover.png"], cover_dir)
                                 if not cover_file_path:
