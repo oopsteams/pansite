@@ -4,7 +4,7 @@ Created by susy at 2020/4/26
 """
 from controller.action import BaseHandler
 from controller.auth_service import auth_service
-
+from controller.book.book_service import book_service
 from controller.wx.wx_service import wx_service
 from controller.wx.goods_service import goods_service
 from controller.payment.payment_service import payment_service
@@ -12,6 +12,7 @@ from controller.open_service import open_service
 from utils import wxapi, decrypt_id, log, get_now_ts, get_payload_from_token, constant, caches
 
 import json
+
 NEW_TOKEN_TAG_TIMEOUT = 7 * 24 * 60 * 60  # seconds
 
 
@@ -150,7 +151,8 @@ class WXAppGet(BaseHandler):
                 wx_id = 0
             else:
                 wx_id = decrypt_id(fuzzy_wx_id)
-            print("user_id:", self.user_id, ",ref_id:", self.ref_id, ", guest id:", self.guest.id, ",payload:", self.user_payload)
+            print("user_id:", self.user_id, ",ref_id:", self.ref_id, ", guest id:", self.guest.id, ",payload:",
+                  self.user_payload)
             new_token = self.token
             if self.user_id and self.token and self.user_id != self.guest.id:
                 # print('payload:', self.user_payload, ctm, ctm - tm, LOGIN_TOKEN_TIMEOUT)
@@ -260,6 +262,32 @@ class WXAppGet(BaseHandler):
             pid = int(decrypt_id(fuzzy_pid))
             imgs = goods_service.query_imgs(pid)
             rs['imgs'] = imgs
+        elif "cost" == cmd:
+            t = params.get("t", "")
+            code = params.get("code", "")
+            if self.user_id and self.token and self.user_id != self.guest.id:
+                if code and t and t == "book":
+                    sb = book_service.get_book(code)
+                    if sb:
+                        p = sb.price
+                        if p and p > 0:
+                            ba = payment_service.query_credit_balance(self.user_id)
+                            if ba["balance"] < p:
+                                rs = {'state': -1, 'err': 'not enough credits!'}
+                            else:
+                                pay_id = payment_service.freeze_credit(self.user_id, p)
+                                if pay_id:
+                                    payment_service.active_frozen_credit(self.user_id)
+                                else:
+                                    rs = {'state': -1, 'err': 'book service ,bad gateway!'}
+                        else:
+                            rs = {'state': -1, 'err': 'book parameters is error!'}
+                    else:
+                        rs = {'state': -1, 'err': 'book parameters is error!'}
+                else:
+                    rs = {'state': -1, 'err': 'book parameters is error!'}
+            else:
+                rs = {'state': -1, 'err': 'user state wrong!'}
         elif "shared" == cmd:
             fs_id = params.get("fs_id", "")
             if self.user_id and self.token and self.user_id != self.guest.id:

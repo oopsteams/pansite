@@ -34,5 +34,9 @@ class BookService(BaseService):
     def list(self, guest, offset, size):
         return StudyDao.query_study_book_list(1, offset, size)
 
+    def get_book(self, code):
+        return StudyDao.check_out_study_book(code)
+
+
 book_service = BookService()
 
