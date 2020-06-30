@@ -424,20 +424,20 @@ class OpenService(BaseService):
                                     cover_file_path = self.find_file(["cover.j", "cover.png"], ops_dir)
                                     if not cover_file_path:
                                         cover_file_path = self.find_file(["cover.j", "cover.png"], current_dest_dir)
-
+                                code_len = len(sb.code + "/")
                                 if opf_file_path:
                                     idx = opf_file_path.find(sb.code + "/")
                                     if idx > 0:
-                                        opf_file_path = opf_file_path[idx + 1:]
+                                        opf_file_path = opf_file_path[idx + code_len:]
                                 if ncx_file_path:
                                     idx = ncx_file_path.find(sb.code + "/")
                                     if idx > 0:
-                                        ncx_file_path = ncx_file_path[idx + 1:]
+                                        ncx_file_path = ncx_file_path[idx + code_len:]
                                 params = {"pin": 1, "unziped": 1, "opf": opf_file_path, "ncx": ncx_file_path}
                                 if cover_file_path:
                                     idx = cover_file_path.find(sb.code + "/")
                                     if idx > 0:
-                                        cover_file_path = cover_file_path[idx + 1:]
+                                        cover_file_path = cover_file_path[idx + code_len:]
                                     params["cover"] = cover_file_path
                                 # print("unzip ok, name:", sb.name)
                                 StudyDao.update_books_by_id(params, sb.id)
