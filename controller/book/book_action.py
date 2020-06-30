@@ -14,7 +14,7 @@ class BookHandler(BaseHandler):
         rs = {"status": 0}
         # print("header", header)
         if "list" == cmd:
-            page = self.get_argument("page", "0")
+            page = params.get("page", "0")
             size = int(params.get('size', '6'))
             offset = int(page) * size
             bl = book_service.list(self.guest, offset, size)
