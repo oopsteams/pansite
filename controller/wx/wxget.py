@@ -278,6 +278,7 @@ class WXAppGet(BaseHandler):
                                 pay_id = payment_service.freeze_credit(self.user_id, p)
                                 if pay_id:
                                     payment_service.active_frozen_credit(self.user_id)
+                                    rs['balance'] = payment_service.query_credit_balance(self.user_id)
                                 else:
                                     rs = {'state': -1, 'err': 'book service ,bad gateway!'}
                         else:
