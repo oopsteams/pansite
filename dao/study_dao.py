@@ -56,8 +56,16 @@ class StudyDao(object):
                     offset).limit(size)
                 if callback:
                     callback(book_list)
-                page = page + 1
-                offset = page * size
+                    _total = cls.query_study_books_count_by_pin(pin, unziped)
+                    if _total != total:
+                        page = 0
+                        total = _total
+                    else:
+                        page = page + 1
+                    offset = page * size
+                else:
+                    page = page + 1
+                    offset = page * size
 
     # update
     @classmethod
