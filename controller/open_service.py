@@ -3,14 +3,16 @@
 Created by susy at 2019/12/18
 """
 from controller.base_service import BaseService
+from controller.async_service import async_service
 from utils import singleton, log as logger, compare_dt_by_now, get_now_datetime_format, scale_size, split_filename, \
     obfuscate_id
-from dao.models import Accounts, DataItem, ShareLogs, ShareFr, ShareApp, AppCfg, AuthUser, BASE_FIELDS
+from dao.models import Accounts, DataItem, ShareLogs, ShareFr, ShareApp, AppCfg, AuthUser, BASE_FIELDS, StudyBook
 from utils.utils_es import SearchParams, build_query_item_es_body
 from dao.es_dao import es_dao_share, es_dao_local
 from dao.community_dao import CommunityDao
 from dao.mdao import DataDao
 from dao.auth_dao import AuthDao
+from dao.study_dao import StudyDao
 from utils.caches import cache_data, cache_service
 from utils.constant import shared_format, SHARED_FR_MINUTES_CNT, SHARED_FR_HOURS_CNT, SHARED_FR_DAYS_CNT, \
     SHARED_FR_DAYS_ERR, SHARED_FR_HOURS_ERR, SHARED_FR_MINUTES_ERR, MAX_RESULT_WINDOW, SHARED_BAN_ERR, \
@@ -18,13 +20,16 @@ from utils.constant import shared_format, SHARED_FR_MINUTES_CNT, SHARED_FR_HOURS
 from controller.sync_service import sync_pan_service
 from controller.service import pan_service
 from controller.auth_service import auth_service
+from cfg import EPUB
 import time
+import zipfile
+import traceback
+
 ONE_DAY_SECONDS_TOTAL = 24 * 60 * 60
 
 
 @singleton
 class OpenService(BaseService):
-
     apps_map = {}
 
     def sync_community_item_to_es(self, acc_id, datas):
@@ -267,10 +272,11 @@ class OpenService(BaseService):
                     alias_fn, alias_extname = split_filename(aliasname)
                     if not alias_extname:
                         alias_extname = extname
-                    aliasname = "{}{}".format(alias_fn, "."+alias_extname if alias_extname.strip() else "")
+                    aliasname = "{}{}".format(alias_fn, "." + alias_extname if alias_extname.strip() else "")
                     fn_name = "[{}]{}".format(fn_name, aliasname)
                 item = {'filename': "%s(%s)" % (fn_name, scale_size(_s["_source"]["size"])),
-                        'path': _s["_source"]["path"], 'source': _s["_source"]["source"], 'isdir': _s["_source"]["isdir"],
+                        'path': _s["_source"]["path"], 'source': _s["_source"]["source"],
+                        'isdir': _s["_source"]["isdir"],
                         'fs_id': _s["_source"]["fs_id"], 'pin': _s["_source"]["pin"],
                         'app_name': app_name}
                 datas.append(item)
@@ -326,6 +332,204 @@ class OpenService(BaseService):
                 else:
                     rs.append(cfg)
         return rs
+
+    def unzip_single(self, src_file, dest_dir):
+        zf = None
+        try:
+            zf = zipfile.ZipFile(src_file)
+            zf.extractall(path=dest_dir)
+        except zipfile.BadZipFile as e:
+            if str(e).startswith("Bad CRC-32 for file"):
+                print("Bad CRC-32 for file, so ignore this error![{}]".format(src_file))
+            else:
+                raise e
+        except Exception as e:
+            # traceback.print_exc()
+            raise e
+        finally:
+            if zf:
+                zf.close()
+
+    def find_file(self, file_starts, root_dir):
+        import os
+        cover_file_path = None
+        if os.path.exists(root_dir):
+            find = False
+            for root, sub_dirs, files in os.walk(root_dir):
+                for special_file in files:
+                    for _start in file_starts:
+                        if special_file.startswith(_start):
+                            cover_file_path = os.path.join(root_dir, special_file)
+                            find = True
+                            break
+                    if find:
+                        break
+                if find:
+                    break
+        return cover_file_path
+
+    def find_file_by_end(self, file_end, root_dir):
+        import os
+        cover_file_path = None
+        if os.path.exists(root_dir):
+            find = False
+            for root, sub_dirs, files in os.walk(root_dir):
+                for special_file in files:
+                    if special_file.endswith(file_end):
+                        cover_file_path = os.path.join(root_dir, special_file)
+                        find = True
+                        break
+                if find:
+                    break
+        return cover_file_path
+
+    def unzip_epub(self, ctx, books: list):
+        import os
+        epub_dir = EPUB["dir"]
+        base_dir = ctx["basepath"]
+        if base_dir:
+            dest_dir = os.path.join(base_dir, EPUB["dest"])
+        else:
+            dest_dir = EPUB["dest"]
+        if books:
+            sb: StudyBook = None
+            need_up_unziped = []
+            for sb in books:
+                file_name = sb.name  # "{}{}".format(sb.name, ".epub")
+                file_path = os.path.join(epub_dir, file_name)
+
+                if os.path.exists(file_path):
+                    # print("exist file_path:", file_path)
+                    current_dest_dir = os.path.join(dest_dir, sb.code)
+                    if not os.path.exists(current_dest_dir):
+                        os.makedirs(current_dest_dir)
+
+                        try:
+                            self.unzip_single(file_path, current_dest_dir)
+                            ops_dir = os.path.join(current_dest_dir, "OPS/")
+                            if not os.path.exists(ops_dir):
+                                ops_dir = os.path.join(current_dest_dir, "OEBPS/")
+                            if not os.path.exists(ops_dir):
+                                ops_dir = current_dest_dir
+                            opf_file_path = self.find_file_by_end(".opf", ops_dir)
+                            if not opf_file_path:
+                                opf_file_path = self.find_file_by_end(".opf", current_dest_dir)
+
+                            if opf_file_path:
+                                cover_dir = os.path.join(ops_dir, "images/")
+                                cover_file_path = self.find_file(["cover.j", "cover.png"], cover_dir)
+                                if not cover_file_path:
+                                    cover_file_path = self.find_file(["cover.j", "cover.png"], ops_dir)
+                                    if not cover_file_path:
+                                        cover_file_path = self.find_file(["cover.j", "cover.png"], current_dest_dir)
+
+                                params = {"pin": 1, "unziped": 1, "opf": opf_file_path}
+                                if cover_file_path:
+                                    params["cover"] = cover_file_path
+                                # print("unzip ok, name:", sb.name)
+                                StudyDao.update_books_by_id(params, sb.id)
+                                # print("update pin=1 unziped=1 ok, name:", sb.name)
+                                # del file
+                                # os.remove(file_path)
+                            else:
+                                StudyDao.update_books_by_id({"pin": 3, "unziped": 1}, sb.id)
+                        except Exception:
+                            need_up_unziped.append(sb.code)
+                            # os.remove(file_path)
+                            try:
+                                if os.path.exists(current_dest_dir):
+                                    os.rmdir(current_dest_dir)
+                            except Exception:
+                                logger.error("remove err epud extract dir [{}] failed!".format(current_dest_dir))
+                else:
+                    print("not exist !!! file_path:", file_path)
+            if need_up_unziped:
+                # print("will batch_update_books_by_codes:", need_up_unziped)
+                StudyDao.batch_update_books_by_codes({"pin": 2, "unziped": 1}, need_up_unziped)
+
+    def scan_epub(self, ctx, guest: Accounts):
+        def final_do():
+            pass
+
+        def unzip_epub(books: list):
+            self.unzip_epub(ctx, books)
+
+        def to_do(key, rs_key):
+            import os
+            import random
+            import time
+            from pypinyin import lazy_pinyin, Style
+            _result = {'state': 0}
+            default_price = 2
+            epub_dir = EPUB["dir"]
+            au: AuthUser = guest.auth_user
+
+            code_map = {}
+            code_list = []
+            for root, sub_dirs, files in os.walk(epub_dir):
+                for special_file in files:
+                    if special_file.lower().endswith(".epub"):
+                        # check
+                        nm = special_file[:-5]
+                        gen_code_nm = nm
+                        if len(gen_code_nm) > 25:
+                            gen_code_nm = gen_code_nm[-25:]
+                        code = "".join(lazy_pinyin(gen_code_nm, style=Style.TONE3))
+                        code_map[code] = {"code": code, "name": special_file, "price": default_price, "pin": 0,
+                                          "account_id": guest.id, "ref_id": au.ref_id, "unziped": 0}
+                        code_list.append(code)
+
+            if code_list:
+                print("insert new book start time:", time.time())
+                tl = len(code_list)
+                size = 50
+                page = 0
+                offset = page * size
+                while offset < tl:
+                    sub_codes = code_list[offset: offset + size]
+                    sb_list = StudyDao.check_out_study_books(sub_codes)
+                    sub_new_books = []
+                    db_sb_list_map = {}
+                    if sb_list:
+                        for sb in sb_list:
+                            db_sb_list_map[sb.code] = sb
+                    for code in sub_codes:
+                        sb_dict = code_map[code]
+                        sb = None
+                        if code in db_sb_list_map:
+                            sb = db_sb_list_map[code]
+                            nm = sb_dict['name']
+                            if sb.name == nm:
+                                continue
+                            else:
+                                dog = 10
+                                code = "{}_{}".format(code, random.randint(1, 10))
+                                _sb = StudyDao.check_out_study_book(code)
+                                while _sb and not (_sb.name == nm) and dog > 0:
+                                    dog = dog - 1
+                                    code = "{}_{}".format(code, random.randint(1, 10))
+                                    _sb = StudyDao.check_out_study_book(code)
+                                if not _sb:
+                                    sb_dict["code"] = code
+                                    sub_new_books.append(sb_dict)
+                        else:
+                            sub_new_books.append(sb_dict)
+                    if sub_new_books:
+                        StudyDao.batch_insert_books(sub_new_books)
+                    page = page + 1
+                    offset = page * size
+                print("insert new book end time:", time.time())
+            # check_ziped_books
+            StudyDao.check_ziped_books(0, 0, callback=unzip_epub)
+            print("check_ziped_books over.")
+            # print("epub_new_books:", epub_new_books)
+            return _result
+
+        # to_do()
+        key_prefix = "epud:ready:"
+        async_service.init_state(key_prefix, guest.id, {"state": 0, "pos": 0})
+        async_rs = async_service.async_checkout_thread_todo(key_prefix, guest.id, to_do, final_do)
+        return async_rs
 
 
 open_service = OpenService()

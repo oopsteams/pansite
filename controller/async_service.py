@@ -30,7 +30,7 @@ class AsyncService(BaseService):
         if THREAD_LIMIT_PARAMS['actived'] > 0:
             THREAD_LIMIT_PARAMS['actived'] = THREAD_LIMIT_PARAMS['actived'] - 1
 
-    def async_checkout_client_item(self, prefix, suffix, action: Callable[..., dict]=None, final_call: Callable=None):
+    def async_checkout_thread_todo(self, prefix, suffix, action: Callable[..., dict]=None, final_call: Callable=None):
         ctx = self
         key = "async:%s:%s" % (prefix, suffix)
         rs_key = "async:%s:rs:%s:" % (prefix, suffix)

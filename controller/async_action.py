@@ -23,3 +23,11 @@ class AsyncHandler(BaseHandler):
                 self.to_write_json(rs)
             else:
                 self.to_write_json({'state': 0})
+
+        elif path.endswith("/scanepudstate"):
+            key_prefix = "epud:ready:"
+            rs = async_service.checkout_key_state(key_prefix, self.guest.id)
+            if rs:
+                self.to_write_json(rs)
+            else:
+                self.to_write_json({'state': 0})
