@@ -19,7 +19,7 @@ class StudyDao(object):
             idx = sb.name.rfind(".")
             if idx > 0:
                 sb_dict["name"] = sb.name[:idx]
-            rs.append(StudyBook.to_dict(sb, ['id']))
+            rs.append(sb_dict)
         return rs
 
     @classmethod
