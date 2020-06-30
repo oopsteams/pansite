@@ -15,6 +15,10 @@ class StudyDao(object):
         rs = []
         ms = StudyBook.select().where(StudyBook.pin == pin).order_by(StudyBook.idx.asc()).offset(offset).limit(cnt)
         for sb in ms:
+            sb_dict = StudyBook.to_dict(sb, ['id'])
+            idx = sb.name.rfind(".")
+            if idx > 0:
+                sb_dict["name"] = sb.name[:idx]
             rs.append(StudyBook.to_dict(sb, ['id']))
         return rs
 
