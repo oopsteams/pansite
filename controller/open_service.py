@@ -391,7 +391,6 @@ class OpenService(BaseService):
             dest_dir = os.path.join(base_dir, EPUB["dest"])
         else:
             dest_dir = EPUB["dest"]
-        print("unzip epub in...")
         if books:
             sb: StudyBook = None
             need_up_unziped = []
@@ -410,7 +409,13 @@ class OpenService(BaseService):
                             ops_dir = os.path.join(current_dest_dir, "OPS/")
                             if not os.path.exists(ops_dir):
                                 ops_dir = os.path.join(current_dest_dir, "OEBPS/")
-                            if os.path.exists(ops_dir):
+                            if not os.path.exists(ops_dir):
+                                ops_dir = current_dest_dir
+                            opf_file_path = self.find_file_by_end(".opf", ops_dir)
+                            if not opf_file_path:
+                                opf_file_path = self.find_file_by_end(".opf", current_dest_dir)
+
+                            if not opf_file_path:
 
                                 cover_dir = os.path.join(ops_dir, "images/")
                                 cover_file_path = self.find_file(["cover.j", "cover.png"], cover_dir)
@@ -418,34 +423,29 @@ class OpenService(BaseService):
                                     cover_file_path = self.find_file(["cover.j", "cover.png"], ops_dir)
                                     if not cover_file_path:
                                         cover_file_path = self.find_file(["cover.j", "cover.png"], current_dest_dir)
-                                opf_file_path = self.find_file_by_end(".opf", ops_dir)
-                                if not opf_file_path:
-                                    opf_file_path = self.find_file_by_end(".opf", current_dest_dir)
-                                params = {"pin": 1, "unziped": 1}
+
+                                params = {"pin": 1, "unziped": 1, "opf": opf_file_path}
                                 if cover_file_path:
                                     params["cover"] = cover_file_path
-                                if opf_file_path:
-                                    params["opf"] = opf_file_path
-                                print("unzip ok, name:", sb.name)
+                                # print("unzip ok, name:", sb.name)
                                 StudyDao.update_books_by_id(params, sb.id)
-                                print("update pin=1 unziped=1 ok, name:", sb.name)
+                                # print("update pin=1 unziped=1 ok, name:", sb.name)
                                 # del file
                                 # os.remove(file_path)
                             else:
-                                StudyDao.update_books_by_id({"pin": 3}, sb.id)
+                                StudyDao.update_books_by_id({"pin": 3, "unziped": 1}, sb.id)
                         except Exception:
                             need_up_unziped.append(sb.code)
                             # os.remove(file_path)
                             try:
                                 if os.path.exists(current_dest_dir):
-                                    # os.removedirs(current_dest_dir)
                                     os.rmdir(current_dest_dir)
                             except Exception:
                                 logger.error("remove err epud extract dir [{}] failed!".format(current_dest_dir))
                 else:
                     print("not exist !!! file_path:", file_path)
             if need_up_unziped:
-                print("will batch_update_books_by_codes:", need_up_unziped)
+                # print("will batch_update_books_by_codes:", need_up_unziped)
                 StudyDao.batch_update_books_by_codes({"pin": 2, "unziped": 1}, need_up_unziped)
 
     def scan_epub(self, ctx, guest: Accounts):
@@ -522,6 +522,7 @@ class OpenService(BaseService):
                 print("insert new book end time:", time.time())
             # check_ziped_books
             StudyDao.check_ziped_books(0, 0, callback=unzip_epub)
+            print("check_ziped_books over.")
             # print("epub_new_books:", epub_new_books)
             return _result
 
