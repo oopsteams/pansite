@@ -183,8 +183,8 @@ class WxService(BaseService):
             rs = dict()
             if not wx_acc:
                 wx_acc = WxDao.new_wx_account_ext(openid, session_key, guest, source, wx_user_dict)
-                print("reg source:", source)
-                if wx_acc and source:
+                # print("reg source:", source)
+                if wx_acc and source > 0:
                     payment_service.reward_credit_by_invite(source, wx_acc.id)
                 result = auth_service.wx_sync_login(wx_acc)
                 tk = result['token']
