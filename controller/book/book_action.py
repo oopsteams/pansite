@@ -20,7 +20,13 @@ class BookHandler(BaseHandler):
             bl = book_service.list(self.guest, offset, size)
             rs["hasnext"] = len(bl) == size
             rs["list"] = bl
-
+        elif "pinyin" == cmd:
+            code = params.get("code", "0")
+            chapter = params.get("c", "")
+            if self.user_id and self.token and self.user_id != self.guest.id:
+                rs = book_service.parse_py_epub(self.context, code, chapter)
+            else:
+                rs = {'state': -1, 'err': 'user state wrong!'}
         return rs
 
     def get(self):
