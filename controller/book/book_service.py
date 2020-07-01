@@ -49,7 +49,6 @@ class BookService(BaseService):
                 parser.feed(f.read())
             parser.close()
             print("parser.data", parser.data)
-            print("parser.links", parser.links)
         else:
             print("can not find chapter_path:", chapter_path)
 
