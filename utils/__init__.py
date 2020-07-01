@@ -18,6 +18,13 @@ from cfg import HASH_ID_MIN_LENGTH, HASH_ID_SALT, JWT_SECRET_KEY
 default_tz = pytz.timezone('Asia/Chongqing')
 
 
+def is_chinese(word):
+    for ch in word:
+        if '\u4e00' <= ch <= '\u9fff':
+            return True
+    return False
+
+
 def scale_size(get_size):
     if not get_size:
         return ""

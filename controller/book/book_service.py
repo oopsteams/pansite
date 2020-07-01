@@ -10,7 +10,7 @@ from dao.wx_dao import WxDao
 from utils import scale_size, compare_dt, decrypt_id, singleton, get_today_zero_datetime, get_now_datetime, constant, \
     get_now_ts
 from utils.caches import cache_data, clear_cache
-from controller.book.my_html_parser import MyHTMLParser
+from controller.book.html_book_parser import HTMLBookParser
 from cfg import EPUB
 import os
 
@@ -44,7 +44,7 @@ class BookService(BaseService):
 
     def translate_epub(self, chapter_path):
         if os.path.exists(chapter_path):
-            parser = MyHTMLParser()
+            parser = HTMLBookParser()
             with open(chapter_path, "r") as f:
                 parser.feed(f.read())
             parser.close()
