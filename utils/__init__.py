@@ -163,14 +163,14 @@ def obfuscate_id(raw_id):
     return hashider.encrypt(raw_id)
 
 
-def decrypt_id(fuzzy_id, is_raise_error=True):
+def decrypt_id(fuzzy_id, is_raise_error=False):
     val = hashider.decrypt(fuzzy_id)
     if val and len(val) > 0:
         return val[0]
     else:
         if is_raise_error:
             raise TypeError("fuzzy id is incorrect!")
-        return ''
+        return 0
 
 
 def decrypt_user_id(fuzzy_user_id, is_raise_error=True):
