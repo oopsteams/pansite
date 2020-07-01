@@ -3,15 +3,12 @@
 Created by susy at 2020/6/30
 """
 from controller.base_service import BaseService
-from controller.auth_service import auth_service
-from dao.models import PaymentAccount, CreditRecord, AccountWxExt
 from dao.study_dao import StudyDao
-from dao.wx_dao import WxDao
-from utils import scale_size, compare_dt, decrypt_id, singleton, get_today_zero_datetime, get_now_datetime, constant, \
-    get_now_ts
+from utils import singleton, CJsonEncoder
 from utils.caches import cache_data, clear_cache
 from controller.book.html_book_parser import HTMLBookParser
 from cfg import EPUB
+import json
 import os
 
 PAY_SIGNED_CACHE_TIMEOUT = 24 * 60 * 60
@@ -49,8 +46,10 @@ class BookService(BaseService):
                 parser.feed(f.read())
             parser.close()
             if parser.data:
+                if os.path.exists(py_chapter_path):
+                    os.remove(py_chapter_path)
                 with open(py_chapter_path, "w") as f:
-                    f.write(parser.data)
+                    f.write(json.dumps(parser.data, cls=CJsonEncoder))
 
     def parse_py_epub(self, ctx, code, chapter):
         rs = {"state": 0}
