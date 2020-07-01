@@ -4,7 +4,7 @@ Created by susy at 2020/7/1
 """
 from html.parser import HTMLParser
 from utils import is_chinese
-from pypinyin import lazy_pinyin, Style
+from pypinyin import lazy_pinyin, Style, pinyin
 
 
 class HTMLBookParser(HTMLParser):
@@ -28,7 +28,7 @@ class HTMLBookParser(HTMLParser):
             for i in range(_l):
                 w = data[i]
                 if w not in self.data and is_chinese(w):
-                    self.data[w] = lazy_pinyin(w, style=Style.TONE)
+                    self.data[w] = pinyin(w, style=Style.TONE, heteronym=True, errors="ignore")
 
     def handle_comment(self, data):
         pass
