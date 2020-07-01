@@ -49,8 +49,6 @@ class BookService(BaseService):
                 parser.feed(f.read())
             parser.close()
             if parser.data:
-                if not os.path.exists(py_chapter_path):
-                    os.makedirs(py_chapter_path)
                 with open(py_chapter_path, "w") as f:
                     f.write(parser.data)
 
@@ -69,6 +67,8 @@ class BookService(BaseService):
         chapter_path = os.path.join(current_dest_dir, chapter)
         print("chapter_path: ", chapter_path)
         py_dir = os.path.join(current_dest_dir, "py")
+        if not os.path.exists(py_dir):
+            os.makedirs(py_dir)
         py_chapter_path = os.path.join(py_dir, chapter_file_name)
         if not os.path.exists(py_chapter_path):
             self.translate_epub(chapter_path, py_chapter_path)
