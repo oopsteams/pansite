@@ -42,15 +42,17 @@ class BookService(BaseService):
     def get_book(self, code):
         return StudyDao.check_out_study_book(code)
 
-    def translate_epub(self, chapter_path):
+    def translate_epub(self, chapter_path, py_chapter_path):
         if os.path.exists(chapter_path):
             parser = HTMLBookParser()
             with open(chapter_path, "r") as f:
                 parser.feed(f.read())
             parser.close()
-            print("parser.data", parser.data)
-        else:
-            print("can not find chapter_path:", chapter_path)
+            if parser.data:
+                if not os.path.exists(py_chapter_path):
+                    os.makedirs(py_chapter_path)
+                with open(py_chapter_path, "w") as f:
+                    f.write(parser.data)
 
     def parse_py_epub(self, ctx, code, chapter):
         rs = {"state": 0}
@@ -68,13 +70,10 @@ class BookService(BaseService):
         print("chapter_path: ", chapter_path)
         py_dir = os.path.join(current_dest_dir, "py")
         py_chapter_path = os.path.join(py_dir, chapter_file_name)
+        if not os.path.exists(py_chapter_path):
+            self.translate_epub(chapter_path, py_chapter_path)
         if os.path.exists(py_chapter_path):
             rs["p"] = os.path.join("py", chapter_file_name)
-        else:
-            self.translate_epub(chapter_path)
-
-        def final_do():
-            pass
 
         return rs
 
