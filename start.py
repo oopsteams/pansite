@@ -22,6 +22,7 @@ from controller.wx.wxpush import WXAppPush
 from controller.wx.wxkf import WXAppKf
 from controller.wx.wxupload import WXAppUpload
 from utils import log as logger
+env = "PROD"
 if len(sys.argv) > 1:
     env = sys.argv[1]
     os.putenv('env', env)

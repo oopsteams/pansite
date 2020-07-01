@@ -50,6 +50,8 @@ class BookService(BaseService):
             parser.close()
             print("parser.data", parser.data)
             print("parser.links", parser.links)
+        else:
+            print("can not find chapter_path:", chapter_path)
 
     def parse_py_epub(self, ctx, code, chapter):
         rs = {"state": 0}
