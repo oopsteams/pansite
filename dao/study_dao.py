@@ -13,7 +13,7 @@ class StudyDao(object):
     @query_wrap_db
     def query_study_book_list(cls, pin, offset=0, cnt=50) -> list:
         rs = []
-        ms = StudyBook.select().where(StudyBook.pin == pin).order_by(StudyBook.idx.asc()).offset(offset).limit(cnt)
+        ms = StudyBook.select().where(StudyBook.pin == pin).order_by(StudyBook.idx.desc()).offset(offset).limit(cnt)
         for sb in ms:
             sb_dict = StudyBook.to_dict(sb, ['id'])
             idx = sb.name.rfind(".")
