@@ -22,6 +22,7 @@ from controller.wx.wxpush import WXAppPush
 from controller.wx.wxkf import WXAppKf
 from controller.wx.wxupload import WXAppUpload
 from utils import log as logger
+
 env = "PROD"
 if len(sys.argv) > 1:
     env = sys.argv[1]
@@ -30,7 +31,6 @@ if len(sys.argv) > 1:
 
 scheduler = TornadoScheduler()
 scheduler.start()
-
 
 guest_user = None
 base_dir = os.path.dirname(__file__)
@@ -87,7 +87,6 @@ scheduler.add_job(update_access_token, 'interval', minutes=10, id='update_access
 
 update_sys_cfg()
 
-
 if __name__ == "__main__":
     settings = {
         "static_path": os.path.join(base_dir, "static"),
@@ -126,10 +125,11 @@ if __name__ == "__main__":
         # (r"/wx/push", WXAppPush),
 
         (r"/.*\.html", MainHandler, dict(middleware=middle_list)),
-        (r"/(.*\.txt)", StaticFileHandler, dict(url=settings['source'])),
-        # (r"/(apple-touch-icon\.png)",StaticFileHandler,dict(path=settings['static_path'])),
+        # (r"/(.*\.txt)", StaticFileHandler, dict(url=settings['source'])),
+        (r"/[^/]*\.(png|woff|ttf|jpg|jpeg|js)", StaticFileHandler, dict(path=settings['static_path'])),
     ], **settings)
     from cfg import service
+
     port = service['port']
 
     # server = HTTPServer(application, ssl_options=ssl_ctx)
