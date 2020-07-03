@@ -124,8 +124,7 @@ if __name__ == "__main__":
         (r"/wx/upload", WXAppUpload, dict(middleware=middle_list, context=context)),
         # (r"/wx/push", WXAppPush),
         # (r"/(.*\.txt)", StaticFileHandler, dict(url=settings['source'])),
-
-        (r"/[^/]*\.(png|woff|ttf|jpg|jpeg|js)", StaticFileHandler, dict(path=settings['static_path'])),
+        # (r"/[^/]*\.(png|woff|ttf|jpg|jpeg|js)", StaticFileHandler, dict(path=settings['static_path'])),
         (r"/.*\.html", MainHandler, dict(middleware=middle_list)),
 
     ], **settings)
