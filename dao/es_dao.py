@@ -6,15 +6,15 @@ from cfg import ES
 from elasticsearch import Elasticsearch, helpers, exceptions
 from utils import log as logger, get_now_ts
 
+_settings = {"number_of_shards": 3, "number_of_replicas": 0, "analysis": {"analyzer": {"slash": {"type": "pattern",
+                                                                                                 "pattern": "/"}}}}
+_tag_prop = {"type": "keyword"}
+_path_prop = {"type": "text", "analyzer": "slash"}
+date_time_prop = {"type": "date", "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"}
+_all_prop = {"type": "text", "analyzer": "ik_max_word", "search_analyzer": "ik_smart", "position_increment_gap": 100
+             }
 
 class EsConnections(object):
-    _settings = {"number_of_shards": 3, "number_of_replicas": 1, "analysis": {"analyzer": {"slash": {"type": "pattern",
-                                                                                                     "pattern": "/"}}}}
-    _tag_prop = {"type": "keyword"}
-    _path_prop = {"type": "text", "analyzer": "slash", "copy_to": "all"}
-    date_time_prop = {"type": "date", "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"}
-    _all_prop = {"type": "text", "analyzer": "ik_max_word", "search_analyzer": "ik_smart", "position_increment_gap": 100
-                 }
 
     def __init__(self, hosts=None):
         self.index_doc_cache = {}
@@ -37,28 +37,28 @@ class EsConnections(object):
             "fs_id": {"type": "keyword"},
             "size": {"type": "long"},
             "account": {"type": "long"},
-            "tags": self._tag_prop,
+            "tags": _tag_prop,
             "filename": {"type": "keyword", "copy_to": "all"},
             "aliasname": {"type": "keyword", "copy_to": "all"},
-            "path": self._path_prop,
+            "path": _path_prop,
             "parent": {"type": "keyword"},
             "server_ctime": {"type": "long"},
-            "updated_at": self.date_time_prop,
-            "created_at": self.date_time_prop,
+            "updated_at": date_time_prop,
+            "created_at": date_time_prop,
             "source": {"type": "keyword"},
             "sourceid": {"type": "long"},
             "extuid": {"type": "keyword"},
             "payload": {"type": "keyword"},
-            "all": self._all_prop}
+            "all": _all_prop}
         _cfg = ES["share"]
-        _index_body = {"settings": self._settings,
+        _index_body = {"settings": _settings,
                        "mappings": {
                           "dataitem": {"properties": props}
                        }}
         self.es_index(_cfg["index_name"], _cfg["doctype"], _index_body, props)
         _cfg = ES["local"]
 
-        _index_body = {"settings": self._settings,
+        _index_body = {"settings": _settings,
                        "mappings": {
                           "dataitem": {"properties": props}
                        }}
@@ -249,7 +249,7 @@ class EsDao(object):
 
 
 __EC = EsConnections()
-
+# __EC = None
 
 def es_dao_share() -> EsDao:
     _cfg = ES["share"]
@@ -272,3 +272,34 @@ def es_dao_test() -> EsDao:
     return __EC.dao(index_name, doc_type)
 
 
+if __name__ == '__main__':
+
+    import json
+
+    props = {
+        "id": {"type": "long"},
+        "category": {"type": "integer"},
+        "isdir": {"type": "integer"},
+        "pin": {"type": "integer"},
+        "pos": {"type": "integer"},
+        "fs_id": {"type": "keyword"},
+        "size": {"type": "long"},
+        "account": {"type": "long"},
+        "tags": _tag_prop,
+        "filename": {"type": "keyword", "copy_to": "all"},
+        "aliasname": {"type": "keyword", "copy_to": "all"},
+        "path": _path_prop,
+        "parent": {"type": "keyword"},
+        "server_ctime": {"type": "long"},
+        "updated_at": date_time_prop,
+        "created_at": date_time_prop,
+        "source": {"type": "keyword"},
+        "sourceid": {"type": "long"},
+        "extuid": {"type": "keyword"},
+        "payload": {"type": "keyword"},
+        "all": _all_prop}
+    _index_body = {"settings": _settings,
+                   "mappings": {
+                       "dataitem": {"properties": props}
+                   }}
+    print(json.dumps(_index_body))

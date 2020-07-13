@@ -78,7 +78,7 @@ ES = {
     "hosts": [{"host": "111.229.193.232", "port": 9200}],
 
     "share": {
-        "index_name": "share",
+        "index_name": "share_2",
         "doctype": "dataitem"
     },
     "local": {

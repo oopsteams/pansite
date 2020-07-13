@@ -1,0 +1,91 @@
+{
+  "settings": {
+    "number_of_shards": 3,
+    "number_of_replicas": 0,
+    "analysis": {
+      "analyzer": {
+        "slash": {
+          "type": "pattern",
+          "pattern": "/"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "dataitem": {
+      "properties": {
+        "id": {
+          "type": "long"
+        },
+        "category": {
+          "type": "integer"
+        },
+        "isdir": {
+          "type": "integer"
+        },
+        "pin": {
+          "type": "integer"
+        },
+        "pos": {
+          "type": "integer"
+        },
+        "fs_id": {
+          "type": "keyword"
+        },
+        "size": {
+          "type": "long"
+        },
+        "account": {
+          "type": "long"
+        },
+        "tags": {
+          "type": "keyword"
+        },
+        "filename": {
+          "type": "keyword",
+          "copy_to": "all"
+        },
+        "aliasname": {
+          "type": "keyword",
+          "copy_to": "all"
+        },
+        "path": {
+          "type": "text",
+          "analyzer": "slash"
+        },
+        "parent": {
+          "type": "keyword"
+        },
+        "server_ctime": {
+          "type": "long"
+        },
+        "updated_at": {
+          "type": "date",
+          "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+        },
+        "created_at": {
+          "type": "date",
+          "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+        },
+        "source": {
+          "type": "keyword"
+        },
+        "sourceid": {
+          "type": "long"
+        },
+        "extuid": {
+          "type": "keyword"
+        },
+        "payload": {
+          "type": "keyword"
+        },
+        "all": {
+          "type": "text",
+          "analyzer": "ik_max_word",
+          "search_analyzer": "ik_smart",
+          "position_increment_gap": 100
+        }
+      }
+    }
+  }
+}

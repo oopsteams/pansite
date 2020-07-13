@@ -166,7 +166,7 @@ class OpenService(BaseService):
 
         return None
 
-    def search(self, path_tag, tag, keyword, source, pid, page, size=50, lvl_pos=2):
+    def search(self, path_tag, tag, keyword, source, pid, rg, page, size=50, lvl_pos=2):
         _app_map_cache = {}
         if not source:
             source = 'shared'
@@ -231,11 +231,12 @@ class OpenService(BaseService):
                 es_dao_fun = es_dao_share
         # if tag and "local" != source:
         #     sp.add_must(field='all', value=tag)
-        if tag:
-            # sp.add_must(False, field='query_string', value="\"%s\"" % tag)
-            sp.add_must(False, field='query_string', value="%s" % tag)
-        if path_tag:
-            sp.add_must(field='path', value="%s" % path_tag)
+        if not rg == "all":
+            if tag:
+                # sp.add_must(False, field='query_string', value="\"%s\"" % tag)
+                sp.add_must(False, field='query_string', value="%s" % tag)
+            if path_tag:
+                sp.add_must(field='path', value="%s" % path_tag)
         if kw:
             es_body = build_query_item_es_body(sp)
         else:
