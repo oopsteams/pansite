@@ -65,7 +65,7 @@ class OpenHandler(BaseHandler):
             path_tag = self.get_argument("path_tag", None)
             source = self.get_argument("source", "")
             page = self.get_argument("page", "0")
-            size = self.get_argument("size", "30")
+            size = self.get_argument("size", "20")
             pos = int(self.get_argument("pos", "2"))
             # print("kw:", kw)
             # print("source:", source)
