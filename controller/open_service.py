@@ -240,8 +240,17 @@ class OpenService(BaseService):
                 sp.add_must(field='path', value="%s" % path_tag)
         if kw:
             es_body = build_query_item_es_body(sp)
+            """
+            "highlight" : {
+        "fields" : {
+            "title" : {}
+        }
+    }
+            """
+            es_body["highlight"] = {"fields": {"filename": {}}}
         else:
             es_body = build_query_item_es_body(sp, sort_fields=_sort_fields)
+
         logger.info("es_body:{}".format(es_body))
         es_result = es_dao_fun().es_search_exec(es_body)
         total = 0
