@@ -258,13 +258,14 @@ class OpenService(BaseService):
                 if not "local" == source:
                     if 'extuid' in _s["_source"]:
                         app_id = _s["_source"]["extuid"]
-                        if app_id in _app_map_cache:
-                            app_name = _app_map_cache[app_id]
-                        else:
-                            _app_name = self.get_app_by_id(app_id)
-                            if _app_name:
-                                app_name = _app_name
-                    _app_map_cache[app_id] = app_name
+                        app_name = app_id
+                        # if app_id in _app_map_cache:
+                        #     app_name = _app_map_cache[app_id]
+                        # else:
+                        #     _app_name = self.get_app_by_id(app_id)
+                        #     if _app_name:
+                        #         app_name = _app_name
+                    # _app_map_cache[app_id] = app_name
                 else:
                     app_name = '#'
                 fn_name = _s["_source"]["filename"]
