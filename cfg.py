@@ -82,7 +82,7 @@ ES = {
         "doctype": "dataitem"
     },
     "local": {
-        "index_name": "local",
+        "index_name": "local_2",
         "doctype": "dataitem"
     },
     "test": {
