@@ -4,7 +4,7 @@ Created by susy at 2020/6/30
 """
 from controller.action import BaseHandler
 from controller.book.book_service import book_service
-from utils import decrypt_id
+from utils import decrypt_id, constant
 import json
 
 
@@ -39,6 +39,7 @@ class BookHandler(BaseHandler):
                 wx_id = decrypt_id(fuzzy_wx_id)
             if wx_id:
                 rs["datas"] = book_service.shelf_book_list(wx_id, offset, size)
+                rs["maxcount"] = constant.SHELF["COUNT"]
         elif "shelfsync" == cmd:
             datas = params.get("datas", [])
             fuzzy_wx_id = params.get('uid', None)
