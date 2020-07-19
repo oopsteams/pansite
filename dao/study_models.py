@@ -30,6 +30,25 @@ class StudyBook(BaseModel):
         return object_to_dict(instance, cls.field_names(), excludes)
 
 
+class BookShelf(Model):
+    id = AutoField()
+    wx_id = IntegerField(null=False, default=0)
+    code = CharField(max_length=128, null=False, index=True)
+    lastopen = IntegerField(null=False, default=0)
+    top = IntegerField(null=False, default=0)
+
+    class Meta:
+        database = db
+
+    @classmethod
+    def field_names(cls):
+        return ["id", "wx_id", "lastopen", "code", "top"]
+
+    @classmethod
+    def to_dict(cls, instance, excludes=[]):
+        return object_to_dict(instance, cls.field_names(), excludes)
+
+
 class StudyProps(Model):
     wx_id = IntegerField(null=False, default=0)
     code = CharField(max_length=16, null=False, index=True)

@@ -4,6 +4,7 @@ Created by susy at 2020/6/30
 """
 from controller.action import BaseHandler
 from controller.book.book_service import book_service
+from utils import decrypt_id
 import json
 
 
@@ -27,6 +28,26 @@ class BookHandler(BaseHandler):
                 rs = book_service.parse_py_epub(self.context, code, chapter)
             else:
                 rs = {'state': -1, 'err': 'user state wrong!'}
+        elif "shelf" == cmd:
+            page = int(params.get("page", "0"))
+            size = int(params.get("size", "10"))
+            offset = page * size
+            fuzzy_wx_id = params.get('uid', None)
+            if not fuzzy_wx_id:
+                wx_id = 0
+            else:
+                wx_id = decrypt_id(fuzzy_wx_id)
+            if wx_id:
+                rs["datas"] = book_service.shelf_book_list(wx_id, offset, size)
+        elif "shelfsync" == cmd:
+            params = params.get("datas", [])
+            fuzzy_wx_id = params.get('uid', None)
+            if not fuzzy_wx_id:
+                wx_id = 0
+            else:
+                wx_id = decrypt_id(fuzzy_wx_id)
+            if wx_id:
+                book_service.sync_shelf_book_list(wx_id, params)
         return rs
 
     def get(self):

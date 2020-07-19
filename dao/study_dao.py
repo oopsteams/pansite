@@ -2,8 +2,9 @@
 """
 Created by susy at 2020/6/28
 """
-from dao.models import db, query_wrap_db, StudyBook
+from dao.models import db, query_wrap_db, StudyBook, BookShelf
 from peewee import fn
+from utils import obfuscate_id
 
 
 class StudyDao(object):
@@ -21,6 +22,26 @@ class StudyDao(object):
                 sb_dict["name"] = sb.name[:idx]
             rs.append(sb_dict)
         return rs
+
+    @classmethod
+    @query_wrap_db
+    def query_shelf_book_list(cls, wx_id, offset=0, cnt=50) -> list:
+        rs = []
+        ms = BookShelf.select(BookShelf, StudyBook).join(StudyBook, on=(StudyBook.code == BookShelf.code), attr="book").where(BookShelf.wx_id == wx_id).order_by(BookShelf.lastopen.desc()).offset(offset).limit(cnt)
+        for bs in ms:
+            sb_dict = BookShelf.to_dict(bs, ['id'])
+            sb_dict["id"] = obfuscate_id(bs.id)
+            sb_dict["bk"] = StudyBook.to_dict(bs.book, ["id"])
+            rs.append(sb_dict)
+        return rs
+
+    @classmethod
+    @query_wrap_db
+    def query_shelf_book_by_code(cls, wx_id, code) -> BookShelf:
+        ms = BookShelf.select(BookShelf).where(BookShelf.wx_id == wx_id, BookShelf.code == code).limit(1)
+        if ms:
+            return ms[0]
+        return None
 
     @classmethod
     @query_wrap_db
@@ -86,11 +107,28 @@ class StudyDao(object):
             print("update_books_by_id params:", _params, ",pk_id:", pk_id)
             StudyBook.update(**_params).where(StudyBook.id == pk_id).execute()
 
+    @classmethod
+    def update_shelf_books(cls, params_list, wx_id):
+
+        with db:
+            for params in params_list:
+                code = params.pop("code")
+                _params = {p: params[p] for p in params if p in BookShelf.field_names()}
+                BookShelf.update(**_params).where(BookShelf.wx_id == wx_id, BookShelf.code == code).execute()
+
     # insert datas
     @classmethod
     def batch_insert_books(cls, book_list):
         with db:
             StudyBook.insert_many(book_list).execute()
+
+    @classmethod
+    def new_book_shelf(cls, params):
+        _params = {p: params[p] for p in params if p in BookShelf.field_names()}
+        bs: BookShelf = BookShelf(**_params)
+        with db:
+            bs.save(force_insert=True)
+            return bs
 
 
 
