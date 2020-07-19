@@ -3,7 +3,7 @@
 Created by susy at 2020/6/28
 """
 from dao.models import db, query_wrap_db, StudyBook, BookShelf
-from peewee import fn
+from peewee import fn, ModelSelect
 from utils import obfuscate_id
 
 
@@ -42,6 +42,19 @@ class StudyDao(object):
         if ms:
             return ms[0]
         return None
+
+    @classmethod
+    @query_wrap_db
+    def query_shelf_book_count(cls, wx_id):
+        model_rs: ModelSelect = BookShelf.select(fn.count(BookShelf.id).alias('count')).where(BookShelf.wx_id == wx_id)
+
+        if model_rs:
+            model_dict = model_rs.dicts()
+            if model_dict:
+                v = model_dict[0].get('count')
+                if v:
+                    return v
+        return 0
 
     @classmethod
     @query_wrap_db
@@ -129,6 +142,12 @@ class StudyDao(object):
         with db:
             bs.save(force_insert=True)
             return bs
+
+    # Del
+    @classmethod
+    def batch_insert_books(cls, wx_id, bookshelf_id):
+        with db:
+            BookShelf.delete().where(BookShelf.id == bookshelf_id, BookShelf.wx_id == wx_id)
 
 
 

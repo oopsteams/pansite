@@ -203,6 +203,9 @@ STUDY = dict(
     SUBJECT_CELLS=_SUBJECT_CELLS
 )
 
+SHELF = dict(
+    COUNT=20
+)
 
 def shared_format(link, code):
     return """链接: {} 提取码: {} 复制这段内容后打开百度网盘手机App，操作更方便哦""".format(link, code)

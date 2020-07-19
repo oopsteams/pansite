@@ -4,7 +4,7 @@ Created by susy at 2020/6/30
 """
 from controller.base_service import BaseService
 from dao.study_dao import StudyDao
-from utils import singleton, CJsonEncoder, decrypt_id
+from utils import singleton, CJsonEncoder, decrypt_id, constant
 from utils.caches import cache_data, clear_cache
 from controller.book.html_book_parser import HTMLBookParser
 from cfg import EPUB
@@ -80,6 +80,7 @@ class BookService(BaseService):
         return StudyDao.query_shelf_book_list(wx_id, offset, size)
 
     def sync_shelf_book_list(self, wx_id, book_list):
+        rs = 0
         news_items = []
         update_items = []
         for bk in book_list:
@@ -94,13 +95,20 @@ class BookService(BaseService):
                     update_items.append(bk)
                 else:
                     news_items.append(bk)
+        if update_items:
+            StudyDao.update_shelf_books(update_items, wx_id)
         if news_items:
+            cnt = StudyDao.query_shelf_book_count(wx_id)
+            if cnt >= constant.SHELF["COUNT"]:
+                return -1
             for nbk in news_items:
                 nbk["wx_id"] = wx_id
                 StudyDao.new_book_shelf(nbk)
-        if update_items:
-            StudyDao.update_shelf_books(update_items, wx_id)
-        pass
+
+        return rs
+
+    def remove_shelf_book(self, wx_id, shelf_book_id):
+        StudyDao.batch_insert_books(wx_id, shelf_book_id)
 
 
 book_service = BookService()
