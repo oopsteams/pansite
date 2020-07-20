@@ -40,6 +40,7 @@ class BookHandler(BaseHandler):
             if wx_id:
                 rs["datas"] = book_service.shelf_book_list(wx_id, offset, size)
                 rs["maxcount"] = constant.SHELF["COUNT"]
+                rs["hasnext"] = len(rs["datas"]) == size
         elif "shelfsync" == cmd:
             datas = params.get("datas", [])
             fuzzy_wx_id = params.get('uid', None)
