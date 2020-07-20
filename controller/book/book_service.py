@@ -4,7 +4,7 @@ Created by susy at 2020/6/30
 """
 from controller.base_service import BaseService
 from dao.study_dao import StudyDao
-from utils import singleton, CJsonEncoder, decrypt_id, constant
+from utils import singleton, CJsonEncoder, decrypt_id, constant, log
 from utils.caches import cache_data, clear_cache
 from controller.book.html_book_parser import HTMLBookParser
 from cfg import EPUB
@@ -103,6 +103,7 @@ class BookService(BaseService):
                 return -1
             for nbk in news_items:
                 nbk["wx_id"] = wx_id
+                log.debug("new shelf book:{}".format(nbk))
                 StudyDao.new_book_shelf(nbk)
 
         return rs
