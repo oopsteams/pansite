@@ -147,7 +147,7 @@ class StudyDao(object):
     @classmethod
     def del_shelf_books(cls, wx_id, bookshelf_code):
         with db:
-            BookShelf.delete().where(BookShelf.code == bookshelf_code, BookShelf.wx_id == wx_id)
+            BookShelf.delete().where(BookShelf.code == bookshelf_code, BookShelf.wx_id == wx_id).execute()
 
 
 
