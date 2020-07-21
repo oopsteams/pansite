@@ -52,18 +52,15 @@ class BookHandler(BaseHandler):
                 rs_val = book_service.sync_shelf_book_list(wx_id, datas)
                 rs["value"] = rs_val
         elif "shelfremove" == cmd:
-            book_shelf_fuzzy_id = params.get("id", None)
+            book_shelf_code = params.get("code", None)
             fuzzy_wx_id = params.get('uid', None)
             if not fuzzy_wx_id:
                 wx_id = 0
             else:
                 wx_id = decrypt_id(fuzzy_wx_id)
 
-            if book_shelf_fuzzy_id:
-                book_shelf_id = decrypt_id(book_shelf_fuzzy_id)
-
-                if wx_id:
-                    book_service.remove_shelf_book(wx_id, book_shelf_id)
+            if wx_id and book_shelf_code:
+                rs["value"] = book_service.remove_shelf_book(wx_id, book_shelf_code)
         return rs
 
     def get(self):

@@ -108,8 +108,9 @@ class BookService(BaseService):
 
         return rs
 
-    def remove_shelf_book(self, wx_id, shelf_book_id):
-        StudyDao.batch_insert_books(wx_id, shelf_book_id)
+    def remove_shelf_book(self, wx_id, book_shelf_code):
+        StudyDao.del_shelf_books(wx_id, book_shelf_code)
+        return 0
 
 
 book_service = BookService()

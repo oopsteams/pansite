@@ -29,7 +29,7 @@ class StudyDao(object):
         rs = []
         ms = BookShelf.select(BookShelf, StudyBook).join(StudyBook, on=(StudyBook.code == BookShelf.code), attr="book").where(BookShelf.wx_id == wx_id).order_by(BookShelf.lastopen.desc()).offset(offset).limit(cnt)
         for bs in ms:
-            sb_dict = BookShelf.to_dict(bs, ['id'])
+            sb_dict = BookShelf.to_dict(bs, ['id', 'wx_id'])
             sb_dict["id"] = obfuscate_id(bs.id)
             sb_dict["bk"] = StudyBook.to_dict(bs.book, ["id", "account_id", "ref_id"])
             rs.append(sb_dict)
@@ -145,9 +145,9 @@ class StudyDao(object):
 
     # Del
     @classmethod
-    def batch_insert_books(cls, wx_id, bookshelf_id):
+    def del_shelf_books(cls, wx_id, bookshelf_code):
         with db:
-            BookShelf.delete().where(BookShelf.id == bookshelf_id, BookShelf.wx_id == wx_id)
+            BookShelf.delete().where(BookShelf.code == bookshelf_code, BookShelf.wx_id == wx_id)
 
 
 
