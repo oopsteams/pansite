@@ -31,7 +31,7 @@ class StudyDao(object):
         for bs in ms:
             sb_dict = BookShelf.to_dict(bs, ['id'])
             sb_dict["id"] = obfuscate_id(bs.id)
-            sb_dict["bk"] = StudyBook.to_dict(bs.book, ["id"])
+            sb_dict["bk"] = StudyBook.to_dict(bs.book, ["id", "account_id", "ref_id"])
             rs.append(sb_dict)
         return rs
 

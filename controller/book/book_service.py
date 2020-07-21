@@ -103,7 +103,7 @@ class BookService(BaseService):
                 return -1
             for nbk in news_items:
                 nbk["wx_id"] = wx_id
-                log.debug("new shelf book:{}".format(nbk))
+                # log.debug("new shelf book:{}".format(nbk))
                 StudyDao.new_book_shelf(nbk)
 
         return rs
