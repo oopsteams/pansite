@@ -586,6 +586,7 @@ class OpenService(BaseService):
                 current_dest_dir = os.path.join(dest_dir, sb.code)
                 ncx_path = os.path.join(current_dest_dir, sb.ncx)
                 logger.debug("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
+                print("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
 
         StudyDao.check_ziped_books(0, 1, callback=deal_unzip_epub)
         pass

@@ -114,9 +114,6 @@ class EsConnections(object):
         _index_body = {"settings": _settings,
                        "mappings": {
                            _cfg["doctype"]: {
-                               "_id": {
-                                   "path": "id"
-                               },
                                "properties": _book
                            }
                        }}
