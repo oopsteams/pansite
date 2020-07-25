@@ -79,6 +79,7 @@ class BookNcxParser(HTMLParser):
         pass
 
     def handle_endtag(self, tag):
+        print("end tag:", tag)
         if self.find_docTitle and tag.lower() == "doctitle":
             self.find_docTitle = False
         elif self.find_meta and tag.lower() == "meta":
@@ -86,6 +87,7 @@ class BookNcxParser(HTMLParser):
         pass
 
     def handle_startendtag(self, tag, attrs):
+        print("handle_startendtag tag:", tag)
         pass
 
     def handle_data(self, data):
