@@ -92,11 +92,12 @@ class BookNcxParser(HTMLParser):
     def handle_data(self, data):
         if data:
             # print("find_docTitle:", self.find_docTitle, ",data:", data)
+            _d = data.replace('\n', '').replace('\r', '')
             if self.find_docTitle:
                 if self.title:
-                    self.title = "{}{}".format(self.title, data)
+                    self.title = "{}{}".format(self.title, _d)
                 else:
-                    self.title = data
+                    self.title = _d
 
     def handle_comment(self, data):
         pass

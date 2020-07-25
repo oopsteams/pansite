@@ -593,12 +593,13 @@ class OpenService(BaseService):
             for sb in books:
                 current_dest_dir = os.path.join(dest_dir, sb.code)
                 ncx_path = os.path.join(current_dest_dir, sb.ncx)
-                logger.debug("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
-                print("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
+                # logger.debug("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
+                # print("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
                 if os.path.exists(ncx_path):
                     print("ncx file exits!")
                     params = {}
                     self.parse_ncx(ncx_path, params)
+                    print("params:", params)
                 # if _ncx_file_path:
                 #
 
