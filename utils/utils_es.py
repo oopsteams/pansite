@@ -144,37 +144,8 @@ class SearchParams(object):
         self.should.append(MustNotParams(is_match, field, value))
 
 
-# def get_data_item_es_json(data_item_id, category, isdir, pin, fs_id, size, account, filename, path, server_ctime, dlink_updated_at,
-#                           updated_at, created_at, parent, panacc, source='local'):
-#     dlink_updated_at_str = arrow.get(dlink_updated_at).strftime('%Y-%m-%d %H:%M:%S')
-#     updated_at_str = arrow.get(updated_at).strftime('%Y-%m-%d %H:%M:%S')
-#     created_at_str = arrow.get(created_at).strftime('%Y-%m-%d %H:%M:%S')
-#     es_json = {
-#         "id": data_item_id, "category": category, "isdir": isdir, "pin": pin, "fs_id": fs_id, "size": size,
-#         "account": account, "filename": filename, "path": path, "server_ctime": server_ctime,
-#         "dlink_updated_at": dlink_updated_at_str, "updated_at":  updated_at_str, "created_at": created_at_str,
-#         "parent": parent, "source": source, "panacc": panacc
-#     }
-#     return es_json
-#
-#
-# def get_dir_item_es_json(data_item_id, category, isdir, pin, fs_id, size, account, filename, path, server_ctime,
-#                          updated_at, created_at, parent, sourceid, sourceuid, source='local'):
-#
-#     updated_at_str = arrow.get(updated_at).strftime('%Y-%m-%d %H:%M:%S')
-#     created_at_str = arrow.get(created_at).strftime('%Y-%m-%d %H:%M:%S')
-#     es_json = {
-#         "id": data_item_id, "category": category, "isdir": isdir, "pin": pin, "fs_id": fs_id, "size": size,
-#         "account": account, "filename": filename, "path": path, "server_ctime": server_ctime,
-#         "updated_at":  updated_at_str, "created_at": created_at_str, "parent": parent, "source": source,
-#         "sourceid": sourceid, "sourceuid": sourceuid
-#     }
-#     return es_json
-
-
 def build_es_item_json_body(data_item_id, category, isdir, pin, fs_id, size, account, filename, path, server_ctime,
                             updated_at, created_at, parent, sourceid, extuid='#', source='local', pos=0, tags=['0']):
-
     """
     :param data_item_id:
     :param category:
@@ -203,6 +174,16 @@ def build_es_item_json_body(data_item_id, category, isdir, pin, fs_id, size, acc
                       account=account, tags=tags, filename=filename, path=path, parent=parent,
                       server_ctime=server_ctime, updated_at=updated_at_str, created_at=created_at_str, source=source,
                       sourceid=sourceid, extuid=extuid)
+    return es_json_bd
+
+
+def build_es_book_json_body(code, price, name, cover, opf, ncx, ftype, lh, ftsize, desc, idx, created_at, pin=0,
+                            ref_id=0,
+                            source='', tags=['0']):
+    created_at_str = arrow.get(created_at).strftime('%Y-%m-%d %H:%M:%S')
+    es_json_bd = dict(code=code, price=price, name=name, cover=cover, opf=opf, ncx=ncx, ftype=ftype,
+                      lh=lh, ftsize=ftsize, desc=desc, idx=idx, created_at=created_at_str, pin=pin, ref_id=ref_id,
+                      source=source, tags=tags)
     return es_json_bd
 
 
@@ -265,6 +246,3 @@ def build_query_item_es_body(search_params: SearchParams, sort_fields=None, fiel
     print("build_query_item_es_body bool_body:", bool_body)
     query_body["bool"] = bool_body
     return es_body
-
-
-

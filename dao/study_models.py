@@ -12,18 +12,22 @@ class StudyBook(BaseModel):
     account_id = IntegerField(null=False, index=True)
     ref_id = IntegerField(null=False, index=True)
     price = IntegerField(null=False, default=0)  # 价格/评分，分
-    name = CharField(max_length=64, null=False)
+    name = CharField(max_length=128, null=False)
     code = CharField(max_length=128, null=False, index=True)
     cover = CharField(max_length=64)
     opf = CharField(max_length=64)
     ncx = CharField(max_length=64)
     unziped = IntegerField(null=False, default=0)
+    ftype = IntegerField(null=False, default=0)  # 绘本:2
+    lh = CharField(max_length=32, default='')  # 默认行高
+    ftsize = IntegerField(null=False, default=0)  # 默认字号
     idx = IntegerField(null=False, default=0, index=True)
     pin = IntegerField(null=False, default=0, index=True)
 
     @classmethod
     def field_names(cls):
-        return ["id", "code", "account_id", "ref_id", "price", "name", "unziped", "idx", "cover", "pin", "opf", "ncx"]
+        return ["id", "code", "account_id", "ref_id", "price", "name", "unziped", "idx", "cover", "pin", "opf", "ncx",
+                "ftype", "lh", "ftsize"]
 
     @classmethod
     def to_dict(cls, instance, excludes=[]):

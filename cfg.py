@@ -85,9 +85,9 @@ ES = {
         "index_name": "local_2",
         "doctype": "dataitem"
     },
-    "test": {
-        "index_name": "test",
-        "doctype": "dataitem"
+    "book": {
+        "index_name": "book",
+        "doctype": "bookitem"
     }
 }
 if TAG == "dev":

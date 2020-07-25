@@ -13,6 +13,65 @@ _path_prop = {"type": "text", "analyzer": "slash"}
 date_time_prop = {"type": "date", "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"}
 _all_prop = {"type": "text", "analyzer": "ik_max_word", "search_analyzer": "ik_smart", "position_increment_gap": 100
              }
+_props = {
+    "id": {"type": "long"},
+    "category": {"type": "integer"},
+    "isdir": {"type": "integer"},
+    "pin": {"type": "integer"},
+    "pos": {"type": "integer"},
+    "fs_id": {"type": "keyword"},
+    "size": {"type": "long"},
+    "account": {"type": "long"},
+    "tags": _tag_prop,
+    "filename": {"type": "keyword", "copy_to": "all"},
+    "aliasname": {"type": "keyword", "copy_to": "all"},
+    "path": _path_prop,
+    "parent": {"type": "keyword"},
+    "server_ctime": {"type": "long"},
+    "updated_at": date_time_prop,
+    "created_at": date_time_prop,
+    "source": {"type": "keyword"},
+    "sourceid": {"type": "long"},
+    "extuid": {"type": "keyword"},
+    "payload": {"type": "keyword"},
+    "all": _all_prop}
+
+# "code", "account_id", "ref_id", "price", "name", "unziped", "idx", "cover", "pin", "opf", "ncx"
+_book = {
+    "id": {"type": "keyword"},
+    "ref_id": {"type": "long"},
+    "price": {"type": "long"},
+    "name": {"type": "text",
+             "analyzer": "ik_max_word",
+             "search_analyzer":
+                 "ik_smart",
+             "fields": {
+                 "keyword": {
+                     "type": "keyword",
+                     "ignore_above": 128
+                 }
+             }
+             },
+    "idx": {"type": "integer"},
+    "cover": {"type": "keyword"},
+    "opf": {"type": "keyword"},
+    "ncx": {"type": "keyword"},
+    "pin": {"type": "integer"},
+    "ftype": {"type": "integer"},
+    "lh": {"type": "keyword"},
+    "ftsize": {"type": "integer"},
+    "tags": _tag_prop,
+    "created_at": date_time_prop,
+    "source": {"type": "keyword"},
+    "desc": {"type": "text",
+             "analyzer": "ik_max_word",
+             "search_analyzer":
+                 "ik_smart"
+             }
+}
+
+
+#  "ftype", "lh", "ftsize"
 
 class EsConnections(object):
 
@@ -28,39 +87,19 @@ class EsConnections(object):
         logger.info("EsConnections es init hosts=%s" % hosts)
         # print("elastic search es:", self.es)
 
-        props = {
-            "id": {"type": "long"},
-            "category": {"type": "integer"},
-            "isdir": {"type": "integer"},
-            "pin": {"type": "integer"},
-            "pos": {"type": "integer"},
-            "fs_id": {"type": "keyword"},
-            "size": {"type": "long"},
-            "account": {"type": "long"},
-            "tags": _tag_prop,
-            "filename": {"type": "keyword", "copy_to": "all"},
-            "aliasname": {"type": "keyword", "copy_to": "all"},
-            "path": _path_prop,
-            "parent": {"type": "keyword"},
-            "server_ctime": {"type": "long"},
-            "updated_at": date_time_prop,
-            "created_at": date_time_prop,
-            "source": {"type": "keyword"},
-            "sourceid": {"type": "long"},
-            "extuid": {"type": "keyword"},
-            "payload": {"type": "keyword"},
-            "all": _all_prop}
+        props = _props
+
         _cfg = ES["share"]
         _index_body = {"settings": _settings,
                        "mappings": {
-                          "dataitem": {"properties": props}
+                           "dataitem": {"properties": props}
                        }}
         self.es_index(_cfg["index_name"], _cfg["doctype"], _index_body, props)
         _cfg = ES["local"]
 
         _index_body = {"settings": _settings,
                        "mappings": {
-                          "dataitem": {"properties": props}
+                           "dataitem": {"properties": props}
                        }}
         self.es_index(_cfg["index_name"], _cfg["doctype"], _index_body, props)
         # _cfg = ES["test"]
@@ -69,6 +108,19 @@ class EsConnections(object):
         #                    "dataitem": {"properties": props}
         #                }}
         # self.es_index(_cfg["index_name"], _cfg["doctype"], _index_body, props)
+
+        _cfg = ES["book"]
+
+        _index_body = {"settings": _settings,
+                       "mappings": {
+                           _cfg["doctype"]: {
+                               "_id": {
+                                   "path": "id"
+                               },
+                               "properties": _book
+                           }
+                       }}
+        self.es_index(_cfg["index_name"], _cfg["doctype"], _index_body, _book)
 
     def es_index(self, index_name, doc_type, index_body, props):
         key = "%s_%s" % (index_name, doc_type)
@@ -123,7 +175,7 @@ class EsDao(object):
                 doc['@ts'] = get_now_ts()
                 doc['@is_removed'] = 0
         except Exception as e:
-            logger.error("index=%s"% e, exc_info=True)
+            logger.error("index=%s" % e, exc_info=True)
 
         # logger.debug("ES:index=%s" % doc)
         # print("index_name:%s,%s" % (self.index_name, self.doc_type))
@@ -134,7 +186,8 @@ class EsDao(object):
         try:
             ret = self.update(doc_id, {"doc": {field: value}})
         except Exception as e:
-            logger.warn("update_field, doc_id: %s, field: %s, value: %s, error: %s" % (doc_id, field, value, e), exc_info=True)
+            logger.warn("update_field, doc_id: %s, field: %s, value: %s, error: %s" % (doc_id, field, value, e),
+                        exc_info=True)
             return None
 
         return ret
@@ -168,7 +221,7 @@ class EsDao(object):
 
     def update(self, doc_id, body, params=None):
         try:
-            logger.debug("ES:%s,update=%s,=%s"% (self.doc_type, doc_id, body))
+            logger.debug("ES:%s,update=%s,=%s" % (self.doc_type, doc_id, body))
 
             try:
                 body["doc"]['@ts'] = get_now_ts()
@@ -249,6 +302,8 @@ class EsDao(object):
 
 
 __EC = EsConnections()
+
+
 # __EC = None
 
 def es_dao_share() -> EsDao:
@@ -272,8 +327,14 @@ def es_dao_test() -> EsDao:
     return __EC.dao(index_name, doc_type)
 
 
-if __name__ == '__main__':
+def es_dao_book() -> EsDao:
+    _cfg = ES["book"]
+    index_name = _cfg["index_name"]
+    doc_type = _cfg["doctype"]
+    return __EC.dao(index_name, doc_type)
 
+
+if __name__ == '__main__':
     import json
 
     props = {

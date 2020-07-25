@@ -3,7 +3,7 @@
 Created by susy at 2020/7/1
 """
 from html.parser import HTMLParser
-from utils import is_chinese
+from utils import is_chinese, log
 from pypinyin import lazy_pinyin, Style, pinyin
 
 
@@ -48,4 +48,60 @@ class HTMLBookParser(HTMLParser):
         pass
 
     def error(self, message):
-        print("parse err:", message)
+        # print("parse err:", message)
+        log.error("parse err:{}".format(message))
+
+
+class BookNcxParser(HTMLParser):
+    def __init__(self):
+        # HTMLParser.__init__(self)
+        super.__init__()
+        self.meta = dict()
+        self.title = None
+        self.current_tag = None
+        self.find_docTitle = False
+        self.find_meta = False
+
+    def handle_starttag(self, tag, attrs):
+        self.current_tag = tag
+        "".lower()
+        if tag.lower() == "doctitle":
+            self.find_docTitle = True
+        elif tag.lower() == "meta":
+            if "name" in attrs:
+                key = attrs["name"]
+                val = None
+                if "content" in attrs:
+                    val = attrs["content"]
+                if val:
+                    self.meta[key] = val
+            self.find_meta = True
+        pass
+
+    def handle_endtag(self, tag):
+        if self.find_docTitle and tag.lower() == "doctitle":
+            self.find_docTitle = False
+        elif self.find_meta and tag.lower() == "meta":
+            self.find_meta = False
+        pass
+
+    def handle_startendtag(self, tag, attrs):
+        pass
+
+    def handle_data(self, data):
+        if data:
+            if self.find_docTitle:
+                self.title = "".format(self.title, data)
+        pass
+
+    def handle_comment(self, data):
+        pass
+
+    def handle_entityref(self, name):
+        pass
+
+    def handle_charref(self, name):
+        pass
+
+    def error(self, message):
+        log.error("parse err:{}".format(message))

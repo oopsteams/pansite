@@ -5,14 +5,15 @@ Created by susy at 2019/12/18
 from controller.base_service import BaseService
 from controller.async_service import async_service
 from utils import singleton, log as logger, compare_dt_by_now, get_now_datetime_format, scale_size, split_filename, \
-    obfuscate_id
+    obfuscate_id, get_now_datetime
 from dao.models import Accounts, DataItem, ShareLogs, ShareFr, ShareApp, AppCfg, AuthUser, BASE_FIELDS, StudyBook
-from utils.utils_es import SearchParams, build_query_item_es_body
-from dao.es_dao import es_dao_share, es_dao_local
+from utils.utils_es import SearchParams, build_query_item_es_body, build_es_book_json_body
+from dao.es_dao import es_dao_share, es_dao_local, es_dao_book
 from dao.community_dao import CommunityDao
 from dao.mdao import DataDao
 from dao.auth_dao import AuthDao
 from dao.study_dao import StudyDao
+from controller.book.html_book_parser import BookNcxParser
 from utils.caches import cache_data, cache_service
 from utils.constant import shared_format, SHARED_FR_MINUTES_CNT, SHARED_FR_HOURS_CNT, SHARED_FR_DAYS_CNT, \
     SHARED_FR_DAYS_ERR, SHARED_FR_HOURS_ERR, SHARED_FR_MINUTES_ERR, MAX_RESULT_WINDOW, SHARED_BAN_ERR, \
@@ -388,6 +389,18 @@ class OpenService(BaseService):
                     break
         return cover_file_path
 
+    def parse_ncx(self, ncx_file_path):
+        import os
+        if os.path.exists(ncx_file_path):
+            parser = BookNcxParser()
+            with open(ncx_file_path, "r") as f:
+                parser.feed(f.read())
+            parser.close()
+            if parser.meta:
+                print("meta:", parser.meta)
+                print("title:", parser.title)
+                pass
+
     def unzip_epub(self, ctx, books: list):
         import os
         epub_dir = EPUB["dir"]
@@ -434,11 +447,15 @@ class OpenService(BaseService):
                                     idx = opf_file_path.find(sb.code + "/")
                                     if idx > 0:
                                         opf_file_path = opf_file_path[idx + code_len:]
+                                _ncx_file_path = ncx_file_path
                                 if ncx_file_path:
+                                    # parse ncx file
                                     idx = ncx_file_path.find(sb.code + "/")
                                     if idx > 0:
                                         ncx_file_path = ncx_file_path[idx + code_len:]
                                 params = {"pin": 1, "unziped": 1, "opf": opf_file_path, "ncx": ncx_file_path}
+                                # if _ncx_file_path:
+                                #     self.parse_ncx(_ncx_file_path, params)
                                 if cover_file_path:
                                     idx = cover_file_path.find(sb.code + "/")
                                     if idx > 0:
@@ -464,6 +481,16 @@ class OpenService(BaseService):
             if need_up_unziped:
                 # print("will batch_update_books_by_codes:", need_up_unziped)
                 StudyDao.batch_update_books_by_codes({"pin": 2, "unziped": 1}, need_up_unziped)
+
+    def sync_to_es(self, book_list, tag):
+        for bk in book_list:
+            c = bk['code']
+            bk_doc = es_dao_book().es_get(c)
+            if not bk_doc:
+                bk_bd = build_es_book_json_body(bk['code'], bk['price'], bk["name"], bk["cover"], bk["opf"], bk["ncx"],
+                                                bk["ftyp"], bk["lh"], bk["ftsize"], bk["desc"], bk["idx"],
+                                                get_now_datetime(), bk['pin'], bk['ref_id'], bk['source'], [tag])
+                es_dao_book().index(c, bk_bd)
 
     def scan_epub(self, ctx, guest: Accounts):
         def final_do():
@@ -493,7 +520,7 @@ class OpenService(BaseService):
                         if len(gen_code_nm) > 25:
                             gen_code_nm = gen_code_nm[-25:]
                         code = "".join(lazy_pinyin(gen_code_nm, style=Style.TONE3))
-                        code_map[code] = {"code": code, "name": special_file, "price": default_price, "pin": 0,
+                        code_map[code] = {"code": code, "price": default_price, "name": special_file, "pin": 0,
                                           "account_id": guest.id, "ref_id": au.ref_id, "unziped": 0}
                         code_list.append(code)
 
@@ -548,6 +575,20 @@ class OpenService(BaseService):
         async_service.init_state(key_prefix, guest.id, {"state": 0, "pos": 0})
         async_rs = async_service.async_checkout_thread_todo(key_prefix, guest.id, to_do, final_do)
         return async_rs
+
+    def test_es(self):
+        import os
+
+        def deal_unzip_epub(books: list):
+            dest_dir = EPUB["dest"]
+
+            for sb in books:
+                current_dest_dir = os.path.join(dest_dir, sb.code)
+                ncx_path = os.path.join(current_dest_dir, sb.ncx)
+                logger.debug("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
+
+        StudyDao.check_ziped_books(0, 1, callback=deal_unzip_epub)
+        pass
 
 
 open_service = OpenService()
