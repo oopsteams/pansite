@@ -396,10 +396,16 @@ class OpenService(BaseService):
             with open(ncx_file_path, "r") as f:
                 parser.feed(f.read())
             parser.close()
-            print("meta:", parser.meta)
-            print("title:", parser.title)
             if parser.meta:
                 print("meta:", parser.meta)
+                if "dtb:type" in parser.meta:
+                    params["ftype"] = int(parser.meta["dtp:type"])
+                if "dtb:fontSize" in parser.meta:
+                    params["ftsize"] = int(parser.meta["dtb:fontSize"])
+                if "dtb:lineHeight" in parser.meta:
+                    params["lh"] = parser.meta["dtb:lineHeight"]
+            if parser.title:
+                params["name"] = parser.title
                 print("title:", parser.title)
                 pass
 
