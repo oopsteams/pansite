@@ -55,7 +55,7 @@ class HTMLBookParser(HTMLParser):
 class BookNcxParser(HTMLParser):
     def __init__(self):
         # HTMLParser.__init__(self)
-        super.__init__()
+        super().__init__()
         self.meta = dict()
         self.title = None
         self.current_tag = None
