@@ -588,7 +588,7 @@ class OpenService(BaseService):
                 logger.debug("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
                 print("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
 
-        StudyDao.check_ziped_books(0, 1, callback=deal_unzip_epub)
+        StudyDao.check_ziped_books(1, 1, callback=deal_unzip_epub)
         pass
 
 
