@@ -68,15 +68,7 @@ class BookNcxParser(HTMLParser):
         if tag == "doctitle":
             self.find_docTitle = True
         elif tag == "meta":
-            if "name" in attrs:
-                key = attrs["name"]
-                val = None
-                if "content" in attrs:
-                    val = attrs["content"]
-                if val:
-                    self.meta[key] = val
             self.find_meta = True
-        pass
 
     def handle_endtag(self, tag):
         print("end tag:", tag)
@@ -90,11 +82,12 @@ class BookNcxParser(HTMLParser):
         print("handle_startendtag tag:", tag)
         if tag == "meta":
             print("meta attrs:", attrs)
-            if "name" in attrs:
-                key = attrs["name"]
+            _attrs_map = {k: v for k, v in attrs}
+            if "name" in _attrs_map:
+                key = _attrs_map["name"]
                 val = None
-                if "content" in attrs:
-                    val = attrs["content"]
+                if "content" in _attrs_map:
+                    val = _attrs_map["content"]
                 if val:
                     self.meta[key] = val
             self.find_meta = True
@@ -104,8 +97,7 @@ class BookNcxParser(HTMLParser):
         if data:
             print("find_docTitle:", self.find_docTitle, ",data:", data)
             if self.find_docTitle:
-                self.title = "".format(self.title, data)
-        pass
+                self.title = "{}{}".format(self.title, data)
 
     def handle_comment(self, data):
         pass
