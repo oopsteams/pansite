@@ -589,6 +589,7 @@ class OpenService(BaseService):
                 print("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
                 if os.path.exists(ncx_path):
                     print("ncx file exits!")
+                    params = {}
                     self.parse_ncx(ncx_path, params)
                 # if _ncx_file_path:
                 #
