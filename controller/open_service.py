@@ -389,7 +389,7 @@ class OpenService(BaseService):
                     break
         return cover_file_path
 
-    def parse_ncx(self, ncx_file_path):
+    def parse_ncx(self, ncx_file_path, params):
         import os
         if os.path.exists(ncx_file_path):
             parser = BookNcxParser()
