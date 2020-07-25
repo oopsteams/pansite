@@ -65,9 +65,9 @@ class BookNcxParser(HTMLParser):
     def handle_starttag(self, tag, attrs):
         self.current_tag = tag
         print("tag:", tag)
-        if tag.lower() == "doctitle":
+        if tag == "doctitle":
             self.find_docTitle = True
-        elif tag.lower() == "meta":
+        elif tag == "meta":
             if "name" in attrs:
                 key = attrs["name"]
                 val = None
@@ -88,10 +88,21 @@ class BookNcxParser(HTMLParser):
 
     def handle_startendtag(self, tag, attrs):
         print("handle_startendtag tag:", tag)
+        if tag == "meta":
+            print("meta attrs:", attrs)
+            if "name" in attrs:
+                key = attrs["name"]
+                val = None
+                if "content" in attrs:
+                    val = attrs["content"]
+                if val:
+                    self.meta[key] = val
+            self.find_meta = True
         pass
 
     def handle_data(self, data):
         if data:
+            print("find_docTitle:", self.find_docTitle, ",data:", data)
             if self.find_docTitle:
                 self.title = "".format(self.title, data)
         pass
