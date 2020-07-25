@@ -396,6 +396,8 @@ class OpenService(BaseService):
             with open(ncx_file_path, "r") as f:
                 parser.feed(f.read())
             parser.close()
+            print("meta:", parser.meta)
+            print("title:", parser.title)
             if parser.meta:
                 print("meta:", parser.meta)
                 print("title:", parser.title)

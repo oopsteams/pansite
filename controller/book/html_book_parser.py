@@ -64,7 +64,7 @@ class BookNcxParser(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         self.current_tag = tag
-        "".lower()
+        print("tag:", tag)
         if tag.lower() == "doctitle":
             self.find_docTitle = True
         elif tag.lower() == "meta":
