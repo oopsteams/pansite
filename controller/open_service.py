@@ -397,7 +397,7 @@ class OpenService(BaseService):
                 parser.feed(f.read())
             parser.close()
             if parser.meta:
-                print("meta:", parser.meta)
+                # print("meta:", parser.meta)
                 if "dtb:type" in parser.meta:
                     params["ftype"] = int(parser.meta["dtb:type"])
                 if "dtb:fontSize" in parser.meta:
@@ -406,7 +406,7 @@ class OpenService(BaseService):
                     params["lh"] = parser.meta["dtb:lineHeight"]
             if parser.title:
                 params["name"] = parser.title
-                print("title:", parser.title)
+                # print("title:", parser.title)
                 pass
 
     def unzip_epub(self, ctx, books: list):
@@ -462,8 +462,8 @@ class OpenService(BaseService):
                                     if idx > 0:
                                         ncx_file_path = ncx_file_path[idx + code_len:]
                                 params = {"pin": 1, "unziped": 1, "opf": opf_file_path, "ncx": ncx_file_path}
-                                # if _ncx_file_path:
-                                #     self.parse_ncx(_ncx_file_path, params)
+                                if _ncx_file_path:
+                                    self.parse_ncx(_ncx_file_path, params)
                                 if cover_file_path:
                                     idx = cover_file_path.find(sb.code + "/")
                                     if idx > 0:
@@ -471,6 +471,10 @@ class OpenService(BaseService):
                                     params["cover"] = cover_file_path
                                 # print("unzip ok, name:", sb.name)
                                 StudyDao.update_books_by_id(params, sb.id)
+                                ftype = 1
+                                if "ftype" in params:
+                                    ftype = params["ftype"]
+                                self.sync_to_es([params], str(ftype))
                                 # print("update pin=1 unziped=1 ok, name:", sb.name)
                                 # del file
                                 # os.remove(file_path)
@@ -499,6 +503,11 @@ class OpenService(BaseService):
                                                 bk["ftyp"], bk["lh"], bk["ftsize"], bk["desc"], bk["idx"],
                                                 get_now_datetime(), bk['pin'], bk['ref_id'], bk['source'], [tag])
                 es_dao_book().index(c, bk_bd)
+            else:
+                es_up_params = es_dao_book().filter_update_params(bk)
+                if es_up_params:
+                    logger.info("will update book es item es_up_params:{}".format(es_up_params))
+                    es_dao_book().update_fields(bk['code'], **es_up_params)
 
     def scan_epub(self, ctx, guest: Accounts):
         def final_do():
