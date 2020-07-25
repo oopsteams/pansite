@@ -92,7 +92,7 @@ class BookNcxParser(HTMLParser):
     def handle_data(self, data):
         if data:
             # print("find_docTitle:", self.find_docTitle, ",data:", data)
-            _d = data.replace('\n', '').replace('\r', '')
+            _d = data.replace('\n', '').replace('\r', '').replace(' ', '')
             if self.find_docTitle:
                 if self.title:
                     self.title = "{}{}".format(self.title, _d)
