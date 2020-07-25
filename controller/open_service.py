@@ -399,7 +399,7 @@ class OpenService(BaseService):
             if parser.meta:
                 print("meta:", parser.meta)
                 if "dtb:type" in parser.meta:
-                    params["ftype"] = int(parser.meta["dtp:type"])
+                    params["ftype"] = int(parser.meta["dtb:type"])
                 if "dtb:fontSize" in parser.meta:
                     params["ftsize"] = int(parser.meta["dtb:fontSize"])
                 if "dtb:lineHeight" in parser.meta:
