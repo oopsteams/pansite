@@ -503,6 +503,7 @@ class OpenService(BaseService):
                                 if os.path.exists(current_dest_dir):
                                     force_removedir(current_dest_dir)
                             except Exception:
+                                traceback.print_exc()
                                 logger.error("remove err epub extract dir [{}] failed!".format(current_dest_dir))
                 else:
                     print("not exist !!! file_path:", file_path)
