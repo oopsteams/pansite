@@ -652,8 +652,8 @@ class OpenService(BaseService):
                         sb_dict[k] = params[k]
                     updated.append(params)
 
-                    StudyDao.update_books_by_id(params, sb.id)
-                    self.sync_to_es([sb_dict])
+                    # StudyDao.update_books_by_id(params, sb.id)
+                    # self.sync_to_es([sb_dict])
                 # if _ncx_file_path:
                 #
 
