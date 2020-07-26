@@ -21,13 +21,18 @@ class StudyBook(BaseModel):
     ftype = IntegerField(null=False, default=0)  # 绘本:2
     lh = CharField(max_length=32, default='')  # 默认行高
     ftsize = IntegerField(null=False, default=0)  # 默认字号
+    authors = CharField(max_length=128, null=True)  # 作者等信息
+    rating = IntegerField(null=False, default=0)  # 默认平分
+    series = CharField(max_length=128, null=True)  # 丛书等信息
+    publisher = CharField(max_length=128, null=True)  # 出版等信息
+    pubdate = DateTimeField(index=True, null=True)  # 出版日期 可能为空值
     idx = IntegerField(null=False, default=0, index=True)
     pin = IntegerField(null=False, default=0, index=True)
 
     @classmethod
     def field_names(cls):
         return ["id", "code", "account_id", "ref_id", "price", "name", "unziped", "idx", "cover", "pin", "opf", "ncx",
-                "ftype", "lh", "ftsize"]
+                "ftype", "lh", "ftsize", "authors", "rating", "series", "publisher", "pubdate"]
 
     @classmethod
     def to_dict(cls, instance, excludes=[]):

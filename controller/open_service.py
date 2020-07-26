@@ -24,6 +24,7 @@ from controller.auth_service import auth_service
 from cfg import EPUB
 import time
 import zipfile
+import arrow
 import traceback
 
 ONE_DAY_SECONDS_TOTAL = 24 * 60 * 60
@@ -389,7 +390,7 @@ class OpenService(BaseService):
                     break
         return cover_file_path
 
-    def parse_ncx(self, ncx_file_path, params):
+    def parse_opf(self, ncx_file_path, params):
         import os
         if os.path.exists(ncx_file_path):
             parser = BookNcxParser()
@@ -397,16 +398,23 @@ class OpenService(BaseService):
                 parser.feed(f.read())
             parser.close()
             if parser.meta:
-                # print("meta:", parser.meta)
-                if "dtb:type" in parser.meta:
-                    params["ftype"] = int(parser.meta["dtb:type"])
-                if "dtb:fontSize" in parser.meta:
-                    params["ftsize"] = int(parser.meta["dtb:fontSize"])
-                if "dtb:lineHeight" in parser.meta:
-                    params["lh"] = parser.meta["dtb:lineHeight"]
-            if parser.title:
-                params["name"] = parser.title
-                # print("title:", parser.title)
+                print("parse_opf meta:", parser.meta)
+                # if "dtb:type" in parser.meta:
+                #     params["ftype"] = int(parser.meta["dtb:type"])
+                # if "dtb:fontSize" in parser.meta:
+                #     params["ftsize"] = int(parser.meta["dtb:fontSize"])
+                # if "dtb:lineHeight" in parser.meta:
+                #     params["lh"] = parser.meta["dtb:lineHeight"]
+                # if "dtb:tags" in parser.meta:
+                #     _tags = parser.meta["dtb:tags"]
+                #     params["tags"] = _tags.split(",")
+                # try:
+                #     pubdate = arrow.get(bk['pubdate']).datetime
+                # except Exception:
+                #     pass
+            if parser.params:
+
+                print("parse_opf params:", parser.params)
                 pass
 
     def unzip_epub(self, ctx, books: list):
@@ -451,6 +459,7 @@ class OpenService(BaseService):
                                     if not cover_file_path:
                                         cover_file_path = self.find_file(["cover.j", "cover.png"], current_dest_dir)
                                 code_len = len(sb.code + "/")
+                                _opf_file_path = opf_file_path
                                 if opf_file_path:
                                     idx = opf_file_path.find(sb.code + "/")
                                     if idx > 0:
@@ -463,8 +472,8 @@ class OpenService(BaseService):
                                         ncx_file_path = ncx_file_path[idx + code_len:]
                                 params = {"pin": 1, "unziped": 1, "opf": opf_file_path, "ncx": ncx_file_path, "ftype": 1,
                                           "ftsize": 18, "lh": '120%'}
-                                if _ncx_file_path:
-                                    self.parse_ncx(_ncx_file_path, params)
+                                if _opf_file_path:
+                                    self.parse_opf(_opf_file_path, params)
                                 if cover_file_path:
                                     idx = cover_file_path.find(sb.code + "/")
                                     if idx > 0:
@@ -475,7 +484,7 @@ class OpenService(BaseService):
                                 ftype = 1
                                 if "ftype" in params:
                                     ftype = params["ftype"]
-                                self.sync_to_es([params], str(ftype))
+                                self.sync_to_es([params])
                                 # print("update pin=1 unziped=1 ok, name:", sb.name)
                                 # del file
                                 # os.remove(file_path)
@@ -495,7 +504,7 @@ class OpenService(BaseService):
                 # print("will batch_update_books_by_codes:", need_up_unziped)
                 StudyDao.batch_update_books_by_codes({"pin": 2, "unziped": 1}, need_up_unziped)
 
-    def sync_to_es(self, book_list, tag):
+    def sync_to_es(self, book_list):
         for bk in book_list:
             c = bk['code']
             bk_doc_exists = es_dao_book().exists(c)
@@ -503,14 +512,33 @@ class OpenService(BaseService):
             if not bk_doc_exists:
                 desc = ''
                 source = ''
+                authors = ''
+                rating = 0
+                series = ''
+                publisher = ''
+                pubdate = None
+                tags = ['0']
                 if 'desc' in bk:
                     desc = bk['desc']
                 if 'source' in bk:
                     source = bk['source']
+                if 'tags' in bk:
+                    tags = bk['tags']
+                if 'rating' in bk:
+                    rating = bk['rating']
+                if 'series' in bk:
+                    series = bk['series']
+                if 'publisher' in bk:
+                    publisher = bk['publisher']
+                if 'pubdate' in bk:
+                    pubdate = bk['pubdate']
+                if 'authors' in bk:
+                    authors = bk['authors']
 
                 bk_bd = build_es_book_json_body(bk['code'], bk['price'], bk["name"], bk["cover"], bk["opf"], bk["ncx"],
-                                                bk["ftype"], bk["lh"], bk["ftsize"], desc, bk["idx"],
-                                                get_now_datetime(), bk['pin'], bk['ref_id'], source, [tag])
+                                                bk["ftype"], bk["lh"], bk["ftsize"], authors, rating, series, publisher,
+                                                pubdate, desc, bk["idx"], get_now_datetime(), bk['pin'], bk['ref_id'],
+                                                source, tags)
                 es_dao_book().index(c, bk_bd)
             else:
                 es_up_params = es_dao_book().filter_update_params(bk)
@@ -612,22 +640,20 @@ class OpenService(BaseService):
 
             for sb in books:
                 current_dest_dir = os.path.join(dest_dir, sb.code)
-                ncx_path = os.path.join(current_dest_dir, sb.ncx)
+                opf_path = os.path.join(current_dest_dir, sb.opf)
                 sb_dict = StudyBook.to_dict(sb)
                 # logger.debug("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
                 # print("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
-                if os.path.exists(ncx_path):
+                if os.path.exists(opf_path):
                     params = {"pin": 1}
-                    self.parse_ncx(ncx_path, params)
-                    ftype = 1
-                    if "ftype" in params:
-                        ftype = params["ftype"]
+                    self.parse_opf(opf_path, params)
+
                     for k in params:
                         sb_dict[k] = params[k]
                     updated.append(params)
 
                     StudyDao.update_books_by_id(params, sb.id)
-                    self.sync_to_es([sb_dict], str(ftype))
+                    self.sync_to_es([sb_dict])
                 # if _ncx_file_path:
                 #
 

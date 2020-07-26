@@ -13,6 +13,17 @@ _path_prop = {"type": "text", "analyzer": "slash"}
 date_time_prop = {"type": "date", "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"}
 _all_prop = {"type": "text", "analyzer": "ik_max_word", "search_analyzer": "ik_smart", "position_increment_gap": 100
              }
+__keyword_text_prop = {"type": "text",
+             "analyzer": "ik_max_word",
+             "search_analyzer":
+                 "ik_smart",
+             "fields": {
+                 "keyword": {
+                     "type": "keyword",
+                     "ignore_above": 128
+                 }
+             }
+             }
 _props = {
     "id": {"type": "long"},
     "category": {"type": "integer"},
@@ -37,21 +48,12 @@ _props = {
     "all": _all_prop}
 
 # "code", "account_id", "ref_id", "price", "name", "unziped", "idx", "cover", "pin", "opf", "ncx"
+# "authors", "rating", "series", "publisher", "pubdate"
 _book = {
     "id": {"type": "keyword"},
     "ref_id": {"type": "long"},
     "price": {"type": "long"},
-    "name": {"type": "text",
-             "analyzer": "ik_max_word",
-             "search_analyzer":
-                 "ik_smart",
-             "fields": {
-                 "keyword": {
-                     "type": "keyword",
-                     "ignore_above": 128
-                 }
-             }
-             },
+    "name": __keyword_text_prop,
     "idx": {"type": "integer"},
     "cover": {"type": "keyword"},
     "opf": {"type": "keyword"},
@@ -60,6 +62,11 @@ _book = {
     "ftype": {"type": "integer"},
     "lh": {"type": "keyword"},
     "ftsize": {"type": "integer"},
+    "authors": __keyword_text_prop,
+    "rating": {"type": "integer"},
+    "series": __keyword_text_prop,
+    "publisher": __keyword_text_prop,
+    "pubdate": date_time_prop,
     "tags": _tag_prop,
     "created_at": date_time_prop,
     "source": {"type": "keyword"},

@@ -3,8 +3,10 @@
 Created by susy at 2020/7/1
 """
 from html.parser import HTMLParser
+import html
 from utils import is_chinese, log
 from pypinyin import lazy_pinyin, Style, pinyin
+import arrow
 
 
 class HTMLBookParser(HTMLParser):
@@ -57,23 +59,50 @@ class BookNcxParser(HTMLParser):
         # HTMLParser.__init__(self)
         super().__init__()
         self.meta = dict()
-        self.title = None
-        self.current_tag = None
-        self.find_docTitle = False
         self.find_meta = False
+        self.params = {}
+        self.read_datas = False
+        self.cd = ""
 
     def handle_starttag(self, tag, attrs):
-        self.current_tag = tag
-        if tag == "doctitle":
-            self.find_docTitle = True
-        elif tag == "meta":
+        if tag == "metadata":
             self.find_meta = True
+        elif self.find_meta:
+            self.read_datas = True
+            self.cd = ""
+            if tag == "dc:title":
+                self.read_datas = True
+            elif tag == "dc:creator":
+                self.read_datas = True
 
     def handle_endtag(self, tag):
-        if self.find_docTitle and tag.lower() == "doctitle":
-            self.find_docTitle = False
-        elif self.find_meta and tag.lower() == "meta":
+        if self.find_meta and tag == "metadata":
             self.find_meta = False
+        elif self.find_meta:
+            if tag.endswith("title"):
+                self.params["title"] = self.cd
+            elif tag.endswith("creator"):
+                self.params["authors"] = self.cd
+            elif tag.endswith("publisher"):
+                self.params["publisher"] = self.cd
+            elif tag.endswith("date"):
+                pubdate = None
+                try:
+                    pubdate = arrow.get(self.cd).datetime
+                except Exception:
+                    pass
+                self.params["pubdate"] = pubdate
+            elif tag.endswith("subject"):
+                if "tags" not in self.params:
+                    self.params["tags"] = []
+                cd_tags = [self.cd]
+                idx = self.cd.rfind("，")
+                if idx > 0:
+                    cd_tags = self.cd.split("，")
+                for cdt in cd_tags:
+                    self.params["tags"].append(cdt)
+
+            self.read_datas = False
         pass
 
     def handle_startendtag(self, tag, attrs):
@@ -85,19 +114,26 @@ class BookNcxParser(HTMLParser):
                 if "content" in _attrs_map:
                     val = _attrs_map["content"]
                 if val:
-                    self.meta[key] = val
+                    s_key = key
+                    idx = key.rfind(":")
+                    if idx > 0:
+                        s_key = key[idx+1]
+                        if s_key[0] == '#':
+                            s_key = s_key[1:]
+                            val_json = html.unescape(val)
+                            print("val_json:", val_json)
+                    self.meta[s_key] = val
             self.find_meta = True
         pass
 
     def handle_data(self, data):
-        if data:
+        if data and self.read_datas:
             # print("find_docTitle:", self.find_docTitle, ",data:", data)
             _d = data.replace('\n', '').replace('\r', '').replace(' ', '')
-            if self.find_docTitle:
-                if self.title:
-                    self.title = "{}{}".format(self.title, _d)
-                else:
-                    self.title = _d
+            if self.cd:
+                self.cd = "{}{}".format(self.cd, _d)
+            else:
+                self.cd = _d
 
     def handle_comment(self, data):
         pass
