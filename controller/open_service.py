@@ -593,8 +593,10 @@ class OpenService(BaseService):
         async_rs = async_service.async_checkout_thread_todo(key_prefix, guest.id, to_do, final_do)
         return async_rs
 
-    def test_es(self):
+    def recover_bk_es(self):
         import os
+        rs = {"status": 0}
+        updated = []
 
         def deal_unzip_epub(books: list):
             dest_dir = EPUB["dest"]
@@ -602,18 +604,28 @@ class OpenService(BaseService):
             for sb in books:
                 current_dest_dir = os.path.join(dest_dir, sb.code)
                 ncx_path = os.path.join(current_dest_dir, sb.ncx)
+                sb_dict = StudyBook.to_dict(sb)
                 # logger.debug("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
                 # print("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
                 if os.path.exists(ncx_path):
-                    print("ncx file exits!")
                     params = {}
                     self.parse_ncx(ncx_path, params)
-                    print("params:", params)
+                    ftype = 1
+                    if "ftype" in params:
+                        ftype = params["ftype"]
+                    for k in params:
+                        sb_dict[k] = params[k]
+                    updated.append(params)
+
+                    StudyDao.update_books_by_id(params, sb.id)
+                    self.sync_to_es([sb_dict], str(ftype))
                 # if _ncx_file_path:
                 #
 
-        StudyDao.check_ziped_books(1, 1, callback=deal_unzip_epub)
-        pass
+        StudyDao.check_ziped_books(0, 0, callback=deal_unzip_epub)
+        if updated:
+            rs['updated'] = updated = []
+        return rs
 
 
 open_service = OpenService()
