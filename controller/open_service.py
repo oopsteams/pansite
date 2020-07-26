@@ -398,23 +398,18 @@ class OpenService(BaseService):
                 parser.feed(f.read())
             parser.close()
             if parser.meta:
-                print("parse_opf meta:", parser.meta)
-                # if "dtb:type" in parser.meta:
+                # print("parse_opf meta:", parser.meta)
+                # if "" in parser.meta:
                 #     params["ftype"] = int(parser.meta["dtb:type"])
-                # if "dtb:fontSize" in parser.meta:
-                #     params["ftsize"] = int(parser.meta["dtb:fontSize"])
-                # if "dtb:lineHeight" in parser.meta:
-                #     params["lh"] = parser.meta["dtb:lineHeight"]
-                # if "dtb:tags" in parser.meta:
-                #     _tags = parser.meta["dtb:tags"]
-                #     params["tags"] = _tags.split(",")
-                # try:
-                #     pubdate = arrow.get(bk['pubdate']).datetime
-                # except Exception:
-                #     pass
-            if parser.params:
+                if "ftype" in parser.meta and parser.meta["ftype"]:
+                    params["ftsize"] = int(parser.meta["ftype"])
+                if "lh" in parser.meta and parser.meta["lh"]:
+                    params["lh"] = parser.meta["lh"]
 
-                print("parse_opf params:", parser.params)
+            if parser.params:
+                for k in parser.params:
+                    params[k] = parser.params[k]
+                # print("parse_opf params:", parser.params)
                 pass
 
     def unzip_epub(self, ctx, books: list):
@@ -654,8 +649,6 @@ class OpenService(BaseService):
 
                     # StudyDao.update_books_by_id(params, sb.id)
                     # self.sync_to_es([sb_dict])
-                # if _ncx_file_path:
-                #
 
         StudyDao.check_ziped_books(0, 1, callback=deal_unzip_epub)
         if updated:

@@ -7,6 +7,7 @@ import html
 from utils import is_chinese, log
 from pypinyin import lazy_pinyin, Style, pinyin
 import arrow
+import json
 
 
 class HTMLBookParser(HTMLParser):
@@ -70,10 +71,6 @@ class BookNcxParser(HTMLParser):
         elif self.find_meta:
             self.read_datas = True
             self.cd = ""
-            if tag == "dc:title":
-                self.read_datas = True
-            elif tag == "dc:creator":
-                self.read_datas = True
 
     def handle_endtag(self, tag):
         if self.find_meta and tag == "metadata":
@@ -117,11 +114,19 @@ class BookNcxParser(HTMLParser):
                     s_key = key
                     idx = key.rfind(":")
                     if idx > 0:
-                        s_key = key[idx+1]
+                        s_key = key[idx+1:]
                         if s_key[0] == '#':
                             s_key = s_key[1:]
-                            val_json = html.unescape(val)
-                            print("val_json:", val_json)
+                            val_json_str = html.unescape(val)
+                            try:
+                                val_json = json.loads(val_json_str)
+                                if "#value#" in val_json:
+                                    val = val_json["#value#"]
+                                if "label" in val_json:
+                                    s_key = val_json["label"]
+                            except:
+                                val = ""
+                                pass
                     self.meta[s_key] = val
             self.find_meta = True
         pass
