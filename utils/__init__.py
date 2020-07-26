@@ -18,6 +18,13 @@ from cfg import HASH_ID_MIN_LENGTH, HASH_ID_SALT, JWT_SECRET_KEY
 default_tz = pytz.timezone('Asia/Chongqing')
 
 
+def to_num(s):
+    try:
+        return int(s)
+    except ValueError:
+        return float(s)
+
+
 def force_removedir(DirName):
     ret = 0
     try:
