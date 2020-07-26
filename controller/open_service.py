@@ -486,7 +486,10 @@ class OpenService(BaseService):
                                     params["cover"] = cover_file_path
                                 # print("unzip ok, name:", sb.name)
                                 StudyDao.update_books_by_id(params, sb.id)
-                                self.sync_to_es([params])
+                                sb_dict = StudyBook.to_dict(sb, ["id"])
+                                for k in params:
+                                    sb_dict[k] = params[k]
+                                self.sync_to_es([sb_dict])
                                 # print("update pin=1 unziped=1 ok, name:", sb.name)
                                 # del file
                                 # os.remove(file_path)
@@ -549,7 +552,7 @@ class OpenService(BaseService):
 
                 bk_bd = build_es_book_json_body(bk['code'], bk['price'], bk["name"], bk["cover"], bk["opf"], bk["ncx"],
                                                 ftype, lh, ftsize, authors, rating, series, publisher,
-                                                pubdate, desc, bk["idx"], get_now_datetime(), bk['pin'], bk['ref_id'],
+                                                pubdate, desc, bk["idx"], bk["created_at"], bk['pin'], bk['ref_id'],
                                                 source, tags)
                 es_dao_book().index(c, bk_bd)
             else:
