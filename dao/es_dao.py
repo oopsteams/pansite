@@ -5,6 +5,8 @@ Created by susy at 2019/10/21
 from cfg import ES
 from elasticsearch import Elasticsearch, helpers, exceptions
 from utils import log as logger, get_now_ts
+import datetime
+import arrow
 
 _settings = {"number_of_shards": 3, "number_of_replicas": 0, "analysis": {"analyzer": {"slash": {"type": "pattern",
                                                                                                  "pattern": "/"}}}}
@@ -167,7 +169,11 @@ class EsDao(object):
         _params = {}
         for k in params:
             if k in self.props:
-                _params[k] = params[k]
+                p = self.props[k]
+                if p['type'] == 'date' and params[k] and isinstance(params[k], datetime.datetime):
+                    _params[k] = arrow.get(params[k]).strftime('%Y-%m-%d %H:%M:%S')
+                else:
+                    _params[k] = params[k]
         return _params
 
     def index(self, doc_id, doc):
