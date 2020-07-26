@@ -402,7 +402,14 @@ class OpenService(BaseService):
                 # if "" in parser.meta:
                 #     params["ftype"] = int(parser.meta["dtb:type"])
                 if "ftype" in parser.meta and parser.meta["ftype"]:
-                    params["ftsize"] = int(parser.meta["ftype"])
+                    ftype = 0
+                    if "vertical" == parser.meta["ftype"]:
+                        ftype = 1
+                    elif "horizontal" == parser.meta["ftype"]:
+                        ftype = 2
+                    params["ftype"] = ftype
+                if "ftsize" in parser.meta and parser.meta["ftsize"]:
+                    params["ftsize"] = int(parser.meta["ftsize"])
                 if "lh" in parser.meta and parser.meta["lh"]:
                     params["lh"] = parser.meta["lh"]
 
