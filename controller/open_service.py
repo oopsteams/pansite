@@ -413,6 +413,9 @@ class OpenService(BaseService):
                 if "lh" in parser.meta and parser.meta["lh"]:
                     params["lh"] = parser.meta["lh"]
 
+                if "rating" in parser.meta and parser.meta["rating"]:
+                    params["rating"] = parser.meta["rating"]
+
             if parser.params:
                 for k in parser.params:
                     params[k] = parser.params[k]
