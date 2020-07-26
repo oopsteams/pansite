@@ -501,8 +501,11 @@ class OpenService(BaseService):
             bk_doc_exists = es_dao_book().exists(c)
             # print("bk_doc_exists:", bk_doc_exists)
             if not bk_doc_exists:
+                desc = ''
+                if 'desc' in bk:
+                    desc = bk['desc']
                 bk_bd = build_es_book_json_body(bk['code'], bk['price'], bk["name"], bk["cover"], bk["opf"], bk["ncx"],
-                                                bk["ftype"], bk["lh"], bk["ftsize"], bk["desc"], bk["idx"],
+                                                bk["ftype"], bk["lh"], bk["ftsize"], desc, bk["idx"],
                                                 get_now_datetime(), bk['pin'], bk['ref_id'], bk['source'], [tag])
                 es_dao_book().index(c, bk_bd)
             else:
