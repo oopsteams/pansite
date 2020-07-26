@@ -493,13 +493,14 @@ class OpenService(BaseService):
                             else:
                                 StudyDao.update_books_by_id({"pin": 3, "unziped": 1}, sb.id)
                         except Exception:
+                            traceback.print_exc()
                             need_up_unziped.append(sb.code)
                             # os.remove(file_path)
                             try:
                                 if os.path.exists(current_dest_dir):
-                                    os.rmdir(current_dest_dir)
+                                    os.removedirs(current_dest_dir)
                             except Exception:
-                                logger.error("remove err epud extract dir [{}] failed!".format(current_dest_dir))
+                                logger.error("remove err epub extract dir [{}] failed!".format(current_dest_dir))
                 else:
                     print("not exist !!! file_path:", file_path)
             if need_up_unziped:
