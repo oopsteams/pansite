@@ -497,8 +497,9 @@ class OpenService(BaseService):
     def sync_to_es(self, book_list, tag):
         for bk in book_list:
             c = bk['code']
-            bk_doc = es_dao_book().es_get(c)
-            if not bk_doc:
+            bk_doc_exists = es_dao_book().exists(c)
+            print("bk_doc_exists:", bk_doc_exists)
+            if not bk_doc_exists:
                 bk_bd = build_es_book_json_body(bk['code'], bk['price'], bk["name"], bk["cover"], bk["opf"], bk["ncx"],
                                                 bk["ftyp"], bk["lh"], bk["ftsize"], bk["desc"], bk["idx"],
                                                 get_now_datetime(), bk['pin'], bk['ref_id'], bk['source'], [tag])
@@ -608,7 +609,7 @@ class OpenService(BaseService):
                 # logger.debug("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
                 # print("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
                 if os.path.exists(ncx_path):
-                    params = {}
+                    params = {"pin": 1}
                     self.parse_ncx(ncx_path, params)
                     ftype = 1
                     if "ftype" in params:
