@@ -483,9 +483,6 @@ class OpenService(BaseService):
                                     params["cover"] = cover_file_path
                                 # print("unzip ok, name:", sb.name)
                                 StudyDao.update_books_by_id(params, sb.id)
-                                ftype = 1
-                                if "ftype" in params:
-                                    ftype = params["ftype"]
                                 self.sync_to_es([params])
                                 # print("update pin=1 unziped=1 ok, name:", sb.name)
                                 # del file
@@ -520,6 +517,9 @@ class OpenService(BaseService):
                 publisher = ''
                 pubdate = None
                 tags = ['0']
+                ftype = 0
+                ftsize = 18
+                lh = '110%'
                 if 'desc' in bk:
                     desc = bk['desc']
                 if 'source' in bk:
@@ -536,9 +536,15 @@ class OpenService(BaseService):
                     pubdate = bk['pubdate']
                 if 'authors' in bk:
                     authors = bk['authors']
+                if 'ftype' in bk:
+                    ftype = bk['ftype']
+                if 'ftsize' in bk:
+                    ftsize = bk['ftsize']
+                if 'lh' in bk:
+                    lh = bk['lh']
 
                 bk_bd = build_es_book_json_body(bk['code'], bk['price'], bk["name"], bk["cover"], bk["opf"], bk["ncx"],
-                                                bk["ftype"], bk["lh"], bk["ftsize"], authors, rating, series, publisher,
+                                                ftype, lh, ftsize, authors, rating, series, publisher,
                                                 pubdate, desc, bk["idx"], get_now_datetime(), bk['pin'], bk['ref_id'],
                                                 source, tags)
                 es_dao_book().index(c, bk_bd)
@@ -654,8 +660,8 @@ class OpenService(BaseService):
                         sb_dict[k] = params[k]
                     updated.append(params)
 
-                    # StudyDao.update_books_by_id(params, sb.id)
-                    # self.sync_to_es([sb_dict])
+                    StudyDao.update_books_by_id(params, sb.id)
+                    self.sync_to_es([sb_dict])
 
         StudyDao.check_ziped_books(0, 1, callback=deal_unzip_epub)
         if updated:
