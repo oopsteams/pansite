@@ -92,10 +92,11 @@ class BookNcxParser(HTMLParser):
             elif tag.endswith("subject"):
                 if "tags" not in self.params:
                     self.params["tags"] = []
-                cd_tags = [self.cd]
-                idx = self.cd.rfind("，")
+                _cd = self.cd.strip(" ")
+                cd_tags = [_cd]
+                idx = _cd.rfind("，")
                 if idx > 0:
-                    cd_tags = self.cd.split("，")
+                    cd_tags = _cd.split("，")
                 for cdt in cd_tags:
                     self.params["tags"].append(cdt)
 
