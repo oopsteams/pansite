@@ -5,7 +5,7 @@ Created by susy at 2019/12/18
 from controller.base_service import BaseService
 from controller.async_service import async_service
 from utils import singleton, log as logger, compare_dt_by_now, get_now_datetime_format, scale_size, split_filename, \
-    obfuscate_id, get_now_datetime
+    obfuscate_id, get_now_datetime, force_removedir
 from dao.models import Accounts, DataItem, ShareLogs, ShareFr, ShareApp, AppCfg, AuthUser, BASE_FIELDS, StudyBook
 from utils.utils_es import SearchParams, build_query_item_es_body, build_es_book_json_body
 from dao.es_dao import es_dao_share, es_dao_local, es_dao_book
@@ -501,7 +501,7 @@ class OpenService(BaseService):
                             # os.remove(file_path)
                             try:
                                 if os.path.exists(current_dest_dir):
-                                    os.removedirs(current_dest_dir)
+                                    force_removedir(current_dest_dir)
                             except Exception:
                                 logger.error("remove err epub extract dir [{}] failed!".format(current_dest_dir))
                 else:

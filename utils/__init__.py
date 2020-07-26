@@ -18,6 +18,28 @@ from cfg import HASH_ID_MIN_LENGTH, HASH_ID_SALT, JWT_SECRET_KEY
 default_tz = pytz.timezone('Asia/Chongqing')
 
 
+def force_removedir(DirName):
+    ret = 0
+    try:
+        os.rmdir(os.path.abspath(DirName))
+    except FileNotFoundError as e:
+        print(e)
+        ret = 1
+    except OSError as e:
+        for i in os.listdir(os.path.abspath(DirName)):
+            if os.path.isfile("%s/%s" % (os.path.abspath(DirName), i)):
+                os.remove("%s/%s" % (os.path.abspath(DirName), i))
+            else:
+                force_removedir("%s/%s" % (os.path.abspath(DirName), i))
+    except Exception as e:
+        print(e)
+        return 2
+    finally:
+        if ret == 0:
+            os.rmdir(os.path.abspath(DirName))
+        return ret
+
+
 def is_chinese(word):
     for ch in word:
         if '\u4e00' <= ch <= '\u9fff':
@@ -94,7 +116,7 @@ def split_filename(filename):
     __idx = filename.rfind(".")
     if __idx > 0:
         name = filename[0:__idx]
-        suffix = filename[__idx+1:]
+        suffix = filename[__idx + 1:]
 
     return name, suffix
 
@@ -110,7 +132,6 @@ def compare_dt_by_now(dt1) -> int:
 
 
 def make_token(acc_id):
-
     login_token = jwt.encode(dict(id=acc_id, tm=get_now_ts()), JWT_SECRET_KEY).decode("utf-8")
     return login_token
 
@@ -160,6 +181,7 @@ def singleton(cls, *args, **kw):
         if cls not in instances:
             instances[cls] = cls(*args, **kw)
         return instances[cls]
+
     return _singleton
 
 
@@ -187,7 +209,7 @@ def decrypt_user_id(fuzzy_user_id, is_raise_error=True):
 def random_password(bit_count=4):
     dig = list('0123456789')
     alp = list('abcdefghijklmnopqrstuvwxyz')
-    k = int(random.random() * (bit_count-1)) + 1
+    k = int(random.random() * (bit_count - 1)) + 1
     pre = random.choices(dig, k=k)
     j = bit_count - k
     suf = random.choices(alp, k=j)
@@ -258,42 +280,42 @@ def __log_cfg(log_file_name):
     if not os.path.exists("./logs"):
         os.mkdir("./logs")
     return {
-            'version': 1,
-            'disable_existing_loggers': False,
-            'formatters': {
-                'json': {
-                    'format': '%(asctime)s %(message)s',
-                },
-                'text': {
-                    'format': standard_format,
-                }
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'json': {
+                'format': '%(asctime)s %(message)s',
             },
-            'handlers': {
-                'json': {
-                    'class': 'logging.handlers.TimedRotatingFileHandler',
-                    'formatter': 'json',
-                    'filename': "./logs/%s.json" % log_file_name,
-                    'backupCount': 7,
-                    'when': 'midnight'
-                },
-                'text': {
-                    'level': logging.INFO,
-                    'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件
-                    'formatter': 'text',  # 标准
-                    'filename': "./logs/%s.log" % log_file_name,  # 日志文件
-                    'maxBytes': 10000000,  # 日志大小 10M
-                    'backupCount': 5,  # 轮转文件数
-                    'encoding': 'utf-8',  # 日志文件的编码，再也不用担心中文log乱码了
-                }
-            },
-            'loggers': {
-                'pan': {
-                    'handlers': ['text'],
-                    'level': logging.DEBUG
-                },
-
+            'text': {
+                'format': standard_format,
             }
+        },
+        'handlers': {
+            'json': {
+                'class': 'logging.handlers.TimedRotatingFileHandler',
+                'formatter': 'json',
+                'filename': "./logs/%s.json" % log_file_name,
+                'backupCount': 7,
+                'when': 'midnight'
+            },
+            'text': {
+                'level': logging.INFO,
+                'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件
+                'formatter': 'text',  # 标准
+                'filename': "./logs/%s.log" % log_file_name,  # 日志文件
+                'maxBytes': 10000000,  # 日志大小 10M
+                'backupCount': 5,  # 轮转文件数
+                'encoding': 'utf-8',  # 日志文件的编码，再也不用担心中文log乱码了
+            }
+        },
+        'loggers': {
+            'pan': {
+                'handlers': ['text'],
+                'level': logging.DEBUG
+            },
+
         }
+    }
 
 
 __log_dict_cfg = __log_cfg("pansite")
