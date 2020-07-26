@@ -168,6 +168,8 @@ class EsDao(object):
     def filter_update_params(self, params):
         _params = {}
         for k in params:
+            if k == "id":
+                continue
             if k in self.props:
                 p = self.props[k]
                 if p['type'] == 'date' and params[k] and isinstance(params[k], datetime.datetime):

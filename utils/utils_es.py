@@ -183,7 +183,7 @@ def build_es_book_json_body(code, price, name, cover, opf, ncx, ftype, lh, ftsiz
     pubdate_srt = None
     if pubdate:
         pubdate_srt = arrow.get(created_at).strftime('%Y-%m-%d %H:%M:%S')
-    es_json_bd = dict(code=code, price=price, name=name, cover=cover, opf=opf, ncx=ncx, ftype=ftype,
+    es_json_bd = dict(id=code, price=price, name=name, cover=cover, opf=opf, ncx=ncx, ftype=ftype,
                       lh=lh, ftsize=ftsize, desc=desc, idx=idx, created_at=created_at_str, pin=pin, ref_id=ref_id,
                       source=source, tags=tags, authors=authors, rating=rating, series=series, publisher=publisher,
                       pubdate=pubdate_srt)
