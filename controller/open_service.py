@@ -622,7 +622,7 @@ class OpenService(BaseService):
                 # if _ncx_file_path:
                 #
 
-        StudyDao.check_ziped_books(0, 0, callback=deal_unzip_epub)
+        StudyDao.check_ziped_books(0, 1, callback=deal_unzip_epub)
         if updated:
             rs['updated'] = updated = []
         return rs
