@@ -550,7 +550,7 @@ class OpenService(BaseService):
                     ftsize = bk['ftsize']
                 if 'lh' in bk:
                     lh = bk['lh']
-                print("to es bk:", bk)
+                # print("to es bk:", bk)
                 bk_bd = build_es_book_json_body(bk['code'], bk['price'], bk["name"], bk["cover"], bk["opf"], bk["ncx"],
                                                 ftype, lh, ftsize, authors, rating, series, publisher,
                                                 pubdate, desc, bk["idx"], get_now_datetime(), bk['pin'], bk['ref_id'],
