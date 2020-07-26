@@ -550,10 +550,10 @@ class OpenService(BaseService):
                     ftsize = bk['ftsize']
                 if 'lh' in bk:
                     lh = bk['lh']
-
+                print("to es bk:", bk)
                 bk_bd = build_es_book_json_body(bk['code'], bk['price'], bk["name"], bk["cover"], bk["opf"], bk["ncx"],
                                                 ftype, lh, ftsize, authors, rating, series, publisher,
-                                                pubdate, desc, bk["idx"], bk["created_at"], bk['pin'], bk['ref_id'],
+                                                pubdate, desc, bk["idx"], get_now_datetime(), bk['pin'], bk['ref_id'],
                                                 source, tags)
                 es_dao_book().index(c, bk_bd)
             else:
