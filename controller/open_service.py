@@ -461,7 +461,8 @@ class OpenService(BaseService):
                                     idx = ncx_file_path.find(sb.code + "/")
                                     if idx > 0:
                                         ncx_file_path = ncx_file_path[idx + code_len:]
-                                params = {"pin": 1, "unziped": 1, "opf": opf_file_path, "ncx": ncx_file_path}
+                                params = {"pin": 1, "unziped": 1, "opf": opf_file_path, "ncx": ncx_file_path, "ftype": 1,
+                                          "ftsize": 18, "lh": '120%'}
                                 if _ncx_file_path:
                                     self.parse_ncx(_ncx_file_path, params)
                                 if cover_file_path:
@@ -498,10 +499,10 @@ class OpenService(BaseService):
         for bk in book_list:
             c = bk['code']
             bk_doc_exists = es_dao_book().exists(c)
-            print("bk_doc_exists:", bk_doc_exists)
+            # print("bk_doc_exists:", bk_doc_exists)
             if not bk_doc_exists:
                 bk_bd = build_es_book_json_body(bk['code'], bk['price'], bk["name"], bk["cover"], bk["opf"], bk["ncx"],
-                                                bk["ftyp"], bk["lh"], bk["ftsize"], bk["desc"], bk["idx"],
+                                                bk["ftype"], bk["lh"], bk["ftsize"], bk["desc"], bk["idx"],
                                                 get_now_datetime(), bk['pin'], bk['ref_id'], bk['source'], [tag])
                 es_dao_book().index(c, bk_bd)
             else:
