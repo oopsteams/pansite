@@ -91,7 +91,14 @@ class BookService(BaseService):
 
         if kw:
             es_body = build_query_item_es_body(sp)
-            es_body["highlight"] = {"fields": {"name": {}, "authors": {}, "publisher": {}}}
+            # es_body["highlight"] = {
+            #     "pre_tags": "<text class='key'>",
+            #     "post_tags": "</text>",
+            #     "fields": {"name": {}, "authors": {}, "publisher": {}}
+            # }
+            es_body["highlight"] = {
+                "fields": {"name": {}, "authors": {}, "publisher": {}}
+            }
         else:
             es_body = build_query_item_es_body(sp, sort_fields=_sort_fields)
 
@@ -101,11 +108,13 @@ class BookService(BaseService):
         # datas = [_s["_source"] for _s in hits_rs["hits"]]
         datas = []
         if es_result:
-            logger.info("book es_result:{}".format(es_result))
+            # logger.info("book es_result:{}".format(es_result))
             hits_rs = es_result["hits"]
             total = hits_rs["total"]
             for _s in hits_rs["hits"]:
+                highlight = _s["highlight"]
                 raw = _s["_source"]
+                raw["highlight"] = highlight
                 raw["code"] = raw["id"]
                 item = raw
                 datas.append(item)
