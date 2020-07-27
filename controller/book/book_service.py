@@ -103,9 +103,9 @@ class BookService(BaseService):
             hits_rs = es_result["hits"]
             total = hits_rs["total"]
             for _s in hits_rs["hits"]:
-                source = _s["_source"]["source"]
-                source["code"] = source["id"]
-                item = source
+                raw = _s["_source"]
+                raw["code"] = raw["id"]
+                item = raw
                 datas.append(item)
         has_next = offset + size < total
         rs = {"data": datas, "has_next": has_next, "total": total, "pagesize": size}
