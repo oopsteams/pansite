@@ -4,7 +4,9 @@ Created by susy at 2020/6/30
 """
 from controller.base_service import BaseService
 from dao.study_dao import StudyDao
-from utils import singleton, CJsonEncoder, decrypt_id, constant, log
+from dao.es_dao import es_dao_book
+from utils import singleton, CJsonEncoder, decrypt_id, constant, log as logger, constant
+from utils.utils_es import SearchParams, build_query_item_es_body, build_es_book_json_body
 from utils.caches import cache_data, clear_cache
 from controller.book.html_book_parser import HTMLBookParser
 from cfg import EPUB
@@ -35,6 +37,79 @@ class BookService(BaseService):
 
     def list(self, guest, offset, size):
         return StudyDao.query_study_book_list(1, offset, size)
+
+    def search(self, tag, keyword, page, size=50):
+        kw = None
+        if keyword:
+            l_kw = keyword.lower()
+            pos = 0
+            idx = l_kw.find("or", pos)
+            _kw_secs = []
+            while idx >= pos:
+                s = keyword[pos:idx]
+                _s = s.strip()
+                _s_arr = _s.split(' ')
+                _arr = [a for a in _s_arr if len(a) > 0]
+                _s = " AND ".join(_arr)
+                _kw_secs.append(_s)
+                pos = idx + 2
+                idx = l_kw.find("or", pos)
+            if pos < len(l_kw):
+                s = keyword[pos:]
+                _s = s.strip()
+                _s_arr = _s.split(' ')
+                _arr = [a for a in _s_arr if len(a) > 0]
+                _s = " AND ".join(_arr)
+                _kw_secs.append(_s)
+            # print("_kw_secs:", _kw_secs)
+            if _kw_secs:
+                new_keyword = " OR ".join(_kw_secs)
+            else:
+                new_keyword = keyword
+            kw = new_keyword
+        # print("kw:", kw)
+        # size = 50
+        offset = int(page) * size
+        if offset > constant.MAX_RESULT_WINDOW - size:
+            offset = constant.MAX_RESULT_WINDOW - size
+        sp: SearchParams = SearchParams.build_params(offset, size)
+        es_dao_fun = es_dao_book
+        if kw:
+            # sp.add_must(value=kw)
+            # sp.add_must(False, field='query_string', value="\"%s\"" % kw)
+            _kw_val = "%s" % kw
+            sp.add_should(True, field='name', value=_kw_val)
+            sp.add_should(True, field='authors', value=_kw_val)
+            sp.add_should(True, field='publisher', value=_kw_val)
+        if tag:
+            # sp.add_must(False, field='query_string', value="\"%s\"" % tag)
+            sp.add_must(True, field='tags', value="%s" % tag)
+        _sort_fields = None
+        if tag:
+            _sort_fields = [{"created_at": {"order": "desc"}}]
+
+        if kw:
+            es_body = build_query_item_es_body(sp)
+            # es_body["highlight"] = {"fields": {"filename": {}}}
+        else:
+            es_body = build_query_item_es_body(sp, sort_fields=_sort_fields)
+
+        logger.info("es_body:{}".format(es_body))
+        es_result = es_dao_fun().es_search_exec(es_body)
+        total = 0
+        # datas = [_s["_source"] for _s in hits_rs["hits"]]
+        datas = []
+        if es_result:
+            hits_rs = es_result["hits"]
+            total = hits_rs["total"]
+            for _s in hits_rs["hits"]:
+                source = _s["_source"]["source"]
+                source["code"] = source["id"]
+                item = source
+                datas.append(item)
+        has_next = offset + size < total
+        rs = {"data": datas, "has_next": has_next, "total": total, "pagesize": size}
+        return rs
 
     def get_book(self, code):
         return StudyDao.check_out_study_book(code)

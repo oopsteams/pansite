@@ -21,6 +21,16 @@ class BookHandler(BaseHandler):
             bl = book_service.list(self.guest, offset, size)
             rs["hasnext"] = len(bl) == size
             rs["list"] = bl
+        elif "se" == cmd:
+            kw = self.get_argument("kw", None)
+            tag = self.get_argument("tag", None)
+            # tag = url_decode(tag)
+            page = self.get_argument("page", "0")
+            size = self.get_argument("size", "20")
+            # print("kw:", kw)
+            # print("source:", source)
+            rs = book_service.search(tag, kw, page, int(size))
+            self.to_write_json(rs)
         elif "pinyin" == cmd:
             code = params.get("code", "0")
             chapter = params.get("c", "")

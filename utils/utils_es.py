@@ -24,17 +24,18 @@ class ShouldParams(object):
         self.value = value
 
     def to_es_params(self, bool_body: dict):
-        must_body = bool_body.get("must", list())
-        if must_body:
-            must_bool = None
-            for item in must_body:
-                if "bool" in item:
-                    must_bool = item['bool']
-                    break
-            if not must_bool:
-                must_bool = dict()
-                must_body.append({"bool": must_bool})
-            bool_body = must_bool
+        # must_body = bool_body.get("must", list())
+        # if must_body:
+        #     must_bool = None
+        #     for item in must_body:
+        #         if "bool" in item:
+        #             must_bool = item['bool']
+        #             break
+        #     if not must_bool:
+        #         must_bool = dict()
+        #         must_body.append({"bool": must_bool})
+        #     bool_body = must_bool
+        bool_body["minimum_should_match"] = 1
         should_body = list()
         if "should" in bool_body and bool_body.get("should"):
             should_body = bool_body.get("should")
@@ -141,7 +142,7 @@ class SearchParams(object):
             return
         if not self.should:
             self.should = []
-        self.should.append(MustNotParams(is_match, field, value))
+        self.should.append(ShouldParams(is_match, field, value))
 
 
 def build_es_item_json_body(data_item_id, category, isdir, pin, fs_id, size, account, filename, path, server_ctime,
