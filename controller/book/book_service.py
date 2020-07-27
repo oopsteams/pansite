@@ -81,6 +81,7 @@ class BookService(BaseService):
             sp.add_should(True, field='name', value=_kw_val)
             sp.add_should(True, field='authors', value=_kw_val)
             sp.add_should(True, field='publisher', value=_kw_val)
+
         if tag:
             # sp.add_must(False, field='query_string', value="\"%s\"" % tag)
             sp.add_must(True, field='tags', value="%s" % tag)
@@ -90,7 +91,7 @@ class BookService(BaseService):
 
         if kw:
             es_body = build_query_item_es_body(sp)
-            # es_body["highlight"] = {"fields": {"filename": {}}}
+            es_body["highlight"] = {"fields": {"name": {}, "authors": {}, "publisher": {}}}
         else:
             es_body = build_query_item_es_body(sp, sort_fields=_sort_fields)
 
