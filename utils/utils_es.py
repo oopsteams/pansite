@@ -75,7 +75,7 @@ class MustParams(ShouldParams):
 
     def to_es_params(self, bool_body: dict):
         must_body = bool_body.get("must", list())
-        print("MustParams to_es_params must_body:", must_body)
+        # print("MustParams to_es_params must_body:", must_body)
         if self.is_match:
             if self.field and self.value:
                 must_body.append({"match": {self.field: self.value}})
@@ -84,9 +84,9 @@ class MustParams(ShouldParams):
             else:
                 must_body.append({"match_all": {}})
         else:
-            print("MustParams to_es_params field:", self.field, self.value)
+            # print("MustParams to_es_params field:", self.field, self.value)
             if self.field and self.value is not None:
-                if "query_string" == self.field or self.is_query:
+                if "query_string" == self.field:
                     must_body.append(build_query_string(self.value))
                 else:
                     if self.is_query:
@@ -254,7 +254,7 @@ def build_query_item_es_body(search_params: SearchParams, sort_fields=None, fiel
     query_body: dict = es_body["query"]
     bool_body: dict = query_body.get("bool", dict())
     if search_params.musts:
-        print("has musts!!!!")
+        # print("has musts!!!!")
         for m in search_params.musts:
             m.to_es_params(bool_body)
     if search_params.not_musts:
@@ -263,6 +263,6 @@ def build_query_item_es_body(search_params: SearchParams, sort_fields=None, fiel
     if search_params.should:
         for s in search_params.should:
             s.to_es_params(bool_body)
-    print("build_query_item_es_body bool_body:", bool_body)
+    # print("build_query_item_es_body bool_body:", bool_body)
     query_body["bool"] = bool_body
     return es_body

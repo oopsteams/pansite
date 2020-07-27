@@ -110,7 +110,7 @@ class BookService(BaseService):
         else:
             es_body = build_query_item_es_body(sp, sort_fields=_sort_fields)
 
-        logger.info("es_body:{}".format(es_body))
+        logger.info("es_body:{}".format(json.dumps(es_body)))
         es_result = es_dao_fun().es_search_exec(es_body)
         total = 0
         # datas = [_s["_source"] for _s in hits_rs["hits"]]
