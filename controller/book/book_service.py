@@ -88,7 +88,7 @@ class BookService(BaseService):
             # sp.add_must(False, field='query_string', value="\"%s\"" % tag)
                 sp.add_must(True, field='tags', value="%s" % t)
         _sort_fields = None
-        if tag:
+        if not kw:
             _sort_fields = [{"created_at": {"order": "desc"}}]
 
         if kw:
