@@ -86,7 +86,7 @@ class BookService(BaseService):
             idx = tag.rfind(",")
             if idx > 0:
                 tag_query = tag.replace(",", " OR ")
-                sp.add_must(True, field='tags', value=tag_query, is_query=True)
+                sp.add_must(False, field='tags', value=tag_query, is_query=True)
             else:
                 sp.add_must(True, field='tags', value="%s" % tag)
             # tags = tag.split(",")
@@ -110,7 +110,7 @@ class BookService(BaseService):
         else:
             es_body = build_query_item_es_body(sp, sort_fields=_sort_fields)
 
-        logger.info("es_body:{}".format(json.dumps(es_body)))
+        logger.info("es_body:{}".format(es_body).replace("'", '"'))
         es_result = es_dao_fun().es_search_exec(es_body)
         total = 0
         # datas = [_s["_source"] for _s in hits_rs["hits"]]
