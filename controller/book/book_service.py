@@ -112,7 +112,9 @@ class BookService(BaseService):
             hits_rs = es_result["hits"]
             total = hits_rs["total"]
             for _s in hits_rs["hits"]:
-                highlight = _s["highlight"]
+                highlight = {}
+                if "highlight" in _s:
+                    highlight = _s["highlight"]
                 raw = _s["_source"]
                 raw["highlight"] = highlight
                 raw["code"] = raw["id"]
