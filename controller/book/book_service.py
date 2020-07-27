@@ -83,8 +83,10 @@ class BookService(BaseService):
             sp.add_should(True, field='publisher', value=_kw_val)
 
         if tag:
+            tags = tag.split(",")
+            for t in tags:
             # sp.add_must(False, field='query_string', value="\"%s\"" % tag)
-            sp.add_must(True, field='tags', value="%s" % tag)
+                sp.add_must(True, field='tags', value="%s" % t)
         _sort_fields = None
         if tag:
             _sort_fields = [{"created_at": {"order": "desc"}}]

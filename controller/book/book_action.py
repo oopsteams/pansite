@@ -72,8 +72,9 @@ class BookHandler(BaseHandler):
                 rs["value"] = book_service.remove_shelf_book(wx_id, book_shelf_code)
 
         elif "recoverbkes" == cmd:
-            from controller.open_service import open_service
-            rs = open_service.recover_bk_es()
+            if self.token:
+                from controller.open_service import open_service
+                rs = open_service.recover_bk_es()
 
         return rs
 
