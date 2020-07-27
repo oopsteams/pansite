@@ -612,21 +612,22 @@ class OpenService(BaseService):
                         sb_dict = code_map[code]
                         sb = None
                         if code in db_sb_list_map:
-                            sb = db_sb_list_map[code]
-                            nm = sb_dict['name']
-                            if sb.name == nm:
-                                continue
-                            else:
-                                dog = 10
-                                code = "{}_{}".format(code, random.randint(1, 10))
-                                _sb = StudyDao.check_out_study_book(code)
-                                while _sb and not (_sb.name == nm) and dog > 0:
-                                    dog = dog - 1
-                                    code = "{}_{}".format(code, random.randint(1, 10))
-                                    _sb = StudyDao.check_out_study_book(code)
-                                if not _sb:
-                                    sb_dict["code"] = code
-                                    sub_new_books.append(sb_dict)
+                            continue
+                            # sb = db_sb_list_map[code]
+                            # nm = sb_dict['name']
+                            # if sb.name == nm:
+                            #     continue
+                            # else:
+                            #     dog = 10
+                            #     code = "{}_{}".format(code, random.randint(1, 10))
+                            #     _sb = StudyDao.check_out_study_book(code)
+                            #     while _sb and not (_sb.name == nm) and dog > 0:
+                            #         dog = dog - 1
+                            #         code = "{}_{}".format(code, random.randint(1, 10))
+                            #         _sb = StudyDao.check_out_study_book(code)
+                            #     if not _sb:
+                            #         sb_dict["code"] = code
+                            #         sub_new_books.append(sb_dict)
                         else:
                             sub_new_books.append(sb_dict)
                     if sub_new_books:
