@@ -83,10 +83,16 @@ class BookService(BaseService):
             sp.add_should(True, field='publisher', value=_kw_val)
 
         if tag:
-            tags = tag.split(",")
-            for t in tags:
+            idx = tag.rfind(",")
+            if idx > 0:
+                tag_query = tag.replace(",", " OR ")
+                sp.add_must(True, field='tags', value=tag_query, is_query=True)
+            else:
+                sp.add_must(True, field='tags', value="%s" % tag)
+            # tags = tag.split(",")
+            # for t in tags:
             # sp.add_must(False, field='query_string', value="\"%s\"" % tag)
-                sp.add_must(True, field='tags', value="%s" % t)
+            #     sp.add_must(True, field='tags', value="%s" % t, is_query=True)
         _sort_fields = None
         if not kw:
             _sort_fields = [{"created_at": {"order": "desc"}}]
@@ -146,7 +152,7 @@ class BookService(BaseService):
         chapter_file_name = chapter
         idx = chapter.rfind("/")
         if len(chapter) > idx >= 0:
-            chapter_file_name = chapter[idx+1:]
+            chapter_file_name = chapter[idx + 1:]
         base_dir = ctx["basepath"]
         if base_dir:
             dest_dir = os.path.join(base_dir, EPUB["dest"])

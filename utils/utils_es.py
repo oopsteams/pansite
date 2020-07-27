@@ -6,22 +6,29 @@ import arrow
 from utils import log as logger
 
 
-def build_query_string(q):
+def build_query_string(q, field=None, is_query=False):
     if q:
         idx = q.find(":")
         if idx >= 0:
             return {"query_string": {"query": q}}
         else:
-            return {"query_string": {"default_field": "all", "query": q}}
+            if is_query:
+                if field and not "query_string" == field:
+                    return {"query_string": {"default_field": field, "query": q}}
+                else:
+                    return {"query_string": {"default_field": "all", "query": q}}
+            else:
+                return {"query_string": {"default_field": "all", "query": q}}
     pass
 
 
 class ShouldParams(object):
 
-    def __init__(self, is_match=True, field=None, value=None):
+    def __init__(self, is_match=True, field=None, value=None, is_query=False):
         self.is_match = is_match
         self.field = field
         self.value = value
+        self.is_query = is_query
 
     def to_es_params(self, bool_body: dict):
         # must_body = bool_body.get("must", list())
@@ -53,15 +60,18 @@ class ShouldParams(object):
                 if "query_string" == self.field:
                     should_body.append(build_query_string(self.value))
                 else:
-                    should_body.append({"term": {self.field: self.value}})
+                    if self.is_query:
+                        should_body.append(build_query_string(self.value, self.field, self.is_query))
+                    else:
+                        should_body.append({"term": {self.field: self.value}})
             else:
                 return
 
 
 class MustParams(ShouldParams):
 
-    def __init__(self, is_match=True, field=None, value=None):
-        super().__init__(is_match, field, value)
+    def __init__(self, is_match=True, field=None, value=None, is_query=False):
+        super().__init__(is_match, field, value, is_query)
 
     def to_es_params(self, bool_body: dict):
         must_body = bool_body.get("must", list())
@@ -76,10 +86,13 @@ class MustParams(ShouldParams):
         else:
             print("MustParams to_es_params field:", self.field, self.value)
             if self.field and self.value is not None:
-                if "query_string" == self.field:
+                if "query_string" == self.field or self.is_query:
                     must_body.append(build_query_string(self.value))
                 else:
-                    must_body.append({"term": {self.field: self.value}})
+                    if self.is_query:
+                        must_body.append(build_query_string(self.value, self.field, self.is_query))
+                    else:
+                        must_body.append({"term": {self.field: self.value}})
             else:
                 return
         bool_body['must'] = must_body
@@ -87,8 +100,8 @@ class MustParams(ShouldParams):
 
 class MustNotParams(ShouldParams):
 
-    def __init__(self, is_match=True, field=None, value=None):
-        super().__init__(is_match, field, value)
+    def __init__(self, is_match=True, field=None, value=None, is_query=False):
+        super().__init__(is_match, field, value, is_query)
 
     def to_es_params(self, bool_body: dict):
         must_not_body = bool_body.get("must_not", list())
@@ -104,7 +117,10 @@ class MustNotParams(ShouldParams):
                 if "query_string" == self.field:
                     must_not_body.append(build_query_string(self.value))
                 else:
-                    must_not_body.append({"term": {self.field: self.value}})
+                    if self.is_query:
+                        must_not_body.append(build_query_string(self.value, self.field, self.is_query))
+                    else:
+                        must_not_body.append({"term": {self.field: self.value}})
             else:
                 return
         bool_body['must_not'] = must_not_body
@@ -125,24 +141,24 @@ class SearchParams(object):
     def build_params(cls, offset=0, size=10):
         return SearchParams(offset, size)
 
-    def add_must(self, is_match=True, field=None, value=None):
+    def add_must(self, is_match=True, field=None, value=None, is_query=False):
         if not self.musts:
             self.musts = []
-        self.musts.append(MustParams(is_match, field, value))
+        self.musts.append(MustParams(is_match, field, value, is_query))
 
-    def add_must_not(self, is_match=True, field=None, value=None):
+    def add_must_not(self, is_match=True, field=None, value=None, is_query=False):
         if not value:
             return
         if not self.not_musts:
             self.not_musts = []
-        self.not_musts.append(MustNotParams(is_match, field, value))
+        self.not_musts.append(MustNotParams(is_match, field, value, is_query))
 
-    def add_should(self, is_match=True, field=None, value=None):
+    def add_should(self, is_match=True, field=None, value=None, is_query=False):
         if not value:
             return
         if not self.should:
             self.should = []
-        self.should.append(ShouldParams(is_match, field, value))
+        self.should.append(ShouldParams(is_match, field, value, is_query))
 
 
 def build_es_item_json_body(data_item_id, category, isdir, pin, fs_id, size, account, filename, path, server_ctime,
