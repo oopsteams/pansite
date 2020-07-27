@@ -127,6 +127,10 @@ class BookService(BaseService):
                 raw["highlight"] = highlight
                 raw["code"] = raw["id"]
                 item = raw
+                item.pop("tags")
+                item.pop("@ts")
+                item.pop("@is_removed")
+                item.pop("ref_id")
                 datas.append(item)
         has_next = offset + size < total
         rs = {"data": datas, "has_next": has_next, "total": total, "pagesize": size}

@@ -77,7 +77,7 @@ class BookNcxParser(HTMLParser):
             self.find_meta = False
         elif self.find_meta:
             if tag.endswith("title"):
-                self.params["title"] = self.cd
+                self.params["name"] = self.cd
             elif tag.endswith("creator"):
                 self.params["authors"] = self.cd
             elif tag.endswith("publisher"):
