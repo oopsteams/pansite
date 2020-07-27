@@ -101,6 +101,7 @@ class BookService(BaseService):
         # datas = [_s["_source"] for _s in hits_rs["hits"]]
         datas = []
         if es_result:
+            logger.debug("book es_result:".format(es_result))
             hits_rs = es_result["hits"]
             total = hits_rs["total"]
             for _s in hits_rs["hits"]:
