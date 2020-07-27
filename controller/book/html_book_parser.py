@@ -99,7 +99,8 @@ class BookNcxParser(HTMLParser):
                     cd_tags = _cd.split("，")
                 for cdt in cd_tags:
                     self.params["tags"].append(cdt)
-
+            elif tag.endswith("description"):
+                self.params["desc"] = self.cd
             self.read_datas = False
         pass
 
