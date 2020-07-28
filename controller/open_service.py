@@ -397,9 +397,14 @@ class OpenService(BaseService):
         if os.path.exists(ncx_file_path):
             dom: Document = xml_book_parser.read_xml(ncx_file_path)
             root = dom.documentElement
-            node:Node = root.getElementsByTagName("navMap")
+            nodes = root.getElementsByTagName("navMap")
+            if nodes:
+                nav_map_node = nodes[0]
+                points = nav_map_node.getElementsByTaName("navPoint")
+                for n in points:
+                    print("point:", n)
+
             print("root:", root)
-            print("node:", node)
             # root_tree = xml_book_parser.read_xml(ncx_file_path)
             # root_node = root_tree.getroot()
             # attrs = root_node.attrib
