@@ -22,8 +22,8 @@ def if_match(node, kv_map):
     return True
 
 
-def find_nodes(tree, path):
-    return tree.findall(path)
+def find_nodes(tree, path, np):
+    return tree.findall(path, namespaces=np)
 
 
 def get_node_by_keyvalue(nodelist, kv_map):
