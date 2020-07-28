@@ -443,19 +443,10 @@ class OpenService(BaseService):
                             text.childNodes[0].data = item["id"]
                             content_elem.setAttribute("src", item["href"])
                             nav_map_node.appendChild(nElem)
-                # with open(ncx_file_path, "w", encoding='UTF-8') as f:
-                #     dom.writexml(f, encoding='UTF-8')
-                rs = dom.saveXML(root)
-                print("saveXML rs:", rs)
-            # print("root:", root)
-            # root_tree = xml_book_parser.read_xml(ncx_file_path)
-            # root_node = root_tree.getroot()
-            # attrs = root_node.attrib
-            # print("repaire_ncx root_node:", root_node, ",attrs:", attrs)
-            # text_node = xml_book_parser.find_nodes(root_tree, "ncx:text", {'ncx': 'http://www.daisy.org/z3986/2005/ncx/'})
-            # print("repaire_ncx need check text_node:", text_node)
-            # navMap_node = xml_book_parser.find_nodes(root_tree, "ncx:navMap", {'ncx': 'http://www.daisy.org/z3986/2005/ncx/'})
-            # print("repaire_ncx need check navMap_node:", navMap_node)
+                with open(ncx_file_path, "w", encoding='UTF-8') as f:
+                    dom.writexml(f, encoding='UTF-8')
+                # rs = dom.saveXML(root)
+                # print("saveXML rs:", rs)
 
     def parse_opf(self, opf_file_path, params):
         import os
@@ -753,8 +744,8 @@ class OpenService(BaseService):
                         sb_dict[k] = params[k]
                     updated.append(params)
                     #
-                    # StudyDao.update_books_by_id(params, sb.id)
-                    # self.sync_to_es([sb_dict])
+                    StudyDao.update_books_by_id(params, sb.id)
+                    self.sync_to_es([sb_dict])
 
         StudyDao.check_ziped_books(0, 1, callback=deal_unzip_epub)
         if updated:
