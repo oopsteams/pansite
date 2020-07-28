@@ -398,7 +398,7 @@ class OpenService(BaseService):
             root_node = root_tree.getroot()
 
             print("repaire_ncx root_node:", root_node)
-            text_node = xml_book_parser.find_nodes(root_tree, "text")
+            text_node = xml_book_parser.find_nodes(root_tree, "ncx:text", {'ncx': 'http://www.daisy.org/z3986/2005/ncx/'})
             print("repaire_ncx need check text_node:", text_node)
             navMap_node = xml_book_parser.find_nodes(root_tree, "ncx:navMap", {'ncx': 'http://www.daisy.org/z3986/2005/ncx/'})
             print("repaire_ncx need check navMap_node:", navMap_node)
