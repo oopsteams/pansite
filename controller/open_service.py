@@ -390,11 +390,17 @@ class OpenService(BaseService):
                     break
         return cover_file_path
 
-    def parse_opf(self, ncx_file_path, params):
+    def repaire_ncx(self, ncx_file_path, items):
         import os
         if os.path.exists(ncx_file_path):
+            print("need check items:", items)
+            pass
+
+    def parse_opf(self, opf_file_path, params):
+        import os
+        if os.path.exists(opf_file_path):
             parser = BookOpfParser()
-            with open(ncx_file_path, "r") as f:
+            with open(opf_file_path, "r") as f:
                 parser.feed(f.read())
             parser.close()
             if parser.meta:
@@ -429,6 +435,15 @@ class OpenService(BaseService):
 
                 print("parse_opf items:", parser.items)
                 pass
+            if "ncx" in params and parser.itemrefs:
+                prefix_path = opf_file_path
+                idx = opf_file_path.rfind("/")
+                if idx > 0:
+                    prefix_path = opf_file_path[0:idx]
+                _items = []
+                for ir in parser.itemrefs:
+                    _items.append(parser.items[ir])
+                self.repaire_ncx(os.path.join(prefix_path, params["ncx"]), _items)
 
     def unzip_epub(self, ctx, books: list):
         import os
@@ -675,10 +690,10 @@ class OpenService(BaseService):
 
                     for k in params:
                         sb_dict[k] = params[k]
-                    updated.append(params)
-
-                    StudyDao.update_books_by_id(params, sb.id)
-                    self.sync_to_es([sb_dict])
+                    # updated.append(params)
+                    #
+                    # StudyDao.update_books_by_id(params, sb.id)
+                    # self.sync_to_es([sb_dict])
 
         StudyDao.check_ziped_books(0, 1, callback=deal_unzip_epub)
         if updated:

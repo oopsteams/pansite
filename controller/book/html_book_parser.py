@@ -63,6 +63,7 @@ class BookOpfParser(HTMLParser):
         self.find_meta = False
         self.params = {}
         self.items = {}
+        self.itemrefs = []
         self.read_datas = False
         self.cd = ""
 
@@ -136,7 +137,9 @@ class BookOpfParser(HTMLParser):
             _attrs_map = {k: v for k, v in attrs}
             if "id" in _attrs_map:
                 self.items[_attrs_map["id"]] = _attrs_map
-
+        elif tag == "itemref":
+            _attrs_map = {k: v for k, v in attrs}
+            self.itemrefs.append(_attrs_map["idref"])
         pass
 
     def handle_data(self, data):
