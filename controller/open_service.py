@@ -394,21 +394,38 @@ class OpenService(BaseService):
     def repaire_ncx(self, ncx_file_path, items):
         import os
         from xml.dom.minidom import Element, Document
+        _items_map = {i.href:i for i in items}
         if os.path.exists(ncx_file_path):
             dom: Document = xml_book_parser.read_xml(ncx_file_path)
             root = dom.documentElement
             nodes = root.getElementsByTagName("navMap")
             if nodes:
                 nav_map_node: Element = nodes[0]
+                demo:Element = None
                 points = nav_map_node.getElementsByTagName("navPoint")
-                need_change = []
+                titlepage_node = None
                 for n in points:
                     print("point:", n)
+                    demo = n
                     elems = n.getElementsByTagName("content")
                     if elems:
                         el: Element = elems[0]
                         src = el.getAttribute("src")
-                        print("content src:", src)
+                        if src in _items_map:
+                            _items_map.pop(src)
+                        if src.startswith("titlepage"):
+                            titlepage_node = el
+                titlepage_need_cover = False
+                if titlepage_node:
+                    titlepage_need_cover = True
+                for item in items:
+                    if item.href in _items_map:
+                        if titlepage_need_cover:
+                            titlepage_node.setAttribute("src", item.href)
+                        else:
+                            nElem: Element = demo.cloneNode(True)
+                            text: Element = nElem.getElementsByTagName("text")
+                            print("text data:", text.childNodes[0].data)
 
             print("root:", root)
             # root_tree = xml_book_parser.read_xml(ncx_file_path)
