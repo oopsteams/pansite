@@ -394,7 +394,7 @@ class OpenService(BaseService):
     def repaire_ncx(self, ncx_file_path, items):
         import os
         from xml.dom.minidom import Element, Document
-        _items_map = {i.href:i for i in items}
+        _items_map = {i["href"]: i for i in items}
         if os.path.exists(ncx_file_path):
             dom: Document = xml_book_parser.read_xml(ncx_file_path)
             root = dom.documentElement
