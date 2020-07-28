@@ -395,7 +395,7 @@ class OpenService(BaseService):
         import os
         if os.path.exists(ncx_file_path):
             root_tree = xml_book_parser.read_xml(ncx_file_path)
-            print("repaire_ncx root_tree:", root_tree)
+            print("repaire_ncx root_node:", root_tree.getroot())
             navMap_node = xml_book_parser.find_nodes(root_tree, "navMap")
             print("repaire_ncx need check navMap_node:", navMap_node)
 
