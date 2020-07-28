@@ -3,12 +3,15 @@
 Created by susy at 2020/7/28
 """
 from xml.etree.ElementTree import ElementTree, Element
+from xml.dom import minidom
 
 
 def read_xml(in_path):
-    tree = ElementTree()
-    tree.parse(in_path)
-    return tree
+    dom = minidom.parse(in_path)
+    # tree = ElementTree()
+    # tree.parse(in_path)
+    # return tree
+    return dom
 
 
 def write_xml(tree, out_path):
