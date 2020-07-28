@@ -393,14 +393,14 @@ class OpenService(BaseService):
 
     def repaire_ncx(self, ncx_file_path, items):
         import os
-        from xml.dom.minidom import Node, Document
+        from xml.dom.minidom import Element, Document
         if os.path.exists(ncx_file_path):
             dom: Document = xml_book_parser.read_xml(ncx_file_path)
             root = dom.documentElement
             nodes = root.getElementsByTagName("navMap")
             if nodes:
-                nav_map_node = nodes[0]
-                points = nav_map_node.getElementsByTaName("navPoint")
+                nav_map_node: Element = nodes[0]
+                points = nav_map_node.getElementsByTagName("navPoint")
                 for n in points:
                     print("point:", n)
 
