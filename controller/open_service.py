@@ -415,9 +415,9 @@ class OpenService(BaseService):
                 titlepage_node = None
                 titlepage_point = None
                 for n in points:
-                    demo = n
                     elems = n.getElementsByTagName("content")
                     if elems:
+                        demo = n
                         el: Element = elems[0]
                         src = el.getAttribute("src")
                         if src in _items_map:
@@ -437,7 +437,7 @@ class OpenService(BaseService):
                             titlepage_node.setAttribute("src", item["href"])
                         else:
                             nElem: Element = demo.cloneNode(True)
-                            content_elem: Element = nElem.getElementsByTagName("content")
+                            content_elem: Element = nElem.getElementsByTagName("content")[0]
                             text: Element = nElem.getElementsByTagName("text")[0]
                             nElem.setAttribute("id", item["id"])
                             text.childNodes[0].data = item["id"]
