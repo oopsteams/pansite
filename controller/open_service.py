@@ -421,12 +421,15 @@ class OpenService(BaseService):
                 for item in items:
                     if item.href in _items_map:
                         if titlepage_need_cover:
+                            text: Element = nElem.getElementsByTagName("text")
+                            print("text data:", text.childNodes[0].data)
                             titlepage_node.setAttribute("src", item.href)
                         else:
                             nElem: Element = demo.cloneNode(True)
                             text: Element = nElem.getElementsByTagName("text")
                             print("text data:", text.childNodes[0].data)
-
+                rs = dom.saveXML()
+                print("saveXML rs:", rs)
             print("root:", root)
             # root_tree = xml_book_parser.read_xml(ncx_file_path)
             # root_node = root_tree.getroot()
