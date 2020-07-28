@@ -393,6 +393,15 @@ class OpenService(BaseService):
 
     def repaire_ncx(self, ncx_file_path, items):
         import os
+        skip_points = ["titlepage"]
+
+        def is_hit_skip_points(src):
+            if src:
+                for p in skip_points:
+                    if src.startswith(p):
+                        return True
+            return False
+
         from xml.dom.minidom import Element, Document
         _items_map = {i["href"]: i for i in items}
         if os.path.exists(ncx_file_path):
@@ -414,7 +423,7 @@ class OpenService(BaseService):
                         src = el.getAttribute("src")
                         if src in _items_map:
                             _items_map.pop(src)
-                        if src.startswith("titlepage"):
+                        if is_hit_skip_points(src):
                             titlepage_point = n
                             titlepage_node = el
                 titlepage_need_cover = False
