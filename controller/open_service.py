@@ -419,11 +419,11 @@ class OpenService(BaseService):
                 if titlepage_node:
                     titlepage_need_cover = True
                 for item in items:
-                    if item.href in _items_map:
+                    if item["href"] in _items_map:
                         if titlepage_need_cover:
                             text: Element = nElem.getElementsByTagName("text")
                             print("text data:", text.childNodes[0].data)
-                            titlepage_node.setAttribute("src", item.href)
+                            titlepage_node.setAttribute("src", item["href"])
                         else:
                             nElem: Element = demo.cloneNode(True)
                             text: Element = nElem.getElementsByTagName("text")
