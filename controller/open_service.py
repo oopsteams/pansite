@@ -421,7 +421,7 @@ class OpenService(BaseService):
                 for item in items:
                     if item["href"] in _items_map:
                         if titlepage_need_cover:
-                            text: Element = nElem.getElementsByTagName("text")
+                            text: Element = titlepage_node.getElementsByTagName("text")
                             print("text data:", text.childNodes[0].data)
                             titlepage_node.setAttribute("src", item["href"])
                         else:
