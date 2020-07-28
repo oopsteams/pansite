@@ -430,7 +430,7 @@ class OpenService(BaseService):
                     titlepage_need_cover = True
                 for item in items:
                     # not is_hit_skip_points(item["href"])
-                    if item["href"] in _items_map:
+                    if not is_hit_skip_points(item["href"]) and item["href"] in _items_map:
                         if titlepage_need_cover:
                             text: Element = titlepage_point.getElementsByTagName("text")[0]
                             # print("text data:", text.childNodes[0].data)
@@ -503,7 +503,6 @@ class OpenService(BaseService):
                     prefix_path = opf_file_path[0:idx]
                 _items = []
                 for ir in parser.itemrefs:
-                    print("ir:", ir)
                     _items.append(parser.items[ir])
                 self.repaire_ncx(os.path.join(prefix_path, params["ncx"]), _items)
 
