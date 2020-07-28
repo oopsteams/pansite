@@ -428,11 +428,15 @@ class OpenService(BaseService):
                             titlepage_node.setAttribute("src", item["href"])
                         else:
                             nElem: Element = demo.cloneNode(True)
-                            text: Element = nElem.getElementsByTagName("text")
+                            text: Element = titlepage_point.getElementsByTagName("text")[0]
+                            text.childNodes[0].data = item["id"]
                             print("text data:", text.childNodes[0].data)
-                rs = dom.saveXML(root)
-                print("saveXML rs:", rs)
-            print("root:", root)
+                            nav_map_node.appendChild(nElem)
+                with open(ncx_file_path, "w", encoding='UTF-8') as f:
+                    dom.writexml(f, encoding='UTF-8')
+                # rs = dom.saveXML(root)
+                # print("saveXML rs:", rs)
+            # print("root:", root)
             # root_tree = xml_book_parser.read_xml(ncx_file_path)
             # root_node = root_tree.getroot()
             # attrs = root_node.attrib
