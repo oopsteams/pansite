@@ -401,8 +401,14 @@ class OpenService(BaseService):
             if nodes:
                 nav_map_node: Element = nodes[0]
                 points = nav_map_node.getElementsByTagName("navPoint")
+                need_change = []
                 for n in points:
                     print("point:", n)
+                    elems = n.getElementsByTagName("content")
+                    if elems:
+                        el: Element = elems[0]
+                        src = el.getAttribute("src")
+                        print("content src:", src)
 
             print("root:", root)
             # root_tree = xml_book_parser.read_xml(ncx_file_path)
