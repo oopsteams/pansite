@@ -430,7 +430,7 @@ class OpenService(BaseService):
                             nElem: Element = demo.cloneNode(True)
                             text: Element = nElem.getElementsByTagName("text")
                             print("text data:", text.childNodes[0].data)
-                rs = dom.saveXML()
+                rs = dom.saveXML(root)
                 print("saveXML rs:", rs)
             print("root:", root)
             # root_tree = xml_book_parser.read_xml(ncx_file_path)
