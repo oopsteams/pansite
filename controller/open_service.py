@@ -567,7 +567,7 @@ class OpenService(BaseService):
                                 self.sync_to_es([sb_dict])
                                 # print("update pin=1 unziped=1 ok, name:", sb.name)
                                 # del file
-                                # os.remove(file_path)
+                                os.remove(file_path)
                             else:
                                 StudyDao.update_books_by_id({"pin": 3, "unziped": 1}, sb.id)
                         except Exception:
