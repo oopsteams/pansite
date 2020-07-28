@@ -442,6 +442,7 @@ class OpenService(BaseService):
                     prefix_path = opf_file_path[0:idx]
                 _items = []
                 for ir in parser.itemrefs:
+                    print("ir:", ir)
                     _items.append(parser.items[ir])
                 self.repaire_ncx(os.path.join(prefix_path, params["ncx"]), _items)
 
@@ -690,7 +691,7 @@ class OpenService(BaseService):
 
                     for k in params:
                         sb_dict[k] = params[k]
-                    # updated.append(params)
+                    updated.append(params)
                     #
                     # StudyDao.update_books_by_id(params, sb.id)
                     # self.sync_to_es([sb_dict])
