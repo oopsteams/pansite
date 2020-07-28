@@ -396,8 +396,8 @@ class OpenService(BaseService):
         if os.path.exists(ncx_file_path):
             root_tree = xml_book_parser.read_xml(ncx_file_path)
             root_node = root_tree.getroot()
-
-            print("repaire_ncx root_node:", root_node)
+            attrs = root_node.attrib
+            print("repaire_ncx root_node:", root_node, ",attrs:", attrs)
             text_node = xml_book_parser.find_nodes(root_tree, "ncx:text", {'ncx': 'http://www.daisy.org/z3986/2005/ncx/'})
             print("repaire_ncx need check text_node:", text_node)
             navMap_node = xml_book_parser.find_nodes(root_tree, "ncx:navMap", {'ncx': 'http://www.daisy.org/z3986/2005/ncx/'})
