@@ -55,13 +55,14 @@ class HTMLBookParser(HTMLParser):
         log.error("parse err:{}".format(message))
 
 
-class BookNcxParser(HTMLParser):
+class BookOpfParser(HTMLParser):
     def __init__(self):
         # HTMLParser.__init__(self)
         super().__init__()
         self.meta = dict()
         self.find_meta = False
         self.params = {}
+        self.items = {}
         self.read_datas = False
         self.cd = ""
 
@@ -131,6 +132,11 @@ class BookNcxParser(HTMLParser):
                                 pass
                     self.meta[s_key] = val
             self.find_meta = True
+        elif tag == "item":
+            _attrs_map = {k: v for k, v in attrs}
+            if "id" in _attrs_map:
+                self.items[_attrs_map["id"]] = _attrs_map
+
         pass
 
     def handle_data(self, data):

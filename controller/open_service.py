@@ -13,7 +13,7 @@ from dao.community_dao import CommunityDao
 from dao.mdao import DataDao
 from dao.auth_dao import AuthDao
 from dao.study_dao import StudyDao
-from controller.book.html_book_parser import BookNcxParser
+from controller.book.html_book_parser import BookOpfParser
 from utils.caches import cache_data, cache_service
 from utils.constant import shared_format, SHARED_FR_MINUTES_CNT, SHARED_FR_HOURS_CNT, SHARED_FR_DAYS_CNT, \
     SHARED_FR_DAYS_ERR, SHARED_FR_HOURS_ERR, SHARED_FR_MINUTES_ERR, MAX_RESULT_WINDOW, SHARED_BAN_ERR, \
@@ -393,7 +393,7 @@ class OpenService(BaseService):
     def parse_opf(self, ncx_file_path, params):
         import os
         if os.path.exists(ncx_file_path):
-            parser = BookNcxParser()
+            parser = BookOpfParser()
             with open(ncx_file_path, "r") as f:
                 parser.feed(f.read())
             parser.close()
@@ -419,7 +419,15 @@ class OpenService(BaseService):
             if parser.params:
                 for k in parser.params:
                     params[k] = parser.params[k]
-                # print("parse_opf params:", parser.params)
+            if parser.items:
+                if "cover" in parser.items:
+                    _dict = parser.items["cover"]
+                    params["cover"] = _dict["href"]
+                if "ncx" in parser.items:
+                    _dict = parser.items["ncx"]
+                    params["ncx"] = _dict["href"]
+
+                print("parse_opf items:", parser.items)
                 pass
 
     def unzip_epub(self, ctx, books: list):
@@ -451,39 +459,39 @@ class OpenService(BaseService):
                             if not os.path.exists(ops_dir):
                                 ops_dir = current_dest_dir
                             opf_file_path = self.find_file_by_end(".opf", ops_dir)
-                            ncx_file_path = self.find_file_by_end(".ncx", ops_dir)
+                            # ncx_file_path = self.find_file_by_end(".ncx", ops_dir)
                             if not opf_file_path:
                                 opf_file_path = self.find_file_by_end(".opf", current_dest_dir)
-                                ncx_file_path = self.find_file_by_end(".ncx", current_dest_dir)
+                                # ncx_file_path = self.find_file_by_end(".ncx", current_dest_dir)
 
                             if opf_file_path:
-                                cover_dir = os.path.join(ops_dir, "images/")
-                                cover_file_path = self.find_file(["cover.j", "cover.png"], cover_dir)
-                                if not cover_file_path:
-                                    cover_file_path = self.find_file(["cover.j", "cover.png"], ops_dir)
-                                    if not cover_file_path:
-                                        cover_file_path = self.find_file(["cover.j", "cover.png"], current_dest_dir)
+                                # cover_dir = os.path.join(ops_dir, "images/")
+                                # cover_file_path = self.find_file(["cover.j", "cover.png"], cover_dir)
+                                # if not cover_file_path:
+                                #     cover_file_path = self.find_file(["cover.j", "cover.png"], ops_dir)
+                                #     if not cover_file_path:
+                                #         cover_file_path = self.find_file(["cover.j", "cover.png"], current_dest_dir)
                                 code_len = len(sb.code + "/")
                                 _opf_file_path = opf_file_path
                                 if opf_file_path:
                                     idx = opf_file_path.find(sb.code + "/")
                                     if idx > 0:
                                         opf_file_path = opf_file_path[idx + code_len:]
-                                _ncx_file_path = ncx_file_path
-                                if ncx_file_path:
-                                    # parse ncx file
-                                    idx = ncx_file_path.find(sb.code + "/")
-                                    if idx > 0:
-                                        ncx_file_path = ncx_file_path[idx + code_len:]
-                                params = {"pin": 1, "unziped": 1, "opf": opf_file_path, "ncx": ncx_file_path, "ftype": 1,
+                                # _ncx_file_path = ncx_file_path
+                                # if ncx_file_path:
+                                #     # parse ncx file
+                                #     idx = ncx_file_path.find(sb.code + "/")
+                                #     if idx > 0:
+                                #         ncx_file_path = ncx_file_path[idx + code_len:]
+                                params = {"pin": 1, "unziped": 1, "opf": opf_file_path, "ftype": 1,
                                           "ftsize": 18, "lh": '120%'}
                                 if _opf_file_path:
                                     self.parse_opf(_opf_file_path, params)
-                                if cover_file_path:
-                                    idx = cover_file_path.find(sb.code + "/")
-                                    if idx > 0:
-                                        cover_file_path = cover_file_path[idx + code_len:]
-                                    params["cover"] = cover_file_path
+                                # if cover_file_path:
+                                #     idx = cover_file_path.find(sb.code + "/")
+                                #     if idx > 0:
+                                #         cover_file_path = cover_file_path[idx + code_len:]
+                                #     params["cover"] = cover_file_path
                                 # print("unzip ok, name:", sb.name)
                                 StudyDao.update_books_by_id(params, sb.id)
                                 sb_dict = StudyBook.to_dict(sb, ["id"])
