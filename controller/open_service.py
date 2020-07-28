@@ -430,6 +430,7 @@ class OpenService(BaseService):
                 if titlepage_node:
                     titlepage_need_cover = True
                 for item in items:
+                    # not is_hit_skip_points(item["href"])
                     if item["href"] in _items_map:
                         if titlepage_need_cover:
                             text: Element = titlepage_point.getElementsByTagName("text")[0]
@@ -437,7 +438,7 @@ class OpenService(BaseService):
                             titlepage_node.setAttribute("src", item["href"])
                         else:
                             nElem: Element = demo.cloneNode(True)
-                            text: Element = titlepage_point.getElementsByTagName("text")[0]
+                            text: Element = nElem.getElementsByTagName("text")[0]
                             text.childNodes[0].data = item["id"]
                             print("text data:", text.childNodes[0].data)
                             nav_map_node.appendChild(nElem)
