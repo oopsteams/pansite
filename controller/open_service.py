@@ -14,6 +14,7 @@ from dao.mdao import DataDao
 from dao.auth_dao import AuthDao
 from dao.study_dao import StudyDao
 from controller.book.html_book_parser import BookOpfParser
+from controller.book import xml_book_parser
 from utils.caches import cache_data, cache_service
 from utils.constant import shared_format, SHARED_FR_MINUTES_CNT, SHARED_FR_HOURS_CNT, SHARED_FR_DAYS_CNT, \
     SHARED_FR_DAYS_ERR, SHARED_FR_HOURS_ERR, SHARED_FR_MINUTES_ERR, MAX_RESULT_WINDOW, SHARED_BAN_ERR, \
@@ -393,8 +394,9 @@ class OpenService(BaseService):
     def repaire_ncx(self, ncx_file_path, items):
         import os
         if os.path.exists(ncx_file_path):
-            print("need check items:", items)
-            pass
+            root_tree = xml_book_parser.read_xml(ncx_file_path)
+            navMap_node = xml_book_parser.find_nodes("navMap")
+            print("repaire_ncx need check navMap_node:", navMap_node)
 
     def parse_opf(self, opf_file_path, params):
         import os
@@ -433,7 +435,7 @@ class OpenService(BaseService):
                     _dict = parser.items["ncx"]
                     params["ncx"] = _dict["href"]
 
-                print("parse_opf items:", parser.items)
+                # print("parse_opf items:", parser.items)
                 pass
             if "ncx" in params and parser.itemrefs:
                 prefix_path = opf_file_path
