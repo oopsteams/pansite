@@ -415,7 +415,6 @@ class OpenService(BaseService):
                 titlepage_node = None
                 titlepage_point = None
                 for n in points:
-                    print("point:", n)
                     demo = n
                     elems = n.getElementsByTagName("content")
                     if elems:
@@ -434,13 +433,15 @@ class OpenService(BaseService):
                     if item["href"] in _items_map:
                         if titlepage_need_cover:
                             text: Element = titlepage_point.getElementsByTagName("text")[0]
-                            print("text data:", text.childNodes[0].data)
+                            # print("text data:", text.childNodes[0].data)
                             titlepage_node.setAttribute("src", item["href"])
                         else:
                             nElem: Element = demo.cloneNode(True)
+                            content_elem: Element = nElem.getElementsByTagName("content")
                             text: Element = nElem.getElementsByTagName("text")[0]
+                            nElem.setAttribute("id", item["id"])
                             text.childNodes[0].data = item["id"]
-                            print("text data:", text.childNodes[0].data)
+                            content_elem.setAttribute("src", item["href"])
                             nav_map_node.appendChild(nElem)
                 # with open(ncx_file_path, "w", encoding='UTF-8') as f:
                 #     dom.writexml(f, encoding='UTF-8')
