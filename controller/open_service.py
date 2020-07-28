@@ -404,6 +404,7 @@ class OpenService(BaseService):
                 demo:Element = None
                 points = nav_map_node.getElementsByTagName("navPoint")
                 titlepage_node = None
+                titlepage_point = None
                 for n in points:
                     print("point:", n)
                     demo = n
@@ -414,6 +415,7 @@ class OpenService(BaseService):
                         if src in _items_map:
                             _items_map.pop(src)
                         if src.startswith("titlepage"):
+                            titlepage_point = n
                             titlepage_node = el
                 titlepage_need_cover = False
                 if titlepage_node:
@@ -421,7 +423,7 @@ class OpenService(BaseService):
                 for item in items:
                     if item["href"] in _items_map:
                         if titlepage_need_cover:
-                            text: Element = titlepage_node.getElementsByTagName("text")[0]
+                            text: Element = titlepage_point.getElementsByTagName("text")[0]
                             print("text data:", text.childNodes[0].data)
                             titlepage_node.setAttribute("src", item["href"])
                         else:
