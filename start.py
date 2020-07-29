@@ -127,6 +127,34 @@ if __name__ == "__main__":
         # (r"/[^/]*\.(png|woff|ttf|jpg|jpeg|js)", StaticFileHandler, dict(path=settings['static_path'])),
         (r"/.*\.html", MainHandler, dict(middleware=middle_list)),
 
+        # service
+        (r"/s/source/[^/]+", PanHandler, dict(middleware=middle_list, context=context)),
+        (r"/s/product/[^/]+", ProductHandler, dict(middleware=middle_list, context=context)),
+        (r"/s/man/[^/]+", ManageHandler, dict(middleware=middle_list, context=context)),
+        (r"/s/open/[^/]+", OpenHandler, dict(middleware=middle_list, context=context)),
+        (r"/s/rpc/[^/]+", OpenHandler, dict(middleware=middle_list, context=context)),
+        (r"/s/async/[^/]+", AsyncHandler, dict(middleware=middle_list, context=context)),
+        (r"/s/user/[^/]+", UserHandler, dict(middleware=middle_list, context=context)),
+        (r"/s/login/", MainHandler, dict(middleware=middle_list, context=context)),
+        (r"/s/bdlogin/", MainHandler, dict(middleware=middle_list, context=context)),
+        (r"/s/register/", MainHandler, dict(middleware=middle_list, context=context)),
+        (r"/s/access_code/", MainHandler, dict(middleware=middle_list, context=context)),
+        (r"/s/ready_login/", MainHandler, dict(middleware=middle_list, context=context)),
+        (r"/s/authlogin/", MainHandler, dict(middleware=middle_list, context=context)),
+        (r"/s/fresh_token/", MainHandler, dict(middleware=middle_list, context=context)),
+        (r"/s/save/", MainHandler, dict(middleware=middle_list, context=context)),
+
+        (r"/s/wx/put", WXAppPut, dict(middleware=middle_list, context=context)),
+        (r"/s/wx/get", WXAppGet, dict(middleware=middle_list, context=context)),
+        (r"/s/wx/book", BookHandler, dict(middleware=middle_list, context=context)),
+        (r"/s/wx/push", WXAppPush, dict(middleware=middle_list, context=context)),
+        (r"/s/wx/kf", WXAppKf, dict(middleware=middle_list, context=context)),
+        (r"/s/wx/upload", WXAppUpload, dict(middleware=middle_list, context=context)),
+        # (r"/wx/push", WXAppPush),
+        # (r"/(.*\.txt)", StaticFileHandler, dict(url=settings['source'])),
+        # (r"/[^/]*\.(png|woff|ttf|jpg|jpeg|js)", StaticFileHandler, dict(path=settings['static_path'])),
+        (r"/s/.*\.html", MainHandler, dict(middleware=middle_list)),
+
     ], **settings)
     from cfg import service
 

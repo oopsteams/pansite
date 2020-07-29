@@ -69,7 +69,7 @@ PAN_ROOT_DIR = {
     "alias": "分享盘"
 }
 CDN = dict(
-    hosts=["http://static.oopsteam.site"]
+    hosts=["https://static.oopsteam.site"]
 )
 RPC = dict(
     hosts=["http://api.oopsteam.site"]
