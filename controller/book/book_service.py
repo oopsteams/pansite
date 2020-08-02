@@ -87,7 +87,7 @@ class BookService(BaseService):
                 tag_query = mtag.replace(",", " OR ")
                 sp.add_must(False, field='tags', value=tag_query, is_query=True)
             else:
-                sp.add_must(True, field='tags', value="%s" % tag)
+                sp.add_must(True, field='tags', value="%s" % mtag)
         if tag:
             idx = tag.rfind(",")
             if idx > 0:
