@@ -38,7 +38,7 @@ class BookService(BaseService):
     def list(self, guest, offset, size):
         return StudyDao.query_study_book_list(1, offset, size)
 
-    def search(self, tag, keyword, page, size=50):
+    def search(self, mtag, tag, keyword, page, size=50):
         kw = None
         if keyword:
             l_kw = keyword.lower()
@@ -81,7 +81,13 @@ class BookService(BaseService):
             sp.add_should(True, field='name', value=_kw_val)
             sp.add_should(True, field='authors', value=_kw_val)
             sp.add_should(True, field='publisher', value=_kw_val)
-
+        if mtag:
+            idx = mtag.rfind(",")
+            if idx > 0:
+                tag_query = mtag.replace(",", " OR ")
+                sp.add_must(False, field='tags', value=tag_query, is_query=True)
+            else:
+                sp.add_must(True, field='tags', value="%s" % tag)
         if tag:
             idx = tag.rfind(",")
             if idx > 0:

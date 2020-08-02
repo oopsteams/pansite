@@ -23,13 +23,14 @@ class BookHandler(BaseHandler):
             rs["list"] = bl
         elif "se" == cmd:
             kw = params.get("kw", None)
+            mtag = params.get("mtag", None)
             tag = params.get("tag", None)
             # tag = url_decode(tag)
             page = params.get("page", "0")
             size = params.get("size", "20")
             # print("kw:", kw)
             # print("source:", source)
-            rs = book_service.search(tag, kw, page, int(size))
+            rs = book_service.search(mtag, tag, kw, page, int(size))
         elif "pinyin" == cmd:
             code = params.get("code", "0")
             chapter = params.get("c", "")
