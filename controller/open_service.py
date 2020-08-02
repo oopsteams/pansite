@@ -658,9 +658,11 @@ class OpenService(BaseService):
             code_list = []
             for root, sub_dirs, files in os.walk(epub_dir):
                 for special_file in files:
-                    if special_file.lower().endswith(".epub"):
+                    lower_special_file  = special_file.lower()
+                    if lower_special_file.endswith(".epub") or lower_special_file.endswith(".kepub"):
                         # check
-                        nm = special_file[:-5]
+                        idx = special_file.rfind(".")
+                        nm = special_file[:idx]
                         gen_code_nm = nm
                         if len(gen_code_nm) > 25:
                             gen_code_nm = gen_code_nm[-25:]
