@@ -484,7 +484,7 @@ class OpenService(BaseService):
                         pass
                 book_params = {"code": code, "name": nm, "pin": 0, "unziped": 1, "is_pack": 1, "cover": target_cover_file}
                 for k in params:
-                    if k not in book_params:
+                    if k not in book_params and not k == "id":
                         book_params[k] = params[k]
                 pack_book = StudyDao.new_study_book(book_params)
                 sb_dict = StudyBook.to_dict(pack_book)
