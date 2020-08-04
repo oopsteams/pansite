@@ -83,7 +83,7 @@ class BookHandler(BaseHandler):
         elif "recoverbkes" == cmd:
             if self.token:
                 from controller.open_service import open_service
-                rs = open_service.recover_bk_es()
+                rs = open_service.recover_bk_es(self.context)
 
         return rs
 

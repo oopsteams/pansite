@@ -448,7 +448,7 @@ class OpenService(BaseService):
                 # rs = dom.saveXML(root)
                 # print("saveXML rs:", rs)
 
-    def build_pack_book_item(self, params):
+    def build_pack_book_item(self, params, ctx):
         from pypinyin import lazy_pinyin, Style
         if "packname" in params:
             nm = params["packname"]
@@ -460,7 +460,29 @@ class OpenService(BaseService):
             else:
                 pack_book = StudyDao.check_out_study_book(code)
             if not pack_book:
-                book_params = {"code": code, "name": nm, "pin": 0, "unziped": 1, "is_pack": 1}
+                import os, shutil
+                base_dir = ctx["basepath"]
+                cover_file = params["cover"]
+                if base_dir:
+                    dest_dir = os.path.join(base_dir, EPUB["dest"])
+                else:
+                    dest_dir = EPUB["dest"]
+                current_file_dest_dir = os.path.join(dest_dir, params["code"])
+                target_file_dest_dir = os.path.join(dest_dir, code)
+                current_cover_file_path = os.path.join(current_file_dest_dir, cover_file)
+                target_cover_file = cover_file
+                idx = target_cover_file.rfind("/")
+                if idx >= 0:
+                    target_cover_file = target_cover_file[idx+1:]
+                if os.path.exists(current_cover_file_path):
+                    if not os.path.exists(target_file_dest_dir):
+                        os.makedirs(target_file_dest_dir)
+                    target_cover_file_path = os.path.join(target_file_dest_dir, target_cover_file)
+                    try:
+                        shutil.copyfile(current_cover_file_path, target_cover_file_path)
+                    except Exception:
+                        pass
+                book_params = {"code": code, "name": nm, "pin": 0, "unziped": 1, "is_pack": 1, "cover": target_cover_file}
                 for k in params:
                     if k not in book_params:
                         book_params[k] = params[k]
@@ -471,7 +493,7 @@ class OpenService(BaseService):
             return pack_book.id
         return 0
 
-    def parse_opf(self, opf_file_path, params):
+    def parse_opf(self, opf_file_path, params, ctx):
         import os
         if os.path.exists(opf_file_path):
             parser = BookOpfParser()
@@ -530,7 +552,7 @@ class OpenService(BaseService):
                 self.repaire_ncx(os.path.join(prefix_path, params["ncx"]), _items)
 
             if params["is_pack"] and params["is_pack"] == 1:
-                self.build_pack_book_item(params)
+                self.build_pack_book_item(params, ctx)
 
     def unzip_epub(self, ctx, books: list):
         import os
@@ -588,7 +610,7 @@ class OpenService(BaseService):
                                 params = {"pin": 1, "unziped": 1, "opf": opf_file_path, "ftype": 1,
                                           "ftsize": 18, "lh": '120%', "is_pack": 0, "pack_id": 0}
                                 if _opf_file_path:
-                                    self.parse_opf(_opf_file_path, params)
+                                    self.parse_opf(_opf_file_path, params,  ctx)
                                 # if cover_file_path:
                                 #     idx = cover_file_path.find(sb.code + "/")
                                 #     if idx > 0:
@@ -766,7 +788,7 @@ class OpenService(BaseService):
         async_rs = async_service.async_checkout_thread_todo(key_prefix, guest.id, to_do, final_do)
         return async_rs
 
-    def recover_bk_es(self):
+    def recover_bk_es(self, ctx):
         import os
         rs = {"status": 0}
         updated = []
@@ -782,7 +804,7 @@ class OpenService(BaseService):
                 # print("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
                 if os.path.exists(opf_path):
                     params = {"pin": 1}
-                    self.parse_opf(opf_path, params)
+                    self.parse_opf(opf_path, params, ctx)
 
                     for k in params:
                         sb_dict[k] = params[k]
