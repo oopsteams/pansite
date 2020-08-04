@@ -448,7 +448,7 @@ class OpenService(BaseService):
                 # rs = dom.saveXML(root)
                 # print("saveXML rs:", rs)
 
-    def build_pack_book_item(self, params, ctx):
+    def build_pack_book_item(self, params, ctx, update_es=False):
         from pypinyin import lazy_pinyin, Style
         if "packname" in params:
             nm = params["packname"]
@@ -488,7 +488,15 @@ class OpenService(BaseService):
                         book_params[k] = params[k]
                 pack_book = StudyDao.new_study_book(book_params)
                 sb_dict = StudyBook.to_dict(pack_book)
+                for k in book_params:
+                    sb_dict[k] = book_params[k]
                 self.sync_to_es([sb_dict])
+            else:
+                if update_es:
+                    if "tags" in params:
+                        sb_dict = StudyBook.to_dict(pack_book)
+                        sb_dict["tags"] = params["tags"]
+                        self.sync_to_es([sb_dict])
             if pack_book:
                 self.pack_book_map[code] = pack_book
             params["pack_id"] = pack_book.id
@@ -819,7 +827,7 @@ class OpenService(BaseService):
                     for k in params:
                         sb_dict_copy[k] = params[k]
                     if sb_dict_copy["is_pack"] and sb_dict_copy["is_pack"] == 1:
-                        self.build_pack_book_item(sb_dict_copy, ctx)
+                        self.build_pack_book_item(sb_dict_copy, ctx, True)
                         if "pack_id" in sb_dict:
                             params["pack_id"] = sb_dict["pack_id"]
 
