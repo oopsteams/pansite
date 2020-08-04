@@ -618,14 +618,18 @@ class OpenService(BaseService):
                                 #     params["cover"] = cover_file_path
                                 # print("unzip ok, name:", sb.name)
                                 sb_dict = StudyBook.to_dict(sb)
+                                sb_dict_copy = sb_dict.copy()
                                 for k in params:
-                                    sb_dict[k] = params[k]
-                                if sb_dict["is_pack"] and sb_dict["is_pack"] == 1:
-                                    self.build_pack_book_item(sb_dict, ctx)
+                                    sb_dict_copy[k] = params[k]
+                                if sb_dict_copy["is_pack"] and sb_dict_copy["is_pack"] == 1:
+                                    params["is_pack"] = 0
+                                    self.build_pack_book_item(sb_dict_copy, ctx)
                                     if "pack_id" in sb_dict:
                                         params["pack_id"] = sb_dict["pack_id"]
-                                StudyDao.update_books_by_id(params, sb.id)
 
+                                StudyDao.update_books_by_id(params, sb.id)
+                                for k in params:
+                                    sb_dict[k] = params[k]
                                 self.sync_to_es([sb_dict])
                                 # print("update pin=1 unziped=1 ok, name:", sb.name)
                                 # del file
@@ -800,28 +804,39 @@ class OpenService(BaseService):
 
         def deal_unzip_epub(books: list):
             dest_dir = EPUB["dest"]
-
+            sb: StudyBook = None
             for sb in books:
                 current_dest_dir = os.path.join(dest_dir, sb.code)
                 opf_path = os.path.join(current_dest_dir, sb.opf)
-                sb_dict = StudyBook.to_dict(sb)
+                sb_dict = StudyBook.to_dict(sb, ["is_pack"])
                 # logger.debug("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
                 # print("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
-                if os.path.exists(opf_path):
-                    params = {"pin": 1}
+                if os.path.exists(opf_path) and not sb.is_pack:
+                    params = {"pin": 1, "is_pack": 0}
                     self.parse_opf(opf_path, params, ctx)
 
+                    sb_dict_copy = sb_dict.copy()
                     for k in params:
-                        sb_dict[k] = params[k]
-                    if sb_dict["is_pack"] and sb_dict["is_pack"] == 1:
-                        self.build_pack_book_item(sb_dict, ctx)
+                        sb_dict_copy[k] = params[k]
+                    if sb_dict_copy["is_pack"] and sb_dict_copy["is_pack"] == 1:
+                        params["is_pack"] = 0
+                        self.build_pack_book_item(sb_dict_copy, ctx)
                         if "pack_id" in sb_dict:
                             params["pack_id"] = sb_dict["pack_id"]
 
                     updated.append(params)
                     #
                     StudyDao.update_books_by_id(params, sb.id)
+                    for k in params:
+                        sb_dict[k] = params[k]
                     self.sync_to_es([sb_dict])
+                else:
+                    if sb.is_pack == 1:
+                        params = {"pin": 1}
+                        updated.append(params)
+                        StudyDao.update_books_by_id(params, sb.id)
+
+
 
         StudyDao.check_ziped_books(0, 1, callback=deal_unzip_epub)
         if updated:
