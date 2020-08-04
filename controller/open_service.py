@@ -553,9 +553,6 @@ class OpenService(BaseService):
                     _items.append(parser.items[ir])
                 self.repaire_ncx(os.path.join(prefix_path, params["ncx"]), _items)
 
-            if params["is_pack"] and params["is_pack"] == 1:
-                self.build_pack_book_item(params, ctx)
-
     def unzip_epub(self, ctx, books: list):
         import os
         epub_dir = EPUB["dir"]
@@ -613,6 +610,7 @@ class OpenService(BaseService):
                                           "ftsize": 18, "lh": '120%', "is_pack": 0, "pack_id": 0}
                                 if _opf_file_path:
                                     self.parse_opf(_opf_file_path, params,  ctx)
+
                                 # if cover_file_path:
                                 #     idx = cover_file_path.find(sb.code + "/")
                                 #     if idx > 0:
@@ -623,6 +621,8 @@ class OpenService(BaseService):
                                 sb_dict = StudyBook.to_dict(sb)
                                 for k in params:
                                     sb_dict[k] = params[k]
+                                if sb_dict["is_pack"] and sb_dict["is_pack"] == 1:
+                                    self.build_pack_book_item(sb_dict, ctx)
                                 self.sync_to_es([sb_dict])
                                 # print("update pin=1 unziped=1 ok, name:", sb.name)
                                 # del file
@@ -810,6 +810,8 @@ class OpenService(BaseService):
 
                     for k in params:
                         sb_dict[k] = params[k]
+                    if sb_dict["is_pack"] and sb_dict["is_pack"] == 1:
+                        self.build_pack_book_item(sb_dict, ctx)
                     updated.append(params)
                     #
                     StudyDao.update_books_by_id(params, sb.id)
