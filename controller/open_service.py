@@ -487,6 +487,8 @@ class OpenService(BaseService):
                     if k not in book_params:
                         book_params[k] = params[k]
                 pack_book = StudyDao.new_study_book(book_params)
+                sb_dict = StudyBook.to_dict(pack_book)
+                self.sync_to_es([sb_dict])
             if pack_book:
                 self.pack_book_map[code] = pack_book
             params["pack_id"] = pack_book.id
