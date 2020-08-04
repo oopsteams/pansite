@@ -79,7 +79,7 @@ class BookService(BaseService):
 
         return rs
 
-    def search(self, mtag, tag, keyword, page, size=50, is_pack=0):
+    def search(self, mtag, tag, keyword, page, size=50):
         kw = None
         if keyword:
             l_kw = keyword.lower()
@@ -136,7 +136,7 @@ class BookService(BaseService):
                 sp.add_must(False, field='tags', value=tag_query, is_query=True)
             else:
                 sp.add_must(True, field='tags', value="%s" % tag)
-        sp.add_must(True, field="is_pack", value=is_pack)
+        sp.add_must(True, field="data_id", value=0)
             # tags = tag.split(",")
             # for t in tags:
             # sp.add_must(False, field='query_string', value="\"%s\"" % tag)
