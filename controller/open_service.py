@@ -617,12 +617,15 @@ class OpenService(BaseService):
                                 #         cover_file_path = cover_file_path[idx + code_len:]
                                 #     params["cover"] = cover_file_path
                                 # print("unzip ok, name:", sb.name)
-                                StudyDao.update_books_by_id(params, sb.id)
-                                sb_dict = StudyBook.to_dict(sb)
                                 for k in params:
                                     sb_dict[k] = params[k]
                                 if sb_dict["is_pack"] and sb_dict["is_pack"] == 1:
                                     self.build_pack_book_item(sb_dict, ctx)
+                                    if "pack_id" in sb_dict:
+                                        params["pack_id"] = sb_dict["pack_id"]
+                                StudyDao.update_books_by_id(params, sb.id)
+                                sb_dict = StudyBook.to_dict(sb)
+
                                 self.sync_to_es([sb_dict])
                                 # print("update pin=1 unziped=1 ok, name:", sb.name)
                                 # del file
@@ -812,6 +815,9 @@ class OpenService(BaseService):
                         sb_dict[k] = params[k]
                     if sb_dict["is_pack"] and sb_dict["is_pack"] == 1:
                         self.build_pack_book_item(sb_dict, ctx)
+                        if "pack_id" in sb_dict:
+                            params["pack_id"] = sb_dict["pack_id"]
+
                     updated.append(params)
                     #
                     StudyDao.update_books_by_id(params, sb.id)
