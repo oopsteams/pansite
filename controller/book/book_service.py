@@ -136,7 +136,7 @@ class BookService(BaseService):
                 sp.add_must(False, field='tags', value=tag_query, is_query=True)
             else:
                 sp.add_must(True, field='tags', value="%s" % tag)
-        sp.add_must(True, field="data_id", value=0)
+        sp.add_must(False, field="data_id", value=0)
             # tags = tag.split(",")
             # for t in tags:
             # sp.add_must(False, field='query_string', value="\"%s\"" % tag)
