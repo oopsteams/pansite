@@ -34,7 +34,7 @@ ONE_DAY_SECONDS_TOTAL = 24 * 60 * 60
 @singleton
 class OpenService(BaseService):
     apps_map = {}
-
+    pack_book_map = {}
     def sync_community_item_to_es(self, acc_id, datas):
         source = datas['source']
         sourceid = datas['sourceid']
@@ -448,6 +448,29 @@ class OpenService(BaseService):
                 # rs = dom.saveXML(root)
                 # print("saveXML rs:", rs)
 
+    def build_pack_book_item(self, params):
+        from pypinyin import lazy_pinyin, Style
+        if "packname" in params:
+            nm = params["packname"]
+            gen_code_nm = nm
+            code = "".join(lazy_pinyin(gen_code_nm, style=Style.TONE3))
+            pack_book: StudyBook = None
+            if code in self.pack_book_map:
+                pack_book = self.pack_book_map[code]
+            else:
+                pack_book = StudyDao.check_out_study_book(code)
+            if not pack_book:
+                book_params = {"code": code, "name": nm, "pin": 0, "unziped": 1, "is_pack": 1}
+                for k in params:
+                    if k not in book_params:
+                        book_params[k] = params[k]
+                pack_book = StudyDao.new_study_book(book_params)
+            if pack_book:
+                self.pack_book_map[code] = pack_book
+            params["pack_id"] = pack_book.id
+            return pack_book.id
+        return 0
+
     def parse_opf(self, opf_file_path, params):
         import os
         if os.path.exists(opf_file_path):
@@ -474,6 +497,15 @@ class OpenService(BaseService):
                 if "rating" in parser.meta and parser.meta["rating"]:
                     params["rating"] = int(to_num(parser.meta["rating"]))
 
+                if "idx" in parser.meta and parser.meta["idx"]:
+                    params["idx"] = int(to_num(parser.meta["idx"]))
+
+                if "pack" in parser.meta and parser.meta["pack"]:
+                    if not "否" == parser.meta["pack"]:
+                        params["is_pack"] = 1
+                if "packname" in parser.meta and parser.meta["packname"]:
+                    params["packname"] = parser.meta["packname"]
+
             if parser.params:
                 for k in parser.params:
                     params[k] = parser.params[k]
@@ -496,6 +528,9 @@ class OpenService(BaseService):
                 for ir in parser.itemrefs:
                     _items.append(parser.items[ir])
                 self.repaire_ncx(os.path.join(prefix_path, params["ncx"]), _items)
+
+            if params["is_pack"] and params["is_pack"] == 1:
+                self.build_pack_book_item(params)
 
     def unzip_epub(self, ctx, books: list):
         import os
@@ -551,7 +586,7 @@ class OpenService(BaseService):
                                 #     if idx > 0:
                                 #         ncx_file_path = ncx_file_path[idx + code_len:]
                                 params = {"pin": 1, "unziped": 1, "opf": opf_file_path, "ftype": 1,
-                                          "ftsize": 18, "lh": '120%'}
+                                          "ftsize": 18, "lh": '120%', "is_pack": 0, "pack_id": 0}
                                 if _opf_file_path:
                                     self.parse_opf(_opf_file_path, params)
                                 # if cover_file_path:
@@ -561,7 +596,7 @@ class OpenService(BaseService):
                                 #     params["cover"] = cover_file_path
                                 # print("unzip ok, name:", sb.name)
                                 StudyDao.update_books_by_id(params, sb.id)
-                                sb_dict = StudyBook.to_dict(sb, ["id"])
+                                sb_dict = StudyBook.to_dict(sb)
                                 for k in params:
                                     sb_dict[k] = params[k]
                                 self.sync_to_es([sb_dict])
@@ -602,6 +637,8 @@ class OpenService(BaseService):
                 tags = ['0']
                 ftype = 0
                 ftsize = 18
+                is_pack = 0
+                pack_id = 0
                 lh = '110%'
                 if 'desc' in bk:
                     desc = bk['desc']
@@ -625,11 +662,15 @@ class OpenService(BaseService):
                     ftsize = bk['ftsize']
                 if 'lh' in bk:
                     lh = bk['lh']
+                if 'is_pack' in bk:
+                    is_pack = bk['is_pack']
+                if 'pack_id' in bk:
+                    pack_id = bk['pack_id']
                 # print("to es bk:", bk)
                 bk_bd = build_es_book_json_body(bk['code'], bk['price'], bk["name"], bk["cover"], bk["opf"], bk["ncx"],
                                                 ftype, lh, ftsize, authors, rating, series, publisher,
                                                 pubdate, desc, bk["idx"], get_now_datetime(), bk['pin'], bk['ref_id'],
-                                                source, tags)
+                                                source, tags, is_pack=is_pack, pack_id=pack_id, data_id=bk["id"])
                 es_dao_book().index(c, bk_bd)
             else:
                 es_up_params = es_dao_book().filter_update_params(bk)
@@ -639,6 +680,7 @@ class OpenService(BaseService):
 
     def scan_epub(self, ctx, guest: Accounts):
         def final_do():
+            pack_book_map = {}
             pass
 
         def unzip_epub(books: list):
@@ -752,6 +794,7 @@ class OpenService(BaseService):
         StudyDao.check_ziped_books(0, 1, callback=deal_unzip_epub)
         if updated:
             rs['updated'] = updated
+            pack_book_map = {}
         return rs
 
 

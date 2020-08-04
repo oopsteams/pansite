@@ -28,11 +28,13 @@ class StudyBook(BaseModel):
     pubdate = DateTimeField(index=True, null=True)  # 出版日期 可能为空值
     idx = IntegerField(null=False, default=0, index=True)
     pin = IntegerField(null=False, default=0, index=True)
+    is_pack = IntegerField(null=False, default=0)  # 默认非打包处理
+    pack_id = IntegerField(null=False, default=0)  # 打包Book ID
 
     @classmethod
     def field_names(cls):
         return ["id", "code", "account_id", "ref_id", "price", "name", "unziped", "idx", "cover", "pin", "opf", "ncx",
-                "ftype", "lh", "ftsize", "authors", "rating", "series", "publisher", "pubdate"]
+                "ftype", "lh", "ftsize", "authors", "rating", "series", "publisher", "pubdate", "is_pack", "pack_id"]
 
     @classmethod
     def to_dict(cls, instance, excludes=[]):

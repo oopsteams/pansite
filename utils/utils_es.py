@@ -195,7 +195,8 @@ def build_es_item_json_body(data_item_id, category, isdir, pin, fs_id, size, acc
 
 
 def build_es_book_json_body(code, price, name, cover, opf, ncx, ftype, lh, ftsize, authors, rating, series, publisher,
-                            pubdate, desc, idx, created_at, pin=0, ref_id=0, source='', tags=['0']):
+                            pubdate, desc, idx, created_at, pin=0, ref_id=0, source='', tags=['0'], is_pack=0,
+                            pack_id=0, data_id=0):
     created_at_str = arrow.get(created_at).strftime('%Y-%m-%d %H:%M:%S')
     pubdate_srt = None
     if pubdate:
@@ -203,7 +204,7 @@ def build_es_book_json_body(code, price, name, cover, opf, ncx, ftype, lh, ftsiz
     es_json_bd = dict(id=code, price=price, name=name, cover=cover, opf=opf, ncx=ncx, ftype=ftype,
                       lh=lh, ftsize=ftsize, desc=desc, idx=idx, created_at=created_at_str, pin=pin, ref_id=ref_id,
                       source=source, tags=tags, authors=authors, rating=rating, series=series, publisher=publisher,
-                      pubdate=pubdate_srt)
+                      pubdate=pubdate_srt, is_pack=is_pack, pack_id=pack_id, data_id=data_id)
     return es_json_bd
 
 

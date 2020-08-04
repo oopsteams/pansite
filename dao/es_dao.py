@@ -76,7 +76,10 @@ _book = {
              "analyzer": "ik_max_word",
              "search_analyzer":
                  "ik_smart"
-             }
+             },
+    "pack_id": {"type": "long"},
+    "is_pack": {"type": "integer"},
+    "data_id": {"type": "long"}
 }
 
 

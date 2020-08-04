@@ -136,6 +136,14 @@ class StudyDao(object):
             StudyBook.insert_many(book_list).execute()
 
     @classmethod
+    def new_study_book(cls, book_params):
+        _params = {p: book_params[p] for p in book_params if p in StudyBook.field_names()}
+        sb: StudyBook = StudyBook(**_params)
+        with db:
+            sb.save(force_insert=True)
+            return sb
+
+    @classmethod
     def new_book_shelf(cls, params):
         _params = {p: params[p] for p in params if p in BookShelf.field_names()}
         bs: BookShelf = BookShelf(**_params)

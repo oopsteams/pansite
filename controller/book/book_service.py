@@ -38,7 +38,48 @@ class BookService(BaseService):
     def list(self, guest, offset, size):
         return StudyDao.query_study_book_list(1, offset, size)
 
-    def search(self, mtag, tag, keyword, page, size=50):
+    def __to_sarch(self, offset, size, es_body):
+        es_dao_fun = es_dao_book
+        es_result = es_dao_fun().es_search_exec(es_body)
+        total = 0
+        # datas = [_s["_source"] for _s in hits_rs["hits"]]
+        datas = []
+        if es_result:
+            # logger.info("book es_result:{}".format(es_result))
+            hits_rs = es_result["hits"]
+            total = hits_rs["total"]
+            for _s in hits_rs["hits"]:
+                highlight = {}
+                if "highlight" in _s:
+                    highlight = _s["highlight"]
+                raw = _s["_source"]
+                raw["highlight"] = highlight
+                raw["code"] = raw["id"]
+                item = raw
+                item.pop("tags")
+                item.pop("@ts")
+                item.pop("@is_removed")
+                item.pop("ref_id")
+                datas.append(item)
+        has_next = offset + size < total
+        rs = {"data": datas, "has_next": has_next, "total": total, "pagesize": size}
+        return rs
+
+    def search_in_pack(self, pack_id, page, size=50):
+        offset = int(page) * size
+        if offset > constant.MAX_RESULT_WINDOW - size:
+            offset = constant.MAX_RESULT_WINDOW - size
+        sp: SearchParams = SearchParams.build_params(offset, size)
+        sp.add_must(True, field="pack_id", value=pack_id)
+        _sort_fields = [{"idx": {"order": "asc"}}]
+        es_body = build_query_item_es_body(sp, sort_fields=_sort_fields)
+        logger.info("es_body:{}".format(es_body).replace("'", '"'))
+
+        rs = self.__to_sarch(offset, size, es_body)
+
+        return rs
+
+    def search(self, mtag, tag, keyword, page, size=50, is_pack=0):
         kw = None
         if keyword:
             l_kw = keyword.lower()
@@ -95,6 +136,7 @@ class BookService(BaseService):
                 sp.add_must(False, field='tags', value=tag_query, is_query=True)
             else:
                 sp.add_must(True, field='tags', value="%s" % tag)
+        sp.add_must(True, field="is_pack", value=is_pack)
             # tags = tag.split(",")
             # for t in tags:
             # sp.add_must(False, field='query_string', value="\"%s\"" % tag)
@@ -117,29 +159,9 @@ class BookService(BaseService):
             es_body = build_query_item_es_body(sp, sort_fields=_sort_fields)
 
         logger.info("es_body:{}".format(es_body).replace("'", '"'))
-        es_result = es_dao_fun().es_search_exec(es_body)
-        total = 0
-        # datas = [_s["_source"] for _s in hits_rs["hits"]]
-        datas = []
-        if es_result:
-            # logger.info("book es_result:{}".format(es_result))
-            hits_rs = es_result["hits"]
-            total = hits_rs["total"]
-            for _s in hits_rs["hits"]:
-                highlight = {}
-                if "highlight" in _s:
-                    highlight = _s["highlight"]
-                raw = _s["_source"]
-                raw["highlight"] = highlight
-                raw["code"] = raw["id"]
-                item = raw
-                item.pop("tags")
-                item.pop("@ts")
-                item.pop("@is_removed")
-                item.pop("ref_id")
-                datas.append(item)
-        has_next = offset + size < total
-        rs = {"data": datas, "has_next": has_next, "total": total, "pagesize": size}
+
+        rs = self.__to_sarch(offset, size, es_body)
+
         return rs
 
     def get_book(self, code):
