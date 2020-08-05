@@ -31,6 +31,22 @@ import traceback
 ONE_DAY_SECONDS_TOTAL = 24 * 60 * 60
 
 
+def compress_img(srcFile, dstFile):
+    from PIL import Image
+    try:
+        # 打开原图片缩小后保存，可以用if srcFile.endswith(".jpg")或者split，splitext等函数等针对特定文件压缩
+        sImg = Image.open(srcFile)
+        w, h = sImg.size
+        if w > 600 or h > 600:
+            dImg = sImg.resize((int(w / 2), int(h / 2)), Image.ANTIALIAS)  # 设置压缩尺寸和选项，注意尺寸要用括号
+            dImg.save(dstFile)  # 也可以用srcFile原路径保存,或者更改后缀保存，save这个函数后面可以加压缩编码选项JPEG之类的
+            print(dstFile + " 成功！")
+        else:
+            print("not need compress, srcFile:", srcFile)
+    except Exception:
+        print(dstFile + "失败！")
+
+
 @singleton
 class OpenService(BaseService):
     apps_map = {}
@@ -507,6 +523,10 @@ class OpenService(BaseService):
     def parse_opf(self, opf_file_path, params, ctx):
         import os
         if os.path.exists(opf_file_path):
+            prefix_path = opf_file_path
+            idx = opf_file_path.rfind("/")
+            if idx > 0:
+                prefix_path = opf_file_path[0:idx]
             parser = BookOpfParser()
             with open(opf_file_path, "r") as f:
                 parser.feed(f.read())
@@ -546,6 +566,9 @@ class OpenService(BaseService):
                 if "cover" in parser.items:
                     _dict = parser.items["cover"]
                     params["cover"] = _dict["href"]
+                    cover_path = os.path.join(prefix_path, params["cover"])
+                    if os.path.exists(cover_path):
+                        compress_img(cover_path, cover_path)
                 if "ncx" in parser.items:
                     _dict = parser.items["ncx"]
                     params["ncx"] = _dict["href"]
@@ -553,10 +576,7 @@ class OpenService(BaseService):
                 # print("parse_opf items:", parser.items)
                 pass
             if "ncx" in params and parser.itemrefs:
-                prefix_path = opf_file_path
-                idx = opf_file_path.rfind("/")
-                if idx > 0:
-                    prefix_path = opf_file_path[0:idx]
+
                 _items = []
                 for ir in parser.itemrefs:
                     _items.append(parser.items[ir])
