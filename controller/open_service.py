@@ -820,7 +820,7 @@ class OpenService(BaseService):
                 # logger.debug("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
                 # print("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
                 if os.path.exists(opf_path) and not sb.is_pack:
-                    params = {"pin": 1, "is_pack": 0}
+                    params = {"pin": 1, "is_pack": 0, "pack_id": 0}
                     self.parse_opf(opf_path, params, ctx)
 
                     sb_dict_copy = sb_dict.copy()
