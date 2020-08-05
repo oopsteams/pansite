@@ -420,7 +420,7 @@ class OpenService(BaseService):
 
         from xml.dom.minidom import Element, Document
         _items_map = {i["href"]: i for i in items}
-        print("_items_map:", _items_map)
+        # print("_items_map:", _items_map)
         if os.path.exists(ncx_file_path):
             dom: Document = xml_book_parser.read_xml(ncx_file_path)
             root = dom.documentElement
@@ -452,6 +452,7 @@ class OpenService(BaseService):
                             # text: Element = titlepage_point.getElementsByTagName("text")[0]
                             # print("text data:", text.childNodes[0].data)
                             titlepage_node.setAttribute("src", item["href"])
+                            titlepage_need_cover = False
                         else:
                             nElem: Element = demo.cloneNode(True)
                             content_elem: Element = nElem.getElementsByTagName("content")[0]
