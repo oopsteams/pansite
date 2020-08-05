@@ -632,8 +632,8 @@ class OpenService(BaseService):
                                 if sb_dict_copy["is_pack"] and sb_dict_copy["is_pack"] == 1:
                                     params["is_pack"] = 0
                                     self.build_pack_book_item(sb_dict_copy, ctx)
-                                    if "pack_id" in sb_dict:
-                                        params["pack_id"] = sb_dict["pack_id"]
+                                    if "pack_id" in sb_dict_copy:
+                                        params["pack_id"] = sb_dict_copy["pack_id"]
 
                                 StudyDao.update_books_by_id(params, sb.id)
                                 for k in params:
@@ -829,8 +829,8 @@ class OpenService(BaseService):
                     if sb_dict_copy["is_pack"] and sb_dict_copy["is_pack"] == 1:
                         params["is_pack"] = 0
                         self.build_pack_book_item(sb_dict_copy, ctx, True)
-                        if "pack_id" in sb_dict:
-                            params["pack_id"] = sb_dict["pack_id"]
+                        if "pack_id" in sb_dict_copy:
+                            params["pack_id"] = sb_dict_copy["pack_id"]
 
                     updated.append(params)
                     #
