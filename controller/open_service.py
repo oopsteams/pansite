@@ -529,7 +529,7 @@ class OpenService(BaseService):
             dest_dir = os.path.join(base_dir, EPUB["dest"])
         else:
             dest_dir = EPUB["dest"]
-        current_dest_dir = os.path.join(dest_dir, code)
+        current_dest_dir = os.path.join(dest_dir, "%s/" % code)
 
         def build_dir(prefix_path, p):
             _p = os.path.abspath(os.path.join(prefix_path, p))
