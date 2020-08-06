@@ -137,10 +137,10 @@ class BookOpfParser(HTMLParser):
             _attrs_map = {k: v for k, v in attrs}
             if "id" in _attrs_map:
                 _id = _attrs_map["id"]
-                if _id.startswith("cover"):
-                    __am = _attrs_map.copy()
-                    __am["cover"] = _attrs_map[_id]
-                    self.items["cover"] = __am
+                href = _attrs_map["href"]
+                if not "coverpage" == _id and _id.startswith("cover") and href.find("cover.") >= 0:
+                    _attrs_map["id"] = "cover"
+                    self.items["cover"] = _attrs_map
                 else:
                     self.items[_id] = _attrs_map
         elif tag == "itemref":
