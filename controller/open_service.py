@@ -500,7 +500,7 @@ class OpenService(BaseService):
                         shutil.copyfile(current_cover_file_path, target_cover_file_path)
                     except Exception:
                         pass
-                book_params = {"code": code, "name": nm, "pin": 0, "unziped": 1, "is_pack": 1, "cover": target_cover_file}
+                book_params = {"code": code, "name": nm, "pin": 1, "unziped": 1, "is_pack": 1, "cover": target_cover_file}
                 for k in params:
                     if k not in book_params and not k == "id":
                         book_params[k] = params[k]
@@ -521,7 +521,7 @@ class OpenService(BaseService):
             return pack_book.id
         return 0
 
-    def parse_opf(self, opf_file_path, params, ctx):
+    def parse_opf(self, opf_file_path, params, ctx, compress_cover=True):
         import os
         if os.path.exists(opf_file_path):
             prefix_path = opf_file_path
@@ -568,7 +568,7 @@ class OpenService(BaseService):
                     _dict = parser.items["cover"]
                     params["cover"] = _dict["href"]
                     cover_path = os.path.join(prefix_path, params["cover"])
-                    if os.path.exists(cover_path):
+                    if compress_cover and os.path.exists(cover_path):
                         compress_img(cover_path, cover_path)
                 if "ncx" in parser.items:
                     _dict = parser.items["ncx"]
@@ -843,7 +843,7 @@ class OpenService(BaseService):
                 # print("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
                 if os.path.exists(opf_path) and not sb.is_pack:
                     params = {"pin": 1, "is_pack": 0, "pack_id": 0}
-                    self.parse_opf(opf_path, params, ctx)
+                    self.parse_opf(opf_path, params, ctx, False)
 
                     sb_dict_copy = sb_dict.copy()
                     for k in params:
