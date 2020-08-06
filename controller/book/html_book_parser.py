@@ -139,7 +139,7 @@ class BookOpfParser(HTMLParser):
                 _id = _attrs_map["id"]
                 if _id.startswith("cover"):
                     __am = _attrs_map.copy()
-                    __am["cover"] = _attrs_map["cover"]
+                    __am["cover"] = _attrs_map[_id]
                     self.items["cover"] = __am
                 else:
                     self.items[_id] = _attrs_map
