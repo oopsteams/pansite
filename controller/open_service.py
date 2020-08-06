@@ -523,6 +523,20 @@ class OpenService(BaseService):
 
     def parse_opf(self, opf_file_path, params, ctx, compress_cover=True):
         import os
+        code = params["code"]
+        base_dir = ctx["basepath"]
+        if base_dir:
+            dest_dir = os.path.join(base_dir, EPUB["dest"])
+        else:
+            dest_dir = EPUB["dest"]
+        current_dest_dir = os.path.join(dest_dir, code)
+
+        def build_dir(prefix_path, p):
+            _p = os.path.abspath(os.path.join(prefix_path, p))
+            _idx = _p.find(current_dest_dir)
+            if _idx >= 0:
+                return _p[_idx+len(current_dest_dir):]
+            return p
         if os.path.exists(opf_file_path):
             prefix_path = opf_file_path
             idx = opf_file_path.rfind("/")
@@ -532,6 +546,7 @@ class OpenService(BaseService):
             with open(opf_file_path, "r") as f:
                 parser.feed(f.read())
             parser.close()
+
             if parser.meta:
                 # print("parse_opf meta:", parser.meta)
                 # if "" in parser.meta:
@@ -566,13 +581,15 @@ class OpenService(BaseService):
             if parser.items:
                 if "cover" in parser.items:
                     _dict = parser.items["cover"]
-                    params["cover"] = _dict["href"]
+                    # params["cover"] = _dict["href"]
+                    params["cover"] = build_dir(prefix_path, _dict["href"])
                     cover_path = os.path.join(prefix_path, params["cover"])
                     if compress_cover and os.path.exists(cover_path):
                         compress_img(cover_path, cover_path)
                 if "ncx" in parser.items:
                     _dict = parser.items["ncx"]
-                    params["ncx"] = _dict["href"]
+                    # params["ncx"] = _dict["href"]
+                    params["ncx"] = build_dir(prefix_path, _dict["href"])
 
                 # print("parse_opf items:", parser.items)
                 pass
@@ -637,7 +654,7 @@ class OpenService(BaseService):
                                 #     if idx > 0:
                                 #         ncx_file_path = ncx_file_path[idx + code_len:]
                                 params = {"pin": 1, "unziped": 1, "opf": opf_file_path, "ftype": 1,
-                                          "ftsize": 18, "lh": '120%', "is_pack": 0, "pack_id": 0}
+                                          "ftsize": 18, "lh": '120%', "is_pack": 0, "pack_id": 0, "code": sb.code}
                                 if _opf_file_path:
                                     self.parse_opf(_opf_file_path, params,  ctx)
 
@@ -842,7 +859,7 @@ class OpenService(BaseService):
                 # logger.debug("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
                 # print("test_es ncx_path:{},name:{}".format(ncx_path, sb.name))
                 if os.path.exists(opf_path) and not sb.is_pack:
-                    params = {"pin": 1, "is_pack": 0, "pack_id": 0}
+                    params = {"pin": 1, "is_pack": 0, "pack_id": 0, "code": sb.code}
                     self.parse_opf(opf_path, params, ctx, False)
 
                     sb_dict_copy = sb_dict.copy()
@@ -865,8 +882,6 @@ class OpenService(BaseService):
                         params = {"pin": 1}
                         updated.append(params)
                         StudyDao.update_books_by_id(params, sb.id)
-
-
 
         StudyDao.check_ziped_books(0, 1, callback=deal_unzip_epub)
         if updated:
