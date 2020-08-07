@@ -249,7 +249,10 @@ class BookService(BaseService):
             sb.pin = 0
             StudyDao.update_books_by_id({"pin": sb.pin}, sb.id)
             sb_dict = StudyBook.to_dict(sb, ["id"])
-            self.sync_to_es([sb_dict])
+            es_up_params = es_dao_book().filter_update_params(sb_dict)
+            if es_up_params:
+                logger.info("will update book es item es_up_params:{}".format(es_up_params))
+                es_dao_book().update_fields(book_shelf_code, **es_up_params)
             updated.append(sb_dict)
             return sb_dict
         if updated:
