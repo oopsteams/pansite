@@ -84,6 +84,10 @@ class BookHandler(BaseHandler):
                 from controller.open_service import open_service
                 rs = open_service.recover_bk_es(self.context)
 
+        elif "putoffbk" == cmd:
+            book_shelf_code = params.get("code", None)
+            if self.token:
+                rs = book_service.put_off_book(book_shelf_code)
         return rs
 
     def get(self):

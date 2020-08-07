@@ -886,7 +886,6 @@ class OpenService(BaseService):
         StudyDao.check_ziped_books(0, 1, callback=deal_unzip_epub)
         if updated:
             rs['updated'] = updated
-            pack_book_map = {}
         return rs
 
 

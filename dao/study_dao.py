@@ -110,14 +110,14 @@ class StudyDao(object):
     def batch_update_books_by_codes(cls, params, codes):
         _params = {p: params[p] for p in params if p in StudyBook.field_names()}
         with db:
-            print("batch_update_books_by_codes params:", _params, ",codes:", codes)
+            # print("batch_update_books_by_codes params:", _params, ",codes:", codes)
             StudyBook.update(**_params).where(StudyBook.code.in_(codes)).execute()
 
     @classmethod
     def update_books_by_id(cls, params, pk_id):
         _params = {p: params[p] for p in params if p in StudyBook.field_names()}
         with db:
-            print("update_books_by_id params:", _params, ",pk_id:", pk_id)
+            # print("update_books_by_id params:", _params, ",pk_id:", pk_id)
             StudyBook.update(**_params).where(StudyBook.id == pk_id).execute()
 
     @classmethod

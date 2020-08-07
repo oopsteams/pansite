@@ -240,5 +240,20 @@ class BookService(BaseService):
         StudyDao.del_shelf_books(wx_id, book_shelf_code)
         return 0
 
+    def put_off_book(self, book_shelf_code):
+        rs = {"status": 0}
+        updated = []
+        from dao.models import StudyBook
+        sb: StudyBook = StudyDao.check_out_study_book(book_shelf_code)
+        if sb:
+            sb.pin = 0
+            StudyDao.update_books_by_id({"pin": sb.pin}, sb.id)
+            sb_dict = StudyBook.to_dict(sb, ["id"])
+            self.sync_to_es([sb_dict])
+            updated.append(sb_dict)
+            return sb_dict
+        if updated:
+            rs['updated'] = updated
+        return rs
 
 book_service = BookService()
