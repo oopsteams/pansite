@@ -70,7 +70,8 @@ class BookService(BaseService):
         if offset > constant.MAX_RESULT_WINDOW - size:
             offset = constant.MAX_RESULT_WINDOW - size
         sp: SearchParams = SearchParams.build_params(offset, size)
-        sp.add_must(True, field="pack_id", value=pack_id)
+        sp.add_must(False, field="pack_id", value=pack_id)
+        sp.add_must(False, field="pin", value=1)
         _sort_fields = [{"idx": {"order": "asc"}}]
         es_body = build_query_item_es_body(sp, sort_fields=_sort_fields)
         logger.info("es_body:{}".format(es_body).replace("'", '"'))
@@ -137,6 +138,7 @@ class BookService(BaseService):
             else:
                 sp.add_must(True, field='tags', value="%s" % tag)
         sp.add_must(False, field="pack_id", value=0)
+        sp.add_must(False, field="pin", value=1)
             # tags = tag.split(",")
             # for t in tags:
             # sp.add_must(False, field='query_string', value="\"%s\"" % tag)
