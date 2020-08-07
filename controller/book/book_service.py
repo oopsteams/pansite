@@ -259,4 +259,5 @@ class BookService(BaseService):
             rs['updated'] = updated
         return rs
 
+
 book_service = BookService()
