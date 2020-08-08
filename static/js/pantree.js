@@ -85,7 +85,7 @@ $('#tree').jstree({
                                     node = inst.get_node(data.reference);
                                 let params = {tk: GetQueryString('tk'), 'itemid': node.data._id};
                                 dialog.dialog("open");
-                                call_service('/product/untag', params, function (res) {
+                                call_service('/s/product/untag', params, function (res) {
                                     setTimeout(() => {
                                         inst.refresh(node);
                                         dialog.dialog("close");
@@ -128,7 +128,7 @@ $('#tree').jstree({
                             'source': node.data.source
                         };
                         console.log('clear dir:', params);
-                        call_service_by_get('/man/clear', params, function (res) {
+                        call_service_by_get('/s/man/clear', params, function (res) {
                             let st = res['state'];
                             if (st < 0) {
                                 let errmsg = '删除失败!';
@@ -179,7 +179,7 @@ $('#tree').jstree({
                             }
                         }
                     }
-                    let url = '/man/unfree';
+                    let url = '/s/man/unfree';
                     if (isfree) {
                         label = '取消免费设置';
                     }
@@ -198,7 +198,7 @@ $('#tree').jstree({
                                     'tags':tags_str
                                 };
                                 dialog.dialog("open");
-                                call_service_by_get('/man/unfree', params, function (res) {
+                                call_service_by_get('/s/man/unfree', params, function (res) {
                                     let st = res['state'];
                                     if (st === 0) {
                                         setTimeout(function () {
@@ -241,7 +241,7 @@ $('#tree').jstree({
                                 'panid': node.data.sourceid,
                                 'id': node.data._id
                             };
-                            call_service_by_get('/source/syncallnodes', params, function (res) {
+                            call_service_by_get('/s/source/syncallnodes', params, function (res) {
                                 let result = res['result'];
                                 console.log('res result:', result);
                                 check_state(node.data.sourceid, function (ok) {
@@ -270,7 +270,7 @@ $('#tree').jstree({
                                     'panid': node.data.sourceid,
                                     'id': node.data._id
                                 };
-                                call_service_by_get('/source/syncallnodes', params, function (res) {
+                                call_service_by_get('/s/source/syncallnodes', params, function (res) {
                                     let result = res['result'];
                                     console.log('res result:', result);
                                     check_state(node.data.sourceid, function (ok) {
@@ -299,7 +299,7 @@ $('#tree').jstree({
                                 'parent': node.data.p_id,
                                 'source': node.data.source
                             };
-                            let url = '/man/show';
+                            let url = '/s/man/show';
                             call_service_by_get(url, params, function (res) {
                                 setTimeout(() => {
                                     inst.refresh(node);
@@ -326,7 +326,7 @@ $('#tree').jstree({
                                 'parent': node.data.p_id,
                                 'source': node.data.source
                             };
-                            let url = '/man/hide';
+                            let url = '/s/man/hide';
                             call_service_by_get(url, params, function (res) {
                                 setTimeout(() => {
                                     inst.refresh(node);

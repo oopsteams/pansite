@@ -59,7 +59,7 @@ $(function () {
         });
     $( ".refresh" ).on("click", (e)=>{
             let params = {panid: e.currentTarget.dataset.id};
-            call_service('/fresh_token/?tk=' + GetQueryString('tk'), params, function (res) {
+            call_service('/s/fresh_token/?tk=' + GetQueryString('tk'), params, function (res) {
                 let result = res['result'];
                 console.log('res result:', result);
             })
@@ -69,15 +69,15 @@ $(function () {
         let panid = e.currentTarget.dataset.id;
             // console.log(e)
             // console.log(e.currentTarget.dataset.id)
-            document.location.href='/man/ftree?tk=' + GetQueryString('tk') + '&panid='+panid;
+            document.location.href='/s/man/ftree?tk=' + GetQueryString('tk') + '&panid='+panid;
         });
     $('#partial').button({"icon": "ui-icon-gear","showLabel": true}).on('click',(event, ui)=>{
-            document.location.href='/man/fparts?tk=' + GetQueryString('tk');
+            document.location.href='/s/man/fparts?tk=' + GetQueryString('tk');
         });
 
     $('.patchupdate').button({"icon": "ui-icon-wrench","showLabel": true}).on('click',(e, ui)=>{
             let panid = e.currentTarget.dataset.id;
-            document.location.href='/man/batchupdate?tk=' + GetQueryString('tk') + '&panid='+panid;
+            document.location.href='/s/man/batchupdate?tk=' + GetQueryString('tk') + '&panid='+panid;
         });
 
     $('#auth').button({"icon": "ui-icon-person","showLabel": true}).on('click',(event, ui)=>{

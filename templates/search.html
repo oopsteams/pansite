@@ -69,7 +69,7 @@
         let v = $('#keyword_input').val();
         if(v.length>0){
             $.ajax({
-                url:"/source/load",
+                url:"/s/source/load",
                 data:{kw: v, page: page, 'source': source},
                 dataType:"json",
                 method:"POST",
@@ -84,7 +84,7 @@
                     $('<h3/>', {html: item.filename}).appendTo(container);
                     let sub_con = $('<div/>', {html: item.path}).appendTo(container);
                     if(item['isdir'] === 0){
-                        $('<a/>', {html: "进入下载页", href: "/source/dlink?id="+item['id'], target: "_blank"}).appendTo(sub_con);
+                        $('<a/>', {html: "进入下载页", href: "/s/source/dlink?id="+item['id'], target: "_blank"}).appendTo(sub_con);
                     }
                     console.log("item:", item);
                 });

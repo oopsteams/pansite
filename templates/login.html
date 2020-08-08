@@ -142,11 +142,11 @@
                 callback(true, res)
             });
     }
-    let _ref = '/source/manage';
+    let _ref = '/s/source/manage';
     function login(){
         let mobile_no = document.getElementById("username").value;
         let password = document.getElementById("password").value;
-        call_pansite_by_post("login/", {"mobile_no": mobile_no, "password": password, "single":1}, function(isok, res){
+        call_pansite_by_post("/s/login/", {"mobile_no": mobile_no, "password": password, "single":1}, function(isok, res){
         if(isok){
             update_tags();
             console.log('res token:', res['token']);
@@ -160,7 +160,7 @@
         let _force = '{{force}}';
         _ref = '{{ref}}';
         if(_ref.length==0 || _ref.indexOf('/index')>=0 || _ref.indexOf('/login')>=0 || _ref.indexOf('/ready_login/')>=0){
-            _ref = '/man/init';
+            _ref = '/s/man/init';
             _force = '1';
         }
         console.log('_tk:', _tk);

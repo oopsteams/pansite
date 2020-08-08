@@ -55,7 +55,7 @@ $(function () {
         let params = {tk: GetQueryString('tk'), id: share_item_id};
         console.log('clear share:', params);
         $(e.currentTarget).button('disable');
-        call_service_by_get('/man/clearshare', params, function (res) {
+        call_service_by_get('/s/man/clearshare', params, function (res) {
             let st = res['state'];
             if(st == 0){
                 $('#dl_'+share_item_id).remove();

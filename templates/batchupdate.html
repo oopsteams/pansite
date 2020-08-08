@@ -74,7 +74,7 @@
                 jsonObj[this.name] = this.value;
             });
             console.log('dist_product:', jsonObj);
-            call_service('/man/batchupdatedo?tk=' + GetQueryString('tk'), jsonObj, function (res) {
+            call_service('/s/man/batchupdatedo?tk=' + GetQueryString('tk'), jsonObj, function (res) {
                 console.log('res result:', res);
                 $('#result').html(JSON.stringify(res));
             });

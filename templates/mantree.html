@@ -166,7 +166,7 @@
     }
 	function check_state(pan_id, cb) {
         let params = {tk: GetQueryString('tk'), 'panid': pan_id};
-        call_service_by_get('/source/syncstate', params, function (res) {
+        call_service_by_get('/s/source/syncstate', params, function (res) {
                 let st = res['state'];
                 if(1 === st){
                     cb(true)
@@ -182,7 +182,7 @@
         $("#dist_combobox").combobox({"parent": $("#dist_product_form"), "src":function(request, cb){
                 let kw = request.term;
                 let __params = {"offset":0, "tk": GetQueryString('tk'), 'kw':kw, 'page': request.page}
-                call_service_by_get('/product/su', __params, function (res) {
+                call_service_by_get('/s/product/su', __params, function (res) {
                     let result = res;
                     console.log('res result:', result);
                     cb(result);
@@ -209,7 +209,7 @@
           "icon": "ui-icon-home",
           "showLabel": false
         }).on('click', function (event, ui) {
-            document.location.href='/man/init?tk=' + GetQueryString('tk');
+            document.location.href='/s/man/init?tk=' + GetQueryString('tk');
         }).end();
 
         $("#manu_file_del").button({
@@ -227,7 +227,7 @@
             let confirm_val = prompt("确认要清除[" + $('#dir_file_item_id').val() + "]吗?确认请输入DELETE.", "");
             if ("DELETE" === confirm_val) {
                 dialog.dialog("open");
-                call_service('/man/clearbyid?tk='+GetQueryString('tk'), jsonObj, function (res) {
+                call_service('/s/man/clearbyid?tk='+GetQueryString('tk'), jsonObj, function (res) {
                     let st = res['state'];
                     if (st < 0) {
                         let errmsg = '删除失败!';
