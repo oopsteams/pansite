@@ -160,8 +160,8 @@ window.pushclient=null;
 					client.authorize();
 				};
 				client.changeAddress=function(host,port){
-					//client.host=host;
-					//client.port=port;
+					client.host=host;
+					client.port=port;
 					pclient.request.add("auth", "1");
 					console.log("changeAddress host:"+host+",port:"+port);
 					client.connect();
