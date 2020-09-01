@@ -377,8 +377,9 @@ window.pushclient=null;
                     return info;
 				},
 				'authorize':function(){
-					console.log('authorize in.');
-					pclient.request.msgbody.send(0,2,pclient.request.authorizeInfo());
+					ainfo = pclient.request.authorizeInfo();
+					console.log('authorize in.ainfo:', ainfo);
+					pclient.request.msgbody.send(0,2,ainfo);
 				},
 
 				'syncparams':function(){
