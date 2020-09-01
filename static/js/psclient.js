@@ -572,6 +572,7 @@ window.pushclient=null;
                 'sendOver':function(msg,head){console.log("sendOver msg:",msg,head);},
 				'onidle':function(){},
 				'receive':function(tag,kind,val){//tag,1:注册回应,2:来自服务端的消息
+					console.log("receive val:", val);
 					if(tag==1){
 						switch(kind){
 							case Kind.INT:
