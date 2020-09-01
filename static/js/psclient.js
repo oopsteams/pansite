@@ -75,6 +75,7 @@ window.pushclient=null;
 				client.lastcheck=0;
 				client.host=pclient.request.host;
 				client.port=pclient.request.port;
+				client.fixport=pclient.request.fixport;
 				client.readers = [];
 				client.cache=[];
 				client.timer=null;
@@ -174,7 +175,8 @@ window.pushclient=null;
 					client.timestamp=(new Date()).getTime();
 					try{
 						//var wsUri=client.proxy+"://"+client.host+":"+client.port+"/?enoding=text";
-						var wsUri=client.proxy+"://"+client.host+":"+client.port+"/";
+						// var wsUri=client.proxy+"://"+client.host+":"+client.port+"/";
+						var wsUri = client.proxy + "://" + client.host+":"+client.fixport + (client.port > 0 ? "/?" + client.port : "/");
 						//console.log('wsUri:'+wsUri);
 						client.wsocket = new WebSocket(wsUri);
 						//client.wsocket.binaryType = "arraybuffer";
