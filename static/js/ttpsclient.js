@@ -1,5 +1,8 @@
-window.pushclient = null;
-(function (saver) {
+function psclient(app, saver) {
+    //var window = app;
+    //window.pushclient = null;
+    var SocketTask = null;
+    var that = app;
     var IPClinet = {
         createNew: function () {
         }
@@ -16,7 +19,8 @@ window.pushclient = null;
         createNew: function () {
         }
     };
-    window.Kind = {'INT': 0, 'LONG': 1, 'STRING': 2, 'BYTE': 3, 'ACK': 4};
+    var Kind = {'INT': 0, 'LONG': 1, 'STRING': 2, 'BYTE': 3, 'ACK': 4};
+    app.Kind = Kind;
     var Msg = {
         createNew: function (wsclient) {
             var msg = {};
@@ -24,7 +28,7 @@ window.pushclient = null;
             msg.send = function (tag, kind, val) {
                 tag = tag % 10;
                 kind = kind % 10;
-
+                //console.log("will send:",val);
                 msg.tosend('' + tag + kind + val);
 
 
@@ -43,14 +47,14 @@ window.pushclient = null;
             msg.unmarshal = function (val) {
                 if (typeof val === 'string') {
                     val = '' + val;
-                    tag = parseInt(val.substring(0, 1));
-                    kind = parseInt(val.substring(1, 2));
-                    _val = val.substring(2);
+                    var tag = parseInt(val.substring(0, 1));
+                    var kind = parseInt(val.substring(1, 2));
+                    var _val = val.substring(2);
                 } else {
-                    tag = val[0];
+                    var tag = val[0];
 
-                    kind = val[1];
-                    _val = val.slice(2, -1);
+                    var kind = val[1];
+                    var _val = val.slice(2, -1);
                 }
                 return [tag, kind, _val];
             };
@@ -74,10 +78,10 @@ window.pushclient = null;
             client.running = false;
             client.isconnected = false;
             client.waitreply = false;
-            client.wsocket = null;
+
             client.connectRetry = 0;
             client.timestamp = 0;
-            client.checktimeout = 5000;
+            client.checktimeout = 10000;
             client.lastcheck = 0;
             client.host = pclient.request.host;
             client.port = pclient.request.port;
@@ -126,19 +130,24 @@ window.pushclient = null;
                 client.pclient.request.authorize();
             };
             client.onclose = function (evt) {
-                console.log('DISCONNECTED.evt:' + evt);
+                console.log('DISCONNECTED.evt:');
+                console.log(evt);
+                client.isconnected = false;
             };
             client.onmessage = function (evt) {
-                if (evt && evt.data) {
+                if (evt) {
+                    // console.log('onmessage evt:');
+                    // console.log(evt);
+
                     if (evt.data) {
                         if (typeof evt.data === 'string') {
                             var datas = client.msgbody.unmarshal(evt.data);
                             client.pclient.response.receive(datas[0], datas[1], datas[2]);
                         } else {
-                            console.log(evt.data);
-                            for (var k in evt.data) {
-                                console.log(k + ":" + evt.data[k]);
-                            }
+                            // console.log(evt.data);
+                            // for (var k in evt.data) {
+                            //   console.log(k + ":" + evt.data[k]);
+                            // }
                             this.blobToArray(evt.data, function (ab) {
                                 var datas = client.msgbody.unmarshal(ab);
                                 console.log("blob tag:" + datas[0] + ",byte kind:" + datas[1]);
@@ -166,7 +175,7 @@ window.pushclient = null;
                 client.authorize();
             };
             client.changeAddress = function (host, port) {
-                client.host = host;
+                // client.host = host;
                 client.port = port;
                 pclient.request.add("auth", "1");
                 console.log("changeAddress host:" + host + ",port:" + port);
@@ -179,35 +188,37 @@ window.pushclient = null;
                 this.close();
                 client.connectRetry += 1;
                 client.timestamp = (new Date()).getTime();
+
                 try {
                     //var wsUri=client.proxy+"://"+client.host+":"+client.port+"/?enoding=text";
-                    // var wsUri=client.proxy+"://"+client.host+":"+client.port+"/";
+
                     var wsUri = client.proxy + "://" + client.host + ":" + client.fixport + (client.port > 0 ? "/?" + client.port : "/");
-                    console.log('wsUri:'+wsUri);
-                    client.wsocket = new WebSocket(wsUri);
-                    //client.wsocket.binaryType = "arraybuffer";
-                    client.wsocket.binaryType = "blob";//必须是该类型,接收通过FileReader  readAsArrayBuffer 获取.
-                    client.wsocket.onopen = function (evt) {
-                        client.onopen(evt);
-                    };
-                    client.wsocket.onmessage = function (evt) {
-                        client.onmessage(evt);
-                    };
-                    client.wsocket.onerror = function (evt) {
-                        client.onerror(evt);
+                    // var wsUri = client.proxy + "://" + client.host + (client.port > 0 ? "/ws/?" + client.port : "");
+                    console.log('wsUri:' + wsUri);
+                    SocketTask = tt.connectSocket({'url': wsUri});
+                    SocketTask.onOpen(function (res) {
+                        client.onopen(res);
+                    });
+                    SocketTask.onError(function (res) {
+                        client.onerror(res);
                         client.isconnected = false;
-                    };
-                    client.wsocket.onclose = function (evt) {
-                        client.onclose(evt);
-                    };
+                    });
+                    SocketTask.onMessage(function (data) {
+                        client.onmessage(data);
+                    })
+                    SocketTask.onClose(function (res) {
+                        client.onclose(res);
+                    })
+                    //client.wsocket.binaryType = "arraybuffer";
 
                 } catch (e) {
                     console.log(e);
+                    client.isconnected = false;
                 }
             };
             client.close = function () {
-                if (client.wsocket) {
-                    client.wsocket.close();
+                if (SocketTask) {
+                    SocketTask.close();
                 }
             };
             client.checkRemote = function () {
@@ -232,11 +243,13 @@ window.pushclient = null;
                         var time = client.connectRetry > 6 ? 6 : client.connectRetry;
                         if (ct - client.timestamp > client.checktimeout * time) {
                             client.connect();
+                            client.pclient.response.heart(client.connectRetry);
                         }
                     } else {
                         client.connect();
+                        client.pclient.response.heart(client.connectRetry);
                     }
-                    client.pclient.response.heart(client.connectRetry);
+
 
                 }
                 return false;
@@ -264,38 +277,61 @@ window.pushclient = null;
                     client.connect();
                     client.monitor = setTimeout(runnable, 15000);
                 }
+
             };
             client.shutdown = function () {
                 client.running = false;
             };
             client.release = function () {
                 client.close();
-                delete client.wsocket;
             };
             client.startsend = function () {
 
                 if (client.cache && client.cache.length > 0) {
-                    if (client.wsocket && client.isconnected && client.wsocket.readyState == WebSocket.OPEN &&
-                        client.wsocket.bufferedAmount < client.threshold) {
+                    if (client.isconnected) {
                         var fdata = client.cache[0];
 
                         try {
-//				                console.log(typeof(fdata.data));
-//				                console.log(fdata.type);
-//				                console.log(fdata);
+                            //				                console.log(typeof(fdata.data));
+                            //				                console.log(fdata.type);
+                            //				                console.log(fdata);
+
+                            var params = {};
                             if (typeof (fdata) == "string") {
-                                //console.log("send a string message.");
-                                client.wsocket.send(fdata);
+                                params['data'] = fdata;
                             } else {
                                 console.log(client.cache);
-                                //client.wsocket.send(new Blob(fdata.data,{type:'application/octet-binary'}),{binary:true,mask:true});
-                                client.wsocket.send(fdata, {binary: true, mask: true});
-                                //console.log('wsocket send byte,bufferedAmount:'+client.wsocket.bufferedAmount);
+                                params['data'] = fdata;
                             }
-//                                console.log("startsend wsocket bufferedAmount:"+client.wsocket.bufferedAmount);
-                            client.lastcheck = (new Date()).getTime();
-                            client.delay = 1;
-                            client.cache.splice(0, 1);
+                            params['data'] = fdata;
+                            params['complete'] = function () {
+                                client.lastcheck = (new Date()).getTime();
+                                client.delay = 1;
+                                client.cache.splice(0, 1);
+
+                                if (client.cache && client.cache.length > 0) {
+                                    setTimeout(function () {
+                                        client.startsend()
+                                    }, 1);
+                                } else {
+                                    //console.log('not find any cache.');
+                                    if (client.timer) {
+                                        clearTimeout(client.timer);
+                                        client.timer = null;
+                                        console.log('not find andy cache,close timer.');
+                                        setTimeout(function () {
+                                            client.startsend()
+                                        }, client.delay * 10);
+                                    } else {
+                                        // console.log('client timer not exist,send over.');
+                                    }
+                                }
+
+                            };
+                            if (SocketTask) {
+                                SocketTask.send(params);
+                            }
+
                             //console.log("send one data end.");
                         } catch (e) {
                             console.log('writeflush err,' + e);
@@ -307,62 +343,23 @@ window.pushclient = null;
 
                 }
                 //console.log("ready check cache .");
-                if (client.cache && client.cache.length > 0) {
-                    if (client.wsocket.bufferedAmount < client.threshold) {
-                        //client.startsend();
-                        console.log('come on deal cache.');
-                        window.setTimeout(function () {
-                            client.startsend()
-                        }, 0);
-                    } else {
-                        if (client.timer) {
-                            window.clearTimeout(client.timer);
-                        }
-                        //if(!client.timer){
-                        client.delay += 100;
-                        console.log("sleep " + client.delay + " ms.");
-                        client.timer = window.setTimeout(function () {
-                            client.startsend()
-                        }, client.delay);
-                        //}
-                    }
-                } else {
-                    //console.log('not find any cache.');
-                    if (client.timer) {
-                        if (client.wsocket.bufferedAmount < client.threshold) {
-                            window.clearTimeout(client.timer);
-                            client.timer = null;
-                            console.log('not find any cache,close timer.');
-                        }
-                        window.setTimeout(function () {
-                            client.startsend()
-                        }, client.delay * 10);
-                    } else {
-//                            console.log('client timer not exist,send over.');
-                    }
-                }
+
 
             };
             client.writeflush = function (data, isheart) {
-                if (client.wsocket && client.isconnected) {
-                    if (client.wsocket.readyState == WebSocket.OPEN) {
-                        var isEmpty = (client.cache.length == 0);
-                        if (isheart) {
-                            if (!client.cache || client.cache.length == 0) {
-                                client.cache[client.cache.length] = '12';//{'data':'12','type':'string'};
-                            }
-                        } else {
-                            client.cache[client.cache.length] = data;//{'data':data,'type':'binary'};
+                if (client.isconnected) {
+                    var isEmpty = (client.cache.length == 0);
+                    if (isheart) {
+                        if (!client.cache || client.cache.length == 0) {
+                            client.cache[client.cache.length] = '12';//{'data':'12','type':'string'};
                         }
-                        if (isEmpty) {
-                            //if(!client.timer)client.timer = window.setTimeout(function(){client.startsend()},client.delay);
-                            client.startsend();
-                        }
-
-                    } else if (client.wsocket.readyState != WebSocket.CONNECTING) {
-                        client.isconnected = false;
+                    } else {
+                        client.cache[client.cache.length] = data;//{'data':data,'type':'binary'};
                     }
-
+                    if (isEmpty) {
+                        //if(!client.timer)client.timer = window.setTimeout(function(){client.startsend()},client.delay);
+                        client.startsend();
+                    }
                 }
             };
             client.willreconnect = function () {
@@ -402,7 +399,7 @@ window.pushclient = null;
                     return info;
                 },
                 'authorize': function () {
-                    ainfo = pclient.request.authorizeInfo();
+                    var ainfo = pclient.request.authorizeInfo();
                     console.log('authorize in.ainfo:', ainfo);
                     pclient.request.msgbody.send(0, 2, ainfo);
                 },
@@ -429,7 +426,7 @@ window.pushclient = null;
                             pclient.response.onidle();
                         } else {
                             if (cache_timer) {
-                                window.clearTimeout(cache_timer);
+                                clearTimeout(cache_timer);
                             }
                             pclient.request.startsendtimer();
                         }
@@ -439,7 +436,7 @@ window.pushclient = null;
                 },
                 'startsendtimer': function () {
                     if (cache_timer) {
-                        window.clearTimeout(cache_timer);
+                        clearTimeout(cache_timer);
                     }
                     if (byte_cache) {
                         for (var sn in byte_cache) {
@@ -465,7 +462,7 @@ window.pushclient = null;
                         }
                         cache_loop_send_cnt++;
                         if (cache_loop_send_cnt < cache_loop_send_max) {
-                            cache_timer = window.setTimeout(pclient.request.startsendtimer, 30000);
+                            cache_timer = setTimeout(pclient.request.startsendtimer, 30000);
                         } else {
                             byte_cache = null;
                             cache_timer = null;
@@ -594,7 +591,7 @@ window.pushclient = null;
                 'heart': function (retry) {
                     if (retry > 0) console.log('retry:' + retry);
                 },
-                'onmessage': function (type, msg, head) {
+                'onmessage': function (msg) {
                 },
                 'onready': function () {
                 },
@@ -604,7 +601,6 @@ window.pushclient = null;
                 'onidle': function () {
                 },
                 'receive': function (tag, kind, val) {//tag,1:注册回应,2:来自服务端的消息
-                    console.log("receive val:", val);
                     if (tag == 1) {
                         switch (kind) {
                             case Kind.INT:
@@ -618,7 +614,7 @@ window.pushclient = null;
                                         pushclient.pclient.request.authorize();
                                     }, 20000);
                                 } else if (v == 2) {
-//								    console.log('heart ok,'+(new Date()));
+                                    // console.log('heart ok,' + (new Date()));
                                 }
 
                                 break;
@@ -631,17 +627,17 @@ window.pushclient = null;
                                 if (vals.length > 2) {
                                     pclient.request.uuid = vals[2];
                                 }
-                                console.log('point:' + val + ',uuid:' + uuid);
+                                console.log('ip:' + ip + ',port:' + port);
                                 pclient.changeAddress(ip, port);
                                 break;
                         }
                     } else if (tag == 2) {
                         if (kind == Kind.STRING) {
                             var _val = this.parsemsg(val);
-                            //console.log("tag:2,STRING,val:"+val);
+                            //console.log("tag:2,STRING,val:" + val);
                             var pos = parseInt(_val[_val.length - 1]);
                             //if(_val.length>4){this.onmessage(Kind.STRING,val);}
-                            //console.log("string pos:"+pos);
+                            //console.log("string pos:" + pos);
                             if (pos > 0 && pos < val.length) {
                                 this.onmessage(Kind.STRING, val.substring(pos), _val);
                             }
@@ -672,7 +668,7 @@ window.pushclient = null;
                             console.log("可以收发消息了");
                             this.onready();
                         }
-
+                        //console.log("tag:" + tag + ",kind:" + kind + ",val:" + val);
                     }
                 },
                 'delaycall': function (func, timeout) {
@@ -795,11 +791,139 @@ window.pushclient = null;
         }
     };
     var pclient = PClient.createNew();
-    window.pushclient = {
+    app.pushclient = {
         'pclient': pclient,
         'saver': saver
     };
-    window.addEventListener("beforeunload", function () {
-        pclient.shutdown();
-    });
-})(null);
+    that.pushclient = app.pushclient;
+}
+
+function start(app, _client, pushclient, gid) {
+    var window = app;
+    var that = app;
+    if (!_client) return;
+    if (!pushclient)
+        pushclient = that.pushclient;
+    var cache = {};
+    var cache_size = 2 * 1024 * 1024;
+    var audioContext = null;
+    try {
+        audioContext = new AudioContext();
+    } catch (e) {
+        console.log(e);
+    }
+    //navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+    console.log('pushclient:', pushclient);
+    pushclient.pclient.response.onready = function () {
+        // that.updateClientSt(1);
+    };
+    var Kind = {'INT': 0, 'LONG': 1, 'STRING': 2, 'BYTE': 3, 'ACK': 4};
+    pushclient.pclient.response.onmessage = function (kind, msg, params) {
+
+        if (kind == Kind.STRING) {
+
+            var idx = msg.indexOf(":");
+            var tag = "";
+            if (idx > 0) tag = msg.substring(0, idx);
+            var _idx = idx;
+            idx = msg.indexOf(":", _idx + 1);
+            var sn = "";
+            if (idx > _idx) {
+                sn = msg.substring(_idx + 1, idx);
+                if (sn) {
+                    pushclient.pclient.request.recvOk(sn);
+                }
+            }
+            var submsg = msg.substring(idx + 1);
+            var vals = msg.split(":");
+
+            if ("apply" == tag) {
+                var _from = params[0];
+                window.fromuid = _from;
+                var page = ~~sn;
+                var sn = submsg;
+                pushclient.pclient.request.apply(page, sn);
+            } else if ("msg" == tag) {
+                var _from = params[0];
+                window.fromuid = _from;
+                var txt = submsg;
+                //console.log("来自" + _from + "[" + sn + "]:" + txt);
+                if (typeof pushclient.pclient.cb == "function") {
+                    pushclient.pclient.cb('recv', _from, sn, txt);
+                }
+            }
+        }
+    };
+    pushclient.pclient.cb = function (msg, head) {
+    };
+    //window.fromuid = 6001;
+    //pushclient.pclient.request.host='127.0.0.1';
+    //pushclient.pclient.request.host='172.16.24.41';
+    pushclient.pclient.request.host = 'wss.oopsteam.site'
+    //pushclient.pclient.request.port=19999;
+    //pushclient.pclient.request.port=19009;
+    pushclient.pclient.request.port = 19443;
+    pushclient.pclient.request.fixport = 19443;
+    pushclient.pclient.request.token = 'TYL001';
+    //pushclient.pclient.request.uuid='';
+    // pushclient.pclient.request.uuid = '36801';
+    //pushclient.pclient.request.uuid = _client.id;
+    pushclient.pclient.request.uuid = 999;
+    pushclient.pclient.request.proxy = "wss";
+    pushclient.pclient.request.add('sids', '1');
+    pushclient.pclient.request.add('vids', '' + gid);
+    pushclient.pclient.start();
+    pushclient.pclient.inited = true;
+    pushclient.pclient.response.sendOver = function (msg, head) {
+        //console.log("sendOver msg:", msg);
+        //console.log("sendOver head:", head);
+        //console.log("pushclient.pclient.cb:",typeof pushclient.pclient.cb);
+        var vals = msg.split(":");
+        var st = vals[0];
+        var sn = "";
+        if ("0" == st) {
+            sn = vals[1];
+        }
+        if (typeof pushclient.pclient.cb == "function") {
+            var _from = head[0];
+            pushclient.pclient.cb('over', _from, sn, st);
+        }
+    };
+    pushclient.pclient.response.onready = function () {
+        if (typeof app.onready == "function") {
+            app.onready();
+        }
+        if (typeof pushclient.pclient.cb == "function") {
+
+            pushclient.pclient.cb('ready', 0, null, 0);
+        }
+    };
+}
+
+function sendText(pushclient, txt, touid, cb) {
+    var sid = pushclient.pclient.request.defaultSid;
+    var vid = pushclient.pclient.request.defaultGid;
+    var routeid = 2;
+    var md = "dhbyuid";
+    if (!touid) {
+        md = "downhit";
+        touid = vid;
+    }
+    var sn = "" + (new Date()).getTime();
+
+    setCallBack(pushclient, cb);
+    pushclient.pclient.request.nsend(10, sid, vid, routeid, touid, md, "msg:" + sn + ":" + txt);
+    return sn;
+}
+
+function setCallBack(pushclient, cb) {
+    if (pushclient && pushclient.pclient) {
+        pushclient.pclient.cb = cb;
+    }
+    //console.log("setCallBack end,pushclient.pclient.cb:", pushclient.pclient.cb);
+}
+
+module.exports.psclient = psclient;
+module.exports.start = start;
+module.exports.sendText = sendText;
+module.exports.setCallBack = setCallBack;
