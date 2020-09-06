@@ -47,6 +47,7 @@ function psclient(app, saver) {
             msg.unmarshal = function (val) {
                 if (typeof val === 'string') {
                     val = '' + val;
+                    console.log("msg.unmarshal:", val);
                     var tag = parseInt(val.substring(0, 1));
                     var kind = parseInt(val.substring(1, 2));
                     var _val = val.substring(2);
@@ -81,7 +82,7 @@ function psclient(app, saver) {
 
             client.connectRetry = 0;
             client.timestamp = 0;
-            client.checktimeout = 10000;
+            client.checktimeout = 8000;
             client.lastcheck = 0;
             client.host = pclient.request.host;
             client.port = pclient.request.port;
@@ -130,8 +131,9 @@ function psclient(app, saver) {
                 client.pclient.request.authorize();
             };
             client.onclose = function (evt) {
-                console.log('DISCONNECTED.evt:');
+                console.log('DISCONNECTED.evt:',Date.now());
                 console.log(evt);
+                client.connecting = false;
                 client.isconnected = false;
             };
             client.onmessage = function (evt) {
@@ -171,7 +173,7 @@ function psclient(app, saver) {
                 client.connecting = false;
                 client.connectRetry = 0;
                 client.isconnected = true;
-                console.log('CONNECTED.');
+                console.log('CONNECTED.', Date.now());
                 client.authorize();
             };
             client.changeAddress = function (host, port) {
@@ -195,7 +197,8 @@ function psclient(app, saver) {
                     var wsUri = client.proxy + "://" + client.host + ":" + client.fixport + (client.port > 0 ? "/?" + client.port : "/");
                     // var wsUri = client.proxy + "://" + client.host + (client.port > 0 ? "/ws/?" + client.port : "");
                     console.log('wsUri:' + wsUri);
-                    SocketTask = tt.connectSocket({'url': wsUri});
+                    SocketTask = tt.connectSocket({'url': wsUri, 'success':function(res){console.log('sucess:', res);},
+                                                    'fail':function(res){console.log('fail:', res);}});
                     SocketTask.onOpen(function (res) {
                         client.onopen(res);
                     });
@@ -214,6 +217,8 @@ function psclient(app, saver) {
                 } catch (e) {
                     console.log(e);
                     client.isconnected = false;
+                    client.connecting = false;
+                    client.waitreply = false;
                 }
             };
             client.close = function () {
@@ -236,16 +241,19 @@ function psclient(app, saver) {
                         }
                     }
                 } catch (e) {
+                    console.log("writeflush heart failed!", e)
                     client.isconnected = false;
                 }
                 if (client.running && !client.isconnected) {
                     if (client.connectRetry > 0) {
                         var time = client.connectRetry > 6 ? 6 : client.connectRetry;
                         if (ct - client.timestamp > client.checktimeout * time) {
+                            console.log("client timestamp is timeout!!!will connect!", "isconnected:", client.isconnected);
                             client.connect();
                             client.pclient.response.heart(client.connectRetry);
                         }
                     } else {
+                        console.log("connectRetry is 0!", "isconnected:", client.isconnected);
                         client.connect();
                         client.pclient.response.heart(client.connectRetry);
                     }
@@ -266,7 +274,7 @@ function psclient(app, saver) {
                 }
                 client.monitorrunner();
                 if (client.running) {
-                    client.monitor = setTimeout(runnable, 15000);
+                    client.monitor = setTimeout(runnable, 10000);
                 } else {
                     client.release();
                 }
@@ -614,7 +622,7 @@ function psclient(app, saver) {
                                         pushclient.pclient.request.authorize();
                                     }, 20000);
                                 } else if (v == 2) {
-                                    // console.log('heart ok,' + (new Date()));
+                                    console.log('heart ok,' + (new Date()));
                                 }
 
                                 break;
@@ -667,6 +675,8 @@ function psclient(app, saver) {
                         if (tag == 0 && kind == Kind.INT && parseInt(val) == 0) {
                             console.log("可以收发消息了");
                             this.onready();
+                        } else {
+                          console.log("等待服务端返回change addr.");
                         }
                         //console.log("tag:" + tag + ",kind:" + kind + ",val:" + val);
                     }
@@ -798,7 +808,7 @@ function psclient(app, saver) {
     that.pushclient = app.pushclient;
 }
 
-function start(app, _client, pushclient, gid) {
+function start(app, _client, pushclient, gid, uuid) {
     var window = app;
     var that = app;
     if (!_client) return;
@@ -808,7 +818,7 @@ function start(app, _client, pushclient, gid) {
     var cache_size = 2 * 1024 * 1024;
     var audioContext = null;
     try {
-        audioContext = new AudioContext();
+        audioContext = tt.createInnerAudioContext();
     } catch (e) {
         console.log(e);
     }
@@ -847,15 +857,18 @@ function start(app, _client, pushclient, gid) {
                 var _from = params[0];
                 window.fromuid = _from;
                 var txt = submsg;
-                //console.log("来自" + _from + "[" + sn + "]:" + txt);
+                console.log("来自" + _from + "[" + sn + "]:" + txt,pushclient.pclient.cb);
                 if (typeof pushclient.pclient.cb == "function") {
+                    console.log("will call cb:",pushclient.pclient.cb);
                     pushclient.pclient.cb('recv', _from, sn, txt);
                 }
             }
         }
     };
+    if(!pushclient.pclient.cb){
     pushclient.pclient.cb = function (msg, head) {
-    };
+      console.log("default recv cb:", msg, ",head:", head);
+    };}
     //window.fromuid = 6001;
     //pushclient.pclient.request.host='127.0.0.1';
     //pushclient.pclient.request.host='172.16.24.41';
@@ -864,14 +877,18 @@ function start(app, _client, pushclient, gid) {
     //pushclient.pclient.request.port=19009;
     pushclient.pclient.request.port = 19443;
     pushclient.pclient.request.fixport = 19443;
-    pushclient.pclient.request.token = 'TYL001';
+    pushclient.pclient.request.token = 'XL001';
     //pushclient.pclient.request.uuid='';
     // pushclient.pclient.request.uuid = '36801';
     //pushclient.pclient.request.uuid = _client.id;
     pushclient.pclient.request.uuid = 999;
+    if(uuid){
+    pushclient.pclient.request.uuid = uuid;}
     pushclient.pclient.request.proxy = "wss";
     pushclient.pclient.request.add('sids', '1');
     pushclient.pclient.request.add('vids', '' + gid);
+    pushclient.pclient.request.add('cat','1');
+    pushclient.pclient.request.add('tid','1');
     pushclient.pclient.start();
     pushclient.pclient.inited = true;
     pushclient.pclient.response.sendOver = function (msg, head) {
@@ -916,8 +933,32 @@ function sendText(pushclient, txt, touid, cb) {
     return sn;
 }
 
+function broadText(pushclient, txt, gid, cb) {
+    var sid = pushclient.pclient.request.defaultSid;
+    var vid = gid;
+    var routeid = 2;
+    var md = "downhit";
+    var sn = "" + (new Date()).getTime();
+
+    setCallBack(pushclient, cb);
+    pushclient.pclient.request.nsend(10, sid, vid, routeid, vid, md, "msg:" + sn + ":" + txt);
+    return sn;
+}
+
+function teamBroadText(pushclient, txt, tid, cb) {
+    var sid = pushclient.pclient.request.defaultSid;
+    var vid = pushclient.pclient.request.defaultGid;
+    var routeid = 2;
+    var md = "dhbytid";
+    var sn = "" + (new Date()).getTime();
+
+    setCallBack(pushclient, cb);
+    pushclient.pclient.request.nsend(10, sid, vid, routeid, tid, md, "msg:" + sn + ":" + txt);
+    return sn;
+}
+
 function setCallBack(pushclient, cb) {
-    if (pushclient && pushclient.pclient) {
+    if (cb && pushclient && pushclient.pclient) {
         pushclient.pclient.cb = cb;
     }
     //console.log("setCallBack end,pushclient.pclient.cb:", pushclient.pclient.cb);
@@ -926,4 +967,6 @@ function setCallBack(pushclient, cb) {
 module.exports.psclient = psclient;
 module.exports.start = start;
 module.exports.sendText = sendText;
+module.exports.broadText = broadText;
+module.exports.teamBroadText = teamBroadText;
 module.exports.setCallBack = setCallBack;

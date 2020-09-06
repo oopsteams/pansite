@@ -162,7 +162,7 @@ window.pushclient = null;
                 client.connecting = false;
                 client.connectRetry = 0;
                 client.isconnected = true;
-                console.log('CONNECTED.');
+                console.log('CONNECTED.', Date.now());
                 client.authorize();
             };
             client.changeAddress = function (host, port) {
@@ -203,6 +203,9 @@ window.pushclient = null;
 
                 } catch (e) {
                     console.log(e);
+                    client.isconnected = false;
+                    client.connecting = false;
+                    client.waitreply = false;
                 }
             };
             client.close = function () {
