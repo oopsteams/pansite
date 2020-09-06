@@ -407,12 +407,13 @@ function testSendImgTag(img){
     });
 }
 function sendText(txt,touid){
-    var sid=1;
-    var vid='21503';
-    var routeid=2;
+    var sid=pushclient.pclient.request.defaultSid;
+    var vid=pushclient.pclient.request.defaultGid;
+    var routeid=3;
     if(!touid)touid=window.fromuid;
     var sn = ""+(new Date()).getTime();
-    pushclient.pclient.request.send(sid,vid,routeid,touid,"dhbyuid","msg:"+sn+":"+txt);
+    console.log("sendText sid:", sid, ",vid:", vid);
+    pushclient.pclient.request.nsend(10, sid,vid,routeid,touid,"dhbyuid","msg:"+sn+":"+txt);
 }
 var global_menu_tag=true;
 function readyImgs(){
