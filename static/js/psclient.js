@@ -603,9 +603,22 @@ window.pushclient = null;
                 'onmessage': function (type, msg, head) {
                 },
                 'onready': function () {
+                    if (typeof pclient.cb === "function") {
+                        pclient.cb('ready', 0, null, 0);
+                    }
                 },
                 'sendOver': function (msg, head) {
-                    console.log("sendOver msg:", msg, head);
+                    // console.log("sendOver msg:", msg, head);
+                    var vals = msg.split(":");
+                    var st = vals[0];
+                    var sn = "";
+                    if ("0" === st) {
+                        sn = vals[1];
+                    }
+                    if (typeof pclient.cb === "function") {
+                        var _from = head[0];
+                        pclient.cb('over', _from, sn, st);
+                    }
                 },
                 'onidle': function () {
                 },

@@ -8,157 +8,16 @@
     <script src="https://static.oopsteam.site/static/js/psclient.js" type="text/javascript"></script>
 </head>
 <body>
+<div id="info">
 
-<!--<canvas id="canvas" width="640" height="480"></canvas>-->
-<!--<video id="video" style='width:640px;height:480px'></video>-->
-<video id="video" ></video>
-<button id="paizhao">拍照</button>
-<div id="info"></div>
+</div>
+<textarea id="txt"></textarea>
+<button id="send" value="发送">发送</button>
 <script type="text/javascript">
-var gstream=null;
-    jQuery(document).ready(function(){
-        var canvas = document.createElement('CANVAS');
-           var video=document.getElementById("video");
-
-        var errocb=function(){
-            console.log("sth srong");
-        }
-     navigator.getUserMedia = navigator.getUserMedia ||
-                 navigator.webkitGetUserMedia ||
-                 navigator.mozGetUserMedia ||
-                 navigator.msGetUserMedia;
-    console.log('myGetUserMedia:',navigator.getUserMedia);
-    if( navigator.getUserMedia){
-        navigator.getUserMedia({"video":true},function(stream){
-        gstream=stream;
-            console.log(stream);
-            if(stream){
-                if (video.mozSrcObject !== undefined) {
-                    video.mozSrcObject = stream;
-                } else {
-                    video.src = window.URL && window.URL.createObjectURL(stream) || stream;
-                }
-
-            }
-
-        },errocb);
-    }else if(navigator.webkitGetUserMedia){
-        navigator.webkitGetUserMedia({"video":true},function(stream){
-            video.src=window.webkitURL.createObjectURL(stream);
-            video.play();
-        },errocb);
-    }
-
-    function loopsend(){
-        var context=canvas.getContext("2d");
-        context.drawImage(video,0,0);
-        var type="image/jpeg";
-        var dataurl=canvas.toDataURL(type,0.2);
-        //console.log(dataurl);
-        var bin = atob(dataurl.split(',')[1]);
-        var buffer = new Uint8Array(bin.length);
-        for(var i=0;i<bin.length;i++){
-            buffer[i]=bin.charCodeAt(i);
-        }
-        var sid=1;
-        var vid='3';
-        var routeid=2;
-        console.log('len:',buffer.length);
-        pushclient.pclient.request.sendbytes(sid,vid,routeid,vid,"","jpeg",buffer,true);
-    }
-
-
-    document.getElementById("paizhao").addEventListener("click",function(){
-
-        canvas.height=video.videoHeight||video.height;
-        canvas.width=video.videoWidth||video.width;
-        console.log('h,w:',canvas.height,canvas.width);
-        $("#info").html('h:'+canvas.height+',w:'+canvas.width);
-        /*
-        var context=canvas.getContext("2d");
-
-        //context.drawImage(video,0,0,640,480);
-        context.drawImage(video,0,0);
-        var type="image/jpeg";
-        var dataurl=canvas.toDataURL(type,1);
-        var bin = atob(dataurl.split(',')[1]);
-        var buffer = new Uint8Array(bin.length);
-        for(var i=0;i<bin.length;i++){
-            buffer[i]=bin.charCodeAt(i);
-        }
-        var sid=1;
-        var vid='3';
-        var routeid=2;
-        console.log('len:',buffer.length);
-        pushclient.pclient.request.sendbytes(sid,vid,routeid,vid,"","jpeg",buffer,true);
-        */
-        //window.setInterval(loopsend,100);
-        var lastsend_time=0;
-        pushclient.pclient.response.onidle=function(){
-            var ct=(new Date()).getTime();
-            if(ct-lastsend_time>66){
-                lastsend_time=ct;
-                loopsend();
-            }else{
-                window.setTimeout(loopsend,ct-lastsend_time);
-            }
-            console.log('sender ready ok.');
-        };
-        pushclient.pclient.response.onidle();
-        /*
-        canvas.toBlob(function(blob){
-
-        var sid=1;
-        var vid='3';
-        var routeid=2;
-
-        pushclient.pclient.wsclient.blobToArray(blob,function(buffer){
-                    console.log(buffer);
-
-                        pushclient.pclient.request.sendbytes(sid,vid,routeid,vid,"","png",buffer,true);
-                    });
-        });
-        */
-    });
-    })
 
 </script>
 <script type="text/javascript">
-
-var videohtml='<video id="example_video_1" class="video-js vjs-default-skin" controls preload="none" width="640" height="264" poster="" data-setup="{}">';
-    //videohtml+='<source src="" type="video/mp4" />'
-    videohtml+='<track kind="captions" src="demo.captions.vtt" srclang="en" label="English"></track>';
-    videohtml+='<track kind="subtitles" src="demo.captions.vtt" srclang="en" label="English"></track>';
-    //videohtml+='<p class="vjs-no-js">请使用支持html5的浏览器</p>';
-    videohtml+='</video>';
-var con = document.createElement('div');
-con.id="mp4_con";
-document.body.appendChild(con);
-document.getElementById('mp4_con').innerHTML=videohtml;
-var videoobj = document.querySelector('#mp4_con video');
-var audiohtml='<audio controls="controls"></audio>';
-con = document.createElement('div');
-con.id="mp3_con";
-document.body.appendChild(con);
-con.innerHTML=audiohtml;
-var audioobj = document.querySelector('#mp3_con audio');
-
-var imghtml='<img id="img_001"/>';
-con = document.createElement('div');
-con.id="img_con";
-document.body.appendChild(con);
-con.innerHTML=imghtml;
-var imgobj=document.querySelector('#img_con img');
-
-var cache={};
-var cache_size=2*1024*1024;
-var audioContext=null;
-try{
-    audioContext=new AudioContext();
-}catch(e){console.log(e);}
-//navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
-
-
+var msg_list = [];
 
 pushclient.pclient.response.onmessage=function(kind,msg,params){
 
@@ -193,98 +52,12 @@ pushclient.pclient.response.onmessage=function(kind,msg,params){
              var sn = vals[1];
              var txt = vals[2];
              console.log("来自"+from+"["+sn+"]:"+txt);
+             pushclient.pclient.cb('recv', from, sn, txt);
          }
-    }else if(kind==Kind.BYTE){
-var applytype="apply";
-        //[fuid,type,page,sn]
-        var sn=params[3],fuid=params[0],page=params[2],type=params[1];
-        console.log('sn:'+sn+',fuid:'+fuid+',page:'+page+',type:'+type);
-        var sid=1;
-        var vid=2001;
-        var route=2;
-        touid = fuid;
-        //if(!touid)touid=window.fromuid;
-            //console.log(msg);
-            if(page>0&&msg==null){
-                if(cache[sn]){
-                    /*
-                    cbuffer = cache[sn].buffer;
-                    if(cbuffer.c){
-                        cbuffer.pool[cbuffer.pool.length]=cbuffer.c;
-                        cbuffer.c = null;
-                        cbuffer.cl=0;
-                        cbuffer.pool[cbuffer.pool.length]=null;
-                    }
-                    */
-                    var datas = cache[sn];
-                    var _data = new Uint8Array(datas.len);
-                    var alldatas = [];
-                    var pos = 0;
-                    for(var i=0;i<page;i++){
-                        alldatas[alldatas.length]=datas[i];
-                        _data.set(datas[i],pos);
-                        pos += datas[i].length;
-                    }
-
-                    if("mp4"==type){
-                        var bb = new Blob(alldatas,{"type":"video/mp4"});
-                        var source = window.URL.createObjectURL(bb);
-                        videoobj.src=source;
-                        videoobj.play();
-                    }else if("mp3"==type){
-                        //var vcontext = new webkitAudioContext();
-                        //var bb = new Blob(alldatas,{"type":"video/mp3"});
-                        //var source = window.URL.createObjectURL(bb);
-                        //console.log("source:"+source);
-                        //audioobj.src=source;
-
-                        audioContext.decodeAudioData(_data.buffer,
-                        function(buffer) { //解码成功则调用此函数，参数buffer为解码后得到的结果
-                            var audioBufferSouceNode = audioContext.createBufferSource();
-                            var analyser = audioContext.createAnalyser();
-                            audioBufferSouceNode.connect(analyser);
-                            analyser.connect(audioContext.destination);
-                            audioBufferSouceNode.buffer = buffer;
-                            audioBufferSouceNode.start(0);
-
-                        }, function(e) {
-                            console.log("!哎玛，文件解码失败:(");
-                        });
-
-
-                    }else if("png"==type){
-                        var bb = new Blob(alldatas,{"type":"img/png"});
-                        var source = window.URL.createObjectURL(bb);
-                        imgobj.src = source;
-                    }
-
-                }
-                pushclient.pclient.request.send(sid,vid,route,touid,"dhbyuid",applytype+":"+page+":"+sn);
-            }else{
-                if(!cache[sn]){
-                    cache[sn]={"len":0};
-                    cache[sn].type=type;
-                    cache[sn].buffer={"c":null,"cl":0,"pool":[]};
-                }
-                //cbuffer = cache[sn].buffer;
-                cache[sn][page]=msg;
-                cache[sn].len+=msg.length;
-
-                //sid,vid,routeid,touid,method,val
-                //pushclient.pclient.request.send(2,Kind.STRING,"msg="+sid+":"+vid+":"+route+":"+page+":"+sn);
-//                pushclient.pclient.request.send(sid,vid,route,2000,"dhbyuid",page+":"+sn);
-                pushclient.pclient.request.send(sid,vid,route,touid,"dhbyuid",applytype+":"+page+":"+sn);
-            }
-
-
-
-    }
+    }else if(kind==Kind.BYTE){}
 };
 window.fromuid=1001;
 pushclient.pclient.request.host='wss.oopsteam.site';
-//pushclient.pclient.request.host='172.16.24.41';
-//pushclient.pclient.request.port=19999;
-//pushclient.pclient.request.port=19009;
 pushclient.pclient.request.port=19443;
 pushclient.pclient.request.token='XL001';
 pushclient.pclient.request.uuid=1000;
@@ -296,116 +69,64 @@ pushclient.pclient.request.add('vids','51888');
 pushclient.pclient.request.add('cat','1');
 pushclient.pclient.request.add('tid','51888.1');//组id store+idx
 pushclient.pclient.start();
+
+$(function () {
+   $('#send').click(function () {
+       var txt = $('#txt').val();
+       console.log("will send txt:", txt);
+   });
+});
+
+var disabled = true;
+function update_view(){
+    var bd = $('#info');
+    bd.html('');
+    msg_list.forEach(function (item) {
+        bd.appendChild($('<div style="text-align:'+item.at+';">'+item.name+':'+item.msg+':'+item.time+'</div>'))
+    })
+}
+function initMsgBody(cb){
+    var tk = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZSI6IjIwMjAtMDktMDYgMjI6MTQ6MDMrMDg6MDAiLCJvaWQiOiIiLCJhIjoxLCJjaWQiOiIxNDIiLCJtbyI6IiIsInRtIjoxNTk5Mzg3MjQzfQ.RY5cj3vBo5osZ3vCZBFU06kWwcuC4yG5VQirp6m7rb8';
+    $.ajax({url:"https://test.orcaengine.com/api/im/guest_list?team_id=51888.1",
+        type:'GET',
+        headers:{
+        "content-type": "application/json",
+              "XL-TOKEN": tk
+        },
+        success: function (data) {
+            console.log("initMsgBody res:", data);
+            if(cb){
+                cb();
+            }
+        }
+    });
+}
+pushclient.pclient.cb=function (tag, _from, sn, txt) {
+    console.log("chatmsg:", txt);
+      if('recv'==tag){//接收到消息
+        // self.setData({"chatmsg": txt, "chatfrom":_from});
+        var msg = {name: self.store_name, msg: txt, 'time': parseInt(sn), 'at': 'left'}
+        msg_list.push(msg);
+        update_view();
+      }else if('ready'==tag){//消息通道ok
+        self.setData({"diabled": false});
+        console.log("消息通道ok");
+        //加载历史消息
+
+        initMsgBody(()=>{
+            disabled = false;
+          update_view();
+        });
+      }else if('disc'==tag){//因为网络问题连接断开
+      console.log("消息通道断开");
+        disabled = true;
+        update_view();
+      }
+    
+}
 //pushclient.pclient.request.sendbytes("2001","","jpg",new Blob())
 
 
-
-function test(){
-    d = new Image();
-    //d.src = 'https://www.sogou.com/index/images/weather/multicolor/qing.png';
-    d.src = 'https://www.sogou.com/index/images/weather/multicolor/duoyun.png';
-
-    var canvas = document.createElement('CANVAS');
-            var ctx = canvas.getContext('2d');
-            canvas.height=d.height;
-            canvas.width=d.width;
-            ctx.drawImage(d,0,0);
-            canvas.toBlob(function(blob){
-                window.imgBlob=blob;
-            });
-}
-function sendtest(){
-    if(window.imgBlob){
-        var sid=1;
-        var vid='21503';
-        var routeid=2;
-        var touid=null;
-        pushclient.pclient.wsclient.blobToArray(window.imgBlob,function(buffer){
-            console.log(buffer);
-            if(!touid)touid=window.fromuid;
-//            pushclient.pclient.request.sendbytes(sid,vid,routeid,"2000","dhbyuid","png",buffer);
-            pushclient.pclient.request.sendbytes(sid,vid,routeid,touid,"dhbyuid","png",buffer,true);
-        });
-    }
-}
-function sendImg(url){
-    var img = new Image();
-    var sid=1;
-    var vid='21503';
-    var routeid=2;
-    var touid=null;
-    img.crossOrigin='anonymous';
-    img.setAttribute('crossOrigin', 'anonymous');
-    img.onload=function(){
-        var canvas = document.createElement('CANVAS');
-        var ctx = canvas.getContext('2d');
-        canvas.height=img.height;
-        canvas.width=img.width;
-        ctx.drawImage(img,0,0);
-        canvas.toBlob(function(blob){
-            pushclient.pclient.wsclient.blobToArray(blob,function(buffer){
-                        console.log(buffer);
-            if(!touid)touid=window.fromuid;
-//                pushclient.pclient.request.sendbytes(sid,vid,routeid,"2000","dhbyuid","png",buffer,true);
-                pushclient.pclient.request.sendbytes(sid,vid,routeid,touid,"dhbyuid","png",buffer,true);
-            });
-        });
-    };
-    img.src=url;
-}
-function testSendImg(url){
-    var img = new Image();
-    var sid=1;
-    var vid='21503';
-    var routeid=2;
-
-    img.crossOrigin='anonymous';
-    img.setAttribute('crossOrigin', 'anonymous');
-    img.onload=function(){
-        var canvas = document.createElement('CANVAS');
-        var ctx = canvas.getContext('2d');
-        canvas.height=img.height;
-        canvas.width=img.width;
-        ctx.drawImage(img,0,0);
-        canvas.toBlob(function(blob){
-            console.log(blob);
-        });
-    };
-    img.src=url;
-}
-function sendImgTag(img){
-    var sid=1;
-    var vid='21503';
-    var routeid=2;
-    var canvas = document.createElement('CANVAS');
-    var ctx = canvas.getContext('2d');
-    var touid=null;
-    canvas.height=img.height;
-    canvas.width=img.width;
-    ctx.drawImage(img,0,0);
-    canvas.toBlob(function(blob){
-        pushclient.pclient.wsclient.blobToArray(blob,function(buffer){
-                console.log(buffer);
-                    if(!touid)touid=window.fromuid;
-                    pushclient.pclient.request.sendbytes(sid,vid,routeid,touid,"dhbyuid","png",buffer,true);
-                });
-    });
-}
-function testSendImgTag(img){
-    var sid=1;
-    var vid='21503';
-    var routeid=2;
-    var canvas = document.createElement('CANVAS');
-    var ctx = canvas.getContext('2d');
-    img.crossOrigin='anonymous';
-    img.setAttribute('crossOrigin', 'anonymous');
-    canvas.height=img.height;
-    canvas.width=img.width;
-    ctx.drawImage(img,0,0);
-    canvas.toBlob(function(blob){
-        console.log(blob);
-    });
-}
 function sendText(txt,touid){
     var sid=pushclient.pclient.request.defaultSid;
     var vid=pushclient.pclient.request.defaultGid;
@@ -415,32 +136,15 @@ function sendText(txt,touid){
     console.log("sendText sid:", sid, ",vid:", vid);
     pushclient.pclient.request.nsend(10, sid, vid, routeid, touid,"dhbyuid","msg:"+sn+":"+txt);
 }
-var global_menu_tag=true;
-function readyImgs(){
-    document.oncontextmenu=function(){
-        return global_menu_tag;
-    }
-    var imgs = document.querySelectorAll('img');
-    imgs.forEach(function(item,idx){
-        //console.log("idx:"+idx+",item:"+item);
-        item.onmousedown=function(evt){
-            var e = evt||window.event;
-            if(e.button==2){
-                if(confirm("要发送该图片吗？")){
-                    console.log("发送该图片:"+e.target.src);
-                    sendImg(e.target.src);
-                }
-            }
-        };
-        item.onmouseover=function(){
-            global_menu_tag=false;
-            console.log("global_menu_tag:"+global_menu_tag);
-        };
-        item.onmouseout=function(){
-            global_menu_tag=true;
-            console.log("global_menu_tag:"+global_menu_tag);
-        };
-    });
+function sendTag(tag, gid, cb) {
+    var sid = pushclient.pclient.request.defaultSid;
+    var vid = gid;
+    var routeid = 2;
+    var md = "downhit";
+    var sn = "" + (new Date()).getTime();
+    setCallBack(pushclient, cb);
+    pushclient.pclient.request.nsend(0, sid, vid, routeid, vid, md, tag+":" + sn + ":");
+    return sn;
 }
 </script>
 </body>
