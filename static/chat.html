@@ -60,7 +60,7 @@ window.fromuid=1001;
 pushclient.pclient.request.host='wss.oopsteam.site';
 pushclient.pclient.request.port=19443;
 pushclient.pclient.request.token='XL001';
-pushclient.pclient.request.uuid=1000;
+pushclient.pclient.request.uuid='0';
 pushclient.pclient.request.fixport=19443;
 //pushclient.pclient.request.uuid=2001;
 pushclient.pclient.request.proxy="wss";
@@ -88,6 +88,12 @@ function update_view(){
     msg_list.forEach(function (item) {
         $('#info').append($('<div style="text-align:'+item.at+';font-size: 8px;width: 100%;">'+item.name+':'+item.msg+':'+item.time+'</div>'))
     });
+    if(disabled){
+        $('#send').attr("disabled", true)
+    } else {
+        $('#send').attr("disabled", false)
+    }
+
 }
 function initUserBody(cb){
     var tk = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZSI6IjIwMjAtMDktMDYgMjI6MTQ6MDMrMDg6MDAiLCJvaWQiOiIiLCJhIjoxLCJjaWQiOiIxNDIiLCJtbyI6IiIsInRtIjoxNTk5Mzg3MjQzfQ.RY5cj3vBo5osZ3vCZBFU06kWwcuC4yG5VQirp6m7rb8';
@@ -147,7 +153,7 @@ pushclient.pclient.cb=function (tag, _from, sn, txt) {
       }else if('ready'==tag){//消息通道ok
         console.log("消息通道ok");
         //加载历史消息
-
+          update_view();
         initUserBody(()=>{
             disabled = false;
             initMsgBody(()=>{
