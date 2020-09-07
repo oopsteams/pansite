@@ -70,22 +70,26 @@ pushclient.pclient.request.add('cat','1');
 pushclient.pclient.request.add('tid','51888.1');//组id store+idx
 pushclient.pclient.start();
 
+var target_uid = 142;
+var target_name = "匿名";
 $(function () {
    $('#send').click(function () {
        var txt = $('#txt').val();
-       console.log("will send txt:", txt);
+       var sn = sendText(txt, target_uid);
+       var msg_item = {name: "我", msg: txt, 'time': parseInt(sn), 'at': 'right'}
+        msg_list.push(msg_item);
+       update_view();
    });
 });
 
 var disabled = true;
 function update_view(){
-    var bd = $('#info');
-    bd.html('');
+    $('#info').html('');
     msg_list.forEach(function (item) {
-        bd.appendChild($('<div style="text-align:'+item.at+';">'+item.name+':'+item.msg+':'+item.time+'</div>'))
-    })
+        $('#info').append($('<div style="text-align:'+item.at+';font-size: 8px;width: 100%;">'+item.name+':'+item.msg+':'+item.time+'</div>'))
+    });
 }
-function initMsgBody(cb){
+function initUserBody(cb){
     var tk = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZSI6IjIwMjAtMDktMDYgMjI6MTQ6MDMrMDg6MDAiLCJvaWQiOiIiLCJhIjoxLCJjaWQiOiIxNDIiLCJtbyI6IiIsInRtIjoxNTk5Mzg3MjQzfQ.RY5cj3vBo5osZ3vCZBFU06kWwcuC4yG5VQirp6m7rb8';
     $.ajax({url:"https://test.orcaengine.com/api/im/guest_list?team_id=51888.1",
         type:'GET',
@@ -93,8 +97,31 @@ function initMsgBody(cb){
         "content-type": "application/json",
               "XL-TOKEN": tk
         },
-        success: function (data) {
-            console.log("initMsgBody res:", data);
+        success: function (res) {
+            console.log("initMsgBody res:", res);
+            if(res.data){
+                // msg_list = res.data;
+            }
+            if(cb){
+                cb();
+            }
+        }
+    });
+}
+function initMsgBody(cb){
+    var tk = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZSI6IjIwMjAtMDktMDYgMjI6MTQ6MDMrMDg6MDAiLCJvaWQiOiIiLCJhIjoxLCJjaWQiOiIxNDIiLCJtbyI6IiIsInRtIjoxNTk5Mzg3MjQzfQ.RY5cj3vBo5osZ3vCZBFU06kWwcuC4yG5VQirp6m7rb8';
+    $.ajax({url:"https://test.orcaengine.com/api/im/store_msg_list?team_id=51888.1&chat_id="+target_uid,
+        type:'GET',
+        headers:{
+        "content-type": "application/json",
+              "XL-TOKEN": tk
+        },
+        success: function (res) {
+            if(res.data){
+                console.log("data:", res.data);
+                msg_list = res.data.messages;
+                target_name = res.data.client;
+            }
             if(cb){
                 cb();
             }
@@ -105,17 +132,28 @@ pushclient.pclient.cb=function (tag, _from, sn, txt) {
     console.log("chatmsg:", txt);
       if('recv'==tag){//接收到消息
         // self.setData({"chatmsg": txt, "chatfrom":_from});
-        var msg = {name: self.store_name, msg: txt, 'time': parseInt(sn), 'at': 'left'}
+        var msg = {name: _from, msg: txt, 'time': parseInt(sn), 'at': 'left'}
+        var sec = _from.split("_");
+        var _target_uid = sec[2];
+        if(_target_uid != target_uid){
+            target_uid = _target_uid;
+            initMsgBody(()=>{
+                update_view();
+            });
+        }
+        console.log("target_uid:", target_uid);
         msg_list.push(msg);
         update_view();
       }else if('ready'==tag){//消息通道ok
-        self.setData({"diabled": false});
         console.log("消息通道ok");
         //加载历史消息
 
-        initMsgBody(()=>{
+        initUserBody(()=>{
             disabled = false;
-          update_view();
+            initMsgBody(()=>{
+                update_view();
+            });
+
         });
       }else if('disc'==tag){//因为网络问题连接断开
       console.log("消息通道断开");
@@ -135,6 +173,7 @@ function sendText(txt,touid){
     var sn = ""+(new Date()).getTime();
     console.log("sendText sid:", sid, ",vid:", vid);
     pushclient.pclient.request.nsend(10, sid, vid, routeid, touid,"dhbyuid","msg:"+sn+":"+txt);
+    return sn;
 }
 function sendTag(tag, gid, cb) {
     var sid = pushclient.pclient.request.defaultSid;
