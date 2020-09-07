@@ -394,6 +394,8 @@ function psclient(app, saver) {
                     } else if ("vids" == key) {
                         var vids = val.split(",");
                         if (vids.length > 0) pclient.request.defaultGid = vids[0];
+                    } else if ("tid" == key) {
+                        if (val.length > 0) pclient.request.defaultTid = val;
                     }
                 },
                 'authorizeInfo': function () {
@@ -592,6 +594,7 @@ function psclient(app, saver) {
             };
             pclient.request.defaultSid = null;
             pclient.request.defaultGid = null;
+            pclient.request.defaultTid = "";
             pclient.request.host = '127.0.0.1';
             pclient.request.port = 19999;
             pclient.request.proxy = "ws";
@@ -599,7 +602,7 @@ function psclient(app, saver) {
                 'heart': function (retry) {
                     if (retry > 0) console.log('retry:' + retry);
                 },
-                'onmessage': function (msg) {
+                'onmessage': function (type, msg, head) {
                 },
                 'onready': function () {
                 },

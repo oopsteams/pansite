@@ -413,7 +413,7 @@ function sendText(txt,touid){
     if(!touid)touid=window.fromuid;
     var sn = ""+(new Date()).getTime();
     console.log("sendText sid:", sid, ",vid:", vid);
-    pushclient.pclient.request.nsend(10, sid,vid,routeid,touid,"dhbyuid","msg:"+sn+":"+txt);
+    pushclient.pclient.request.nsend(10, sid, vid, routeid, touid,"dhbyuid","msg:"+sn+":"+txt);
 }
 var global_menu_tag=true;
 function readyImgs(){

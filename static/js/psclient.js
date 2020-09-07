@@ -392,6 +392,8 @@ window.pushclient = null;
                     } else if ("vids" == key) {
                         var vids = val.split(",");
                         if (vids.length > 0) pclient.request.defaultGid = vids[0];
+                    } else if ("tid" == key) {
+                        if (val.length > 0) pclient.request.defaultTid = val;
                     }
                 },
                 'authorizeInfo': function () {
@@ -482,7 +484,7 @@ window.pushclient = null;
 
                 },
                 'nsend': function (tm, sid, vid, routeid, touid, method, val) {
-                    var fromuid = pclient.request.defaultSid + "_" + pclient.request.defaultGid + "_" + pclient.request.uuid;
+                    var fromuid = pclient.request.defaultSid + "_" + pclient.request.defaultGid + "_" + pclient.request.uuid + "_" +pclient.request.defaultTid;
                     var _touid = ("" + touid).split("_");
                     var target = "" + touid;
                     if (_touid.length < 3) {
@@ -590,6 +592,7 @@ window.pushclient = null;
             };
             pclient.request.defaultSid = null;
             pclient.request.defaultGid = null;
+            pclient.request.defaultTid = "";
             pclient.request.host = '127.0.0.1';
             pclient.request.port = 19999;
             pclient.request.proxy = "ws";
