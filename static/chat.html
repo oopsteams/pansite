@@ -3,7 +3,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Video</title>
-    <link href="https://static.oopsteam.site/static/css/base.css" rel="stylesheet" type="text/css"/>
     <script src="https://static.oopsteam.site/static/js/jquery-ui/external/jquery/jquery.js" type="text/javascript"></script>
     <script src="https://static.oopsteam.site/static/js/psclient.js" type="text/javascript"></script>
 </head>
@@ -57,11 +56,11 @@ pushclient.pclient.response.onmessage=function(kind,msg,params){
     }else if(kind==Kind.BYTE){}
 };
 window.fromuid=1001;
-pushclient.pclient.request.host='wss.oopsteam.site';
+pushclient.pclient.request.host='wss.orcaengine.com';
 pushclient.pclient.request.port=19443;
 pushclient.pclient.request.token='XL001';
 pushclient.pclient.request.uuid='0';
-pushclient.pclient.request.fixport=19443;
+pushclient.pclient.request.fixport=443;
 //pushclient.pclient.request.uuid=2001;
 pushclient.pclient.request.proxy="wss";
 pushclient.pclient.request.add('sids','1');
