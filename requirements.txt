@@ -3,7 +3,7 @@ arrow==0.15.2
 certifi==2019.9.11
 cffi==1.13.1
 chardet==3.0.4
-cryptography==2.8
+cryptography==3.2
 elasticsearch==7.0.5
 hashids==1.2.0
 idna==2.8
