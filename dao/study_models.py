@@ -125,13 +125,14 @@ class StudyEssay(BaseModel):
     authors = CharField(max_length=32, null=False)
     info = CharField(max_length=32, null=False)
     tag = CharField(max_length=32, null=False)
+    description = CharField(max_length=256, null=False)
     hanzi = IntegerField(null=False, index=True)
     idx = IntegerField(null=False, default=0, index=True)
     pin = IntegerField(null=False, default=0, index=True)
 
     @classmethod
     def field_names(cls):
-        return ["id", "title", "authors", "info", "hanzi", "idx", "pin", "tag"]
+        return ["id", "title", "authors", "info", "hanzi", "idx", "pin", "tag", "description"]
 
     @classmethod
     def to_dict(cls, instance, excludes=[]):
@@ -160,3 +161,22 @@ class StudyHanzi(BaseModel):
     @classmethod
     def to_dict(cls, instance, excludes=[]):
         return object_to_dict(instance, cls.field_names(), excludes)
+
+
+class EssayHanzi(Model):
+    essay = IntegerField(null=False, default=0)
+    hz = IntegerField(null=False, default=0)
+
+    @classmethod
+    def field_names(cls):
+        return ["essay", "hz"]
+
+    @classmethod
+    def to_dict(cls, instance):
+        return object_to_dict(instance, cls.field_names())
+
+    class Meta:
+        database = db
+        primary_key = CompositeKey('essay', 'hz')
+
+

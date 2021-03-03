@@ -2,7 +2,7 @@
 """
 Created by susy at 2020/6/28
 """
-from dao.models import db, query_wrap_db, StudyBook, BookShelf, StudyEssay, StudyHanzi
+from dao.models import db, query_wrap_db, StudyBook, BookShelf, StudyEssay, StudyHanzi, EssayHanzi
 from peewee import fn, ModelSelect
 from utils import obfuscate_id
 
@@ -25,11 +25,19 @@ class StudyDao(object):
 
     @classmethod
     @query_wrap_db
+    def query_study_essay(cls, essay_id):
+        essay = StudyEssay.select().where(StudyEssay.id == essay_id).first()
+        sb_dict = StudyEssay.to_dict(essay, ['id'])
+        sb_dict["id"] = obfuscate_id(essay.id)
+        return sb_dict
+
+    @classmethod
+    @query_wrap_db
     def query_study_essay_list(cls, pin, offset=0, cnt=50) -> list:
         rs = []
         ms = StudyEssay.select(StudyEssay, StudyHanzi).join(StudyHanzi, on=(StudyEssay.hanzi == StudyHanzi.id), attr="hz").where(StudyEssay.pin == pin).order_by(StudyEssay.idx.desc()).offset(offset).limit(cnt)
         for sb in ms:
-            sb_dict = StudyEssay.to_dict(sb, ['id'])
+            sb_dict = StudyEssay.to_dict(sb, ['id', 'description'])
             sb_dict["id"] = obfuscate_id(sb.id)
             sb_dict["hz"] = StudyHanzi.to_dict(sb.hz, ["id"])
             rs.append(sb_dict)
@@ -39,6 +47,31 @@ class StudyDao(object):
     @query_wrap_db
     def query_study_essay_count(cls, pin):
         model_rs: ModelSelect = StudyEssay.select(fn.count(StudyEssay.id).alias('count')).where(StudyEssay.pin == pin)
+
+        if model_rs:
+            model_dict = model_rs.dicts()
+            if model_dict:
+                v = model_dict[0].get('count')
+                if v:
+                    return v
+        return 0
+
+    @classmethod
+    @query_wrap_db
+    def query_study_essay_hz_list(cls, essay_id, offset=0, cnt=50):
+        rs = []
+        ms = EssayHanzi.select(EssayHanzi, StudyHanzi).join(StudyHanzi, on=(EssayHanzi.hz == StudyHanzi.id),
+                                                            attr="hanzi").where(EssayHanzi.essay == essay_id).order_by(
+            StudyHanzi.idx.desc()).offset(offset).limit(cnt)
+        for eh in ms:
+            sb_dict = StudyHanzi.to_dict(eh.hanzi, ["id"])
+            rs.append(sb_dict)
+        return rs
+
+    @classmethod
+    @query_wrap_db
+    def query_study_essay_hz_count(cls, essay_id):
+        model_rs: ModelSelect = EssayHanzi.select(fn.count(EssayHanzi.hz).alias('count')).where(EssayHanzi.essay == essay_id)
 
         if model_rs:
             model_dict = model_rs.dicts()

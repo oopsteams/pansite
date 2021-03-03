@@ -89,6 +89,25 @@ class BookService(BaseService):
         rs = {"data": datas, "has_next": has_next, "total": total, "pagesize": size}
         return rs
 
+    def essayclazz(self, fuzzy_id, page, size=20, total=0):
+        kw = None
+        essay_id = decrypt_id(fuzzy_id)
+        offset = int(page) * size
+        essay_dict = StudyDao.query_study_essay(essay_id)
+        hz_list = StudyDao.query_study_essay_hz_list(essay_id, offset, size)
+        if not total:
+            total = StudyDao.query_study_essay_hz_count(essay_id)
+        has_next = offset + len(hz_list) < total
+        rs = {"data": hz_list, "essay": essay_dict, "has_next": has_next, "total": total, "pagesize": size}
+        return rs
+
+    def essayinfo(self, fuzzy_id):
+        essay_id = decrypt_id(fuzzy_id)
+        essay_dict = StudyDao.query_study_essay(essay_id)
+        total = StudyDao.query_study_essay_hz_count(essay_id)
+        rs = {"essay": essay_dict, "total": total}
+        return rs
+
     def search(self, mtag, tag, keyword, page, size=50):
         kw = None
         if keyword:

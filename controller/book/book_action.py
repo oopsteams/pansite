@@ -41,7 +41,23 @@ class BookHandler(BaseHandler):
             # print("kw:", kw)
             # print("source:", source)
             rs = book_service.essay(page, int(size))
+        elif "clazz" == cmd:
+            kw = params.get("kw", None)
+            mtag = params.get("mtag", None)
+            tag = params.get("tag", None)
+            # tag = url_decode(tag)
+            page = params.get("page", "0")
+            size = params.get("size", "20")
+            total = params.get("t", "0")
+            fuzzy_id = params.get("id", None)
+            # print("kw:", kw)
 
+            # print("source:", source)
+
+            rs = book_service.essayclazz(fuzzy_id, page, int(size), int(total))
+        elif "essayinfo" == cmd:
+            fuzzy_id = params.get("id", None)
+            rs = book_service.essayinfo(fuzzy_id)
         elif "sepack" == cmd:
             pack_id = params.get("pack_id", 1)
             page = params.get("page", "0")
