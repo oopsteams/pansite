@@ -119,3 +119,43 @@ class PlanTime(Model):
         return object_to_dict(instance, cls.field_names(), excludes)
 
 
+class StudyEssay(BaseModel):
+    id = AutoField()
+    title = CharField(max_length=16, null=False)
+    authors = CharField(max_length=32, null=False)
+    info = CharField(max_length=32, null=False)
+    hanzi = IntegerField(null=False, index=True)
+    idx = IntegerField(null=False, default=0, index=True)
+    pin = IntegerField(null=False, default=0, index=True)
+
+    @classmethod
+    def field_names(cls):
+        return ["id", "title", "authors", "info", "hanzi", "idx", "pin"]
+
+    @classmethod
+    def to_dict(cls, instance, excludes=[]):
+        return object_to_dict(instance, cls.field_names(), excludes)
+
+
+class StudyHanzi(BaseModel):
+    id = AutoField()
+    txt = CharField(max_length=2, null=False)
+    py = CharField(max_length=10, null=False)
+    cap = CharField(max_length=1, null=False)
+    bs = CharField(max_length=1, null=False)
+    sds = CharField(max_length=4, null=False)
+    num = IntegerField(null=False, index=True)
+    struct = CharField(max_length=4, null=False)
+    demo = CharField(max_length=16, null=False)
+    worder = CharField(max_length=64, null=False)
+    zc = CharField(max_length=16, null=False)
+    zy = CharField(max_length=64, null=False)
+    txt_gif = CharField(max_length=128, null=True)
+
+    @classmethod
+    def field_names(cls):
+        return ["id", "txt", "py", "cap", "bs", "sds", "num", "struct", "demo", "worder", "zc", "zy", "txt_gif"]
+
+    @classmethod
+    def to_dict(cls, instance, excludes=[]):
+        return object_to_dict(instance, cls.field_names(), excludes)

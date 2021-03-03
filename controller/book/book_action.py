@@ -31,6 +31,17 @@ class BookHandler(BaseHandler):
             # print("kw:", kw)
             # print("source:", source)
             rs = book_service.search(mtag, tag, kw, page, int(size))
+        elif "essay" == cmd:
+            kw = params.get("kw", None)
+            mtag = params.get("mtag", None)
+            tag = params.get("tag", None)
+            # tag = url_decode(tag)
+            page = params.get("page", "0")
+            size = params.get("size", "20")
+            # print("kw:", kw)
+            # print("source:", source)
+            rs = book_service.essay(page, int(size))
+
         elif "sepack" == cmd:
             pack_id = params.get("pack_id", 1)
             page = params.get("page", "0")

@@ -414,7 +414,7 @@ window.pushclient = null;
 
                 'syncparams': function () {
                     console.log('syncparams in.');
-                    pclient.request.msgbody.send(0, 4, pclient.request.authorizeInfo());
+                    pclient.request.msgbody.send(4, 2, pclient.request.authorizeInfo());
                 },
                 'apply': function (page, sn) {
                     cache_loop_send_cnt = 0;
@@ -623,7 +623,7 @@ window.pushclient = null;
                 'onidle': function () {
                 },
                 'receive': function (tag, kind, val) {//tag,1:注册回应,2:来自服务端的消息
-                    console.log("receive val:", val);
+                    // console.log("receive val:", val);
                     if (tag == 1) {
                         switch (kind) {
                             case Kind.INT:

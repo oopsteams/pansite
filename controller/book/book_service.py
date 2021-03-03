@@ -80,6 +80,15 @@ class BookService(BaseService):
 
         return rs
 
+    def essay(self, page, size=20):
+        kw = None
+        offset = int(page) * size
+        datas = StudyDao.query_study_essay_list(1, offset, size)
+        total = StudyDao.query_study_essay_count(1)
+        has_next = offset + len(datas) < total
+        rs = {"data": datas, "has_next": has_next, "total": total, "pagesize": size}
+        return rs
+
     def search(self, mtag, tag, keyword, page, size=50):
         kw = None
         if keyword:
