@@ -153,10 +153,11 @@ class StudyHanzi(BaseModel):
     zc = CharField(max_length=16, null=False)
     zy = CharField(max_length=64, null=False)
     txt_gif = CharField(max_length=128, null=True)
+    idx = IntegerField(null=False, default=0, index=True)
 
     @classmethod
     def field_names(cls):
-        return ["id", "txt", "py", "cap", "bs", "sds", "num", "struct", "demo", "worder", "zc", "zy", "txt_gif"]
+        return ["id", "txt", "py", "cap", "bs", "sds", "num", "struct", "demo", "worder", "zc", "zy", "txt_gif", "idx"]
 
     @classmethod
     def to_dict(cls, instance, excludes=[]):
