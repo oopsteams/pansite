@@ -250,6 +250,7 @@ class ManageHandler(BaseHandler):
             zc = self.get_argument("zc", "")
             zy = self.get_argument("zy", "")
             gif_file = None
+            print("files:", self.request.files)
             if self.request.files:
                 gif_file_metas = self.request.files["gif"]
                 if gif_file_metas:
@@ -261,7 +262,8 @@ class ManageHandler(BaseHandler):
             if gif_file:
                 print("gif_file:", gif_file)
             #  title, authors, info, idx, tag, description, txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy, txt_gif
-            mpan_service.newessay(title, authors, info, idx, tag, description, txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy, gif_file, self.context)
+            if txt and title:
+                mpan_service.newessay(title, authors, info, idx, tag, description, txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy, gif_file, self.context)
             self.to_write_json(rs)
         else:
             self.to_write_json({})
