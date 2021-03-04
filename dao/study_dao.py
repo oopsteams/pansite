@@ -50,7 +50,7 @@ class StudyDao(object):
             ms = ms.where(StudyEssay.pin == pin, StudyEssay.tag == tag)
         else:
             ms = ms.where(StudyEssay.pin == pin)
-        ms = ms.order_by(StudyEssay.idx.asc()).offset(offset).limit(cnt)
+        ms = ms.order_by(StudyEssay.tag.asc(), StudyEssay.term.asc(), StudyEssay.idx.asc()).offset(offset).limit(cnt)
         for sb in ms:
             sb_dict = StudyEssay.to_dict(sb, ['id', 'description'])
             sb_dict["id"] = obfuscate_id(sb.id)

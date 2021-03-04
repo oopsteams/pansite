@@ -382,7 +382,7 @@ class MPanService(BaseService):
                     result['errmsg'] = "索引更新失败!"
         return result
 
-    def newessay(self, title, authors, info, idx, tag, description, txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy, gif_file, ctx):
+    def newessay(self, title, authors, info, idx, tag, term, description, txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy, gif_file, ctx):
 
         from dao.study_dao import StudyDao
         # txt_gif = None
@@ -392,7 +392,7 @@ class MPanService(BaseService):
                 # new hz
                 essay_id = essay_dict['id']
                 hz_idx = StudyDao.query_study_essay_hz_count(essay_id)
-                txt_gif = "gif_{}_{}_{}.gif".format(essay_dict['tag'], essay_dict['idx'], hz_idx)
+                txt_gif = "gif_{}_{}_{}_{}.gif".format(essay_dict['tag'], essay_dict['term'], essay_dict['idx'], hz_idx)
                 hz_params = dict(txt=txt, py=py, cap=cap, bs=bs, sds=sds, num=int(num), struct=struct, demo=demo,
                                  worder=worder, zc=zc, zy=zy, txt_gif=txt_gif, idx=hz_idx)
                 log.debug("hz_params:{}".format(hz_params))
@@ -401,12 +401,12 @@ class MPanService(BaseService):
             else:
                 hz_idx = 0
                 # "txt", "py", "cap", "bs", "sds", "num", "struct", "demo", "worder", "zc", "zy", "txt_gif", "idx"
-                txt_gif = "gif_{}_{}_{}.gif".format(tag, idx, hz_idx)
+                txt_gif = "gif_{}_{}_{}_{}.gif".format(tag, term, idx, hz_idx)
                 hz_params = dict(txt=txt, py=py, cap=cap, bs=bs, sds=sds, num=int(num), struct=struct, demo=demo, worder=worder, zc=zc, zy=zy, txt_gif=txt_gif, idx=hz_idx)
                 shz = StudyDao.new_study_hanzi(hz_params)
                 log.debug("new eesay hz_params:{}".format(hz_params))
                 # "title", "authors", "info", "hanzi", "idx", "pin", "tag", "description"
-                essay_params = dict(title=title, authors=authors, info=info, idx=idx, tag=tag, description=description, hanzi=shz.id, pin=1)
+                essay_params = dict(title=title, authors=authors, info=info, idx=idx, tag=tag, description=description, hanzi=shz.id, pin=1, term=int(term))
                 log.debug("essay_params:{}".format(essay_params))
                 study_essay = StudyDao.new_study_essay(essay_params)
                 StudyDao.new_essay_hanzi(study_essay.id, shz.id)

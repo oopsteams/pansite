@@ -124,7 +124,8 @@ class StudyEssay(BaseModel):
     title = CharField(max_length=16, null=False)
     authors = CharField(max_length=32, null=False)
     info = CharField(max_length=32, null=False)
-    tag = CharField(max_length=32, null=False)
+    tag = CharField(max_length=4, null=False)
+    term = IntegerField(null=False, default=0, index=True)
     description = CharField(max_length=2048, null=False)
     hanzi = IntegerField(null=False, index=True)
     idx = IntegerField(null=False, default=0, index=True)
@@ -132,7 +133,7 @@ class StudyEssay(BaseModel):
 
     @classmethod
     def field_names(cls):
-        return ["id", "title", "authors", "info", "hanzi", "idx", "pin", "tag", "description"]
+        return ["id", "title", "authors", "info", "hanzi", "idx", "pin", "tag", "description", "term"]
 
     @classmethod
     def to_dict(cls, instance, excludes=[]):

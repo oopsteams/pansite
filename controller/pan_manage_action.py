@@ -244,6 +244,7 @@ class ManageHandler(BaseHandler):
             bs = self.get_argument("bs", "")
             sds = self.get_argument("sds", "")
             num = self.get_argument("num", "0")
+            term = self.get_argument("term", "0")
             struct = self.get_argument("struct", "")
             demo = self.get_argument("demo", "")
             worder = self.get_argument("worder", "")
@@ -259,9 +260,8 @@ class ManageHandler(BaseHandler):
                         print("file_name:", file_name)
                         gif_file = meta['body']
 
-            #  title, authors, info, idx, tag, description, txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy, txt_gif
             if txt and title:
-                mpan_service.newessay(title, authors, info, idx, tag, description, txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy, gif_file, self.context)
+                mpan_service.newessay(title, authors, info, idx, tag, term, description, txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy, gif_file, self.context)
             else:
                 rs['errmsg'] = "txt:{},title:{}".format(txt, title)
                 rs['state'] = -1
