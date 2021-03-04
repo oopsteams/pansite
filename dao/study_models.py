@@ -125,7 +125,7 @@ class StudyEssay(BaseModel):
     authors = CharField(max_length=32, null=False)
     info = CharField(max_length=32, null=False)
     tag = CharField(max_length=32, null=False)
-    description = CharField(max_length=256, null=False)
+    description = CharField(max_length=2048, null=False)
     hanzi = IntegerField(null=False, index=True)
     idx = IntegerField(null=False, default=0, index=True)
     pin = IntegerField(null=False, default=0, index=True)
