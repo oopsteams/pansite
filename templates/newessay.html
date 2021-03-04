@@ -10,7 +10,7 @@
     <script src="/static/js/base.js"></script>
 </head>
 <body>
-    <form id="new_essay_form">
+    <form id="new_essay_form" onsubmit="return tosubmit()" method="post" enctype="multipart/form-data" action="#">
         <fieldset class="form_table">
             <legend>课程信息</legend>
             <dl>
@@ -99,10 +99,13 @@
             beforeClose: function() {}
 
           });
+
     let tosave_item = function(){
 
         let to_do_save = function(){
-            var form_data =new FormData($("#new_essay_form")[0]);
+            var form_elem = $("#new_essay_form")[0];
+            form_elem.submit();
+            var form_data =new FormData(form_elem);
             var point = '/man/newessay?tk='+$.cookie('tk');
             var cb = function (res) {
                 let st = res['state'];
@@ -141,6 +144,10 @@ dialog.dialog("open");
         };
         to_do_save();
     };
+    function tosubmit(){
+        tosave_item();
+        return false;
+    }
     $( "#tosave_btn" ).on("click", (e)=>{
         tosave_item();
         });
