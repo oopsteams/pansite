@@ -143,9 +143,25 @@
         tosave_item();
         });
     $("#gif_input").on("change",(e)=>{
-        window.files = e.target.files;
+        // window.files = e.target.files;
+        var raw = e.target.files[0];
+        var reader = new FileReader();
+        reader.onload = function(e) {
+			var buffer = this.result;
+			var imgdata = new Uint8Array(buffer);
+			var blob = new Blob([imgdata]);
+            var img_src = window.URL.createObjectURL(blob);
+            var img_elem = $("#gif_view")[0];
+			if(img_elem){
+			    img_elem.src = img_src;
+			    img_elem.onload = function () {
+                    window.URL.revokeObjectURL(img_src);
+                }
+            }
+		};
+		reader.readAsArrayBuffer(raw);
         console.log("gif file:",e);
-        $("#gif_view");
+
     });
 </script>
 </html>
