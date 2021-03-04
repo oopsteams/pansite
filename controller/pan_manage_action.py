@@ -18,6 +18,7 @@ class ManageHandler(BaseHandler):
     @authenticated
     def get(self):
         path = self.request.path
+        logger.debug("ManageHandler deal path:{}".format(path))
         if path.endswith("/init"):
             pan_acc_list = CommunityDao.pan_account_list(self.request.user_id)
             for pan in pan_acc_list:
