@@ -76,7 +76,7 @@
                 <dt><label for="zy">字义</label></dt>
                 <dd><input type="text" name="zy" id="zy" value="" class="text ui-widget-content ui-corner-all"/></dd>
                 <dt><label for="gif_input">动图</label></dt>
-                <dd><input type="file" name="gif" id="gif_input"/><img/></dd>
+                <dd><input type="file" name="gif" id="gif_input"/><img id="gif_view"/></dd>
             </dl>
         </fieldset>
         <input type="button" tabindex="-1" id="tosave_btn" value="提交"/>
@@ -143,7 +143,9 @@
         tosave_item();
         });
     $("#gif_input").on("change",(e)=>{
+        window.files = e.target.files;
         console.log("gif file:",e);
+        $("#gif_view");
     });
 </script>
 </html>
