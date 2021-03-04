@@ -10,7 +10,7 @@
     <script src="/static/js/base.js"></script>
 </head>
 <body>
-    <form id="new_essay_form" onsubmit="tosave_item()">
+    <form id="new_essay_form">
         <fieldset class="form_table">
             <legend>课程信息</legend>
             <dl>
@@ -77,7 +77,7 @@
                 <dd><input type="text" name="zy" id="zy" value="" class="text ui-widget-content ui-corner-all"/></dd>
             </dl>
         </fieldset>
-        <input type="submit" tabindex="-1" />
+        <input type="button" tabindex="-1" onclick="tosave_item"/>
         </form>
     <div id="dialog-message" title="正在处理等待同步">
         <div class="progress-label">处理中...</div>
