@@ -108,7 +108,7 @@
             console.log('rename_item:', jsonObj);
             dialog.dialog("open");
 
-            call_service('/man/newessay?tk='+GetQueryString('tk'), jsonObj, function (res) {
+            call_service('/man/newessay?tk='+$.cookie('tk'), jsonObj, function (res) {
                 let st = res['state'];
                 console.log('res result:', res);
                 if(st<0){
