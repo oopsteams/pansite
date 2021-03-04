@@ -262,6 +262,9 @@ class ManageHandler(BaseHandler):
             #  title, authors, info, idx, tag, description, txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy, txt_gif
             if txt and title:
                 mpan_service.newessay(title, authors, info, idx, tag, description, txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy, gif_file, self.context)
+            else:
+                rs['errmsg'] = "txt:{},title:{}".format(txt, title)
+                rs['state'] = -1
             self.to_write_json(rs)
         else:
             self.to_write_json({})
