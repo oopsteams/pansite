@@ -406,7 +406,7 @@ class MPanService(BaseService):
                 shz = StudyDao.new_study_hanzi(hz_params)
                 log.debug("new eesay hz_params:{}".format(hz_params))
                 # "title", "authors", "info", "hanzi", "idx", "pin", "tag", "description"
-                essay_params = dict(title=title, authors=authors, info=info, idx=idx, tag=tag, description=description, hanzi=shz.id)
+                essay_params = dict(title=title, authors=authors, info=info, idx=idx, tag=tag, description=description, hanzi=shz.id, pin=1)
                 log.debug("essay_params:{}".format(essay_params))
                 study_essay = StudyDao.new_study_essay(essay_params)
                 StudyDao.new_essay_hanzi(study_essay.id, shz.id)
