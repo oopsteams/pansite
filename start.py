@@ -125,7 +125,7 @@ if __name__ == "__main__":
         # (r"/wx/push", WXAppPush),
         # (r"/(.*\.txt)", StaticFileHandler, dict(url=settings['source'])),
         # (r"/[^/]*\.(png|woff|ttf|jpg|jpeg|js)", StaticFileHandler, dict(path=settings['static_path'])),
-        (r"/.*\.html", MainHandler, dict(middleware=middle_list)),
+        # (r"/.*\.html", MainHandler, dict(middleware=middle_list)),
 
         # service
         (r"/s/source/[^/]+", PanHandler, dict(middleware=middle_list, context=context)),
@@ -143,6 +143,7 @@ if __name__ == "__main__":
         (r"/s/authlogin/", MainHandler, dict(middleware=middle_list, context=context)),
         (r"/s/fresh_token/", MainHandler, dict(middleware=middle_list, context=context)),
         (r"/s/save/", MainHandler, dict(middleware=middle_list, context=context)),
+        (r"/s/essay/", MainHandler, dict(middleware=middle_list, context=context)),
 
         (r"/s/wx/put", WXAppPut, dict(middleware=middle_list, context=context)),
         (r"/s/wx/get", WXAppGet, dict(middleware=middle_list, context=context)),
