@@ -75,6 +75,8 @@
                 <dd><input type="text" name="zc" id="zc" value="" class="text ui-widget-content ui-corner-all"/></dd>
                 <dt><label for="zy">字义</label></dt>
                 <dd><input type="text" name="zy" id="zy" value="" class="text ui-widget-content ui-corner-all"/></dd>
+                <dt><label for="gif">动图</label></dt>
+                <dd><input type="file" name="gif" id="gif" id="gif_input"/><img/></dd>
             </dl>
         </fieldset>
         <input type="button" tabindex="-1" id="tosave_btn" value="提交"/>
@@ -100,15 +102,9 @@
     let tosave_item = function(){
 
         let to_do_save = function(){
-            let data = $('#new_essay_form').serializeArray();
-            let jsonObj={};
-            $(data).each(function(){
-                jsonObj[this.name]=this.value;
-            });
-            console.log('rename_item:', jsonObj);
-            dialog.dialog("open");
-
-            call_service('/man/newessay?tk='+$.cookie('tk'), jsonObj, function (res) {
+            var form_data =new FormData($("#new_essay_form")[0]);
+            var point = '/man/newessay?tk='+$.cookie('tk');
+            var cb = function (res) {
                 let st = res['state'];
                 console.log('res result:', res);
                 if(st<0){
@@ -123,7 +119,22 @@
 
                 }
 
+            };
+
+            $.ajax({
+                url:point,
+                data:form_data,
+                async: false,
+                cache: false,
+                // contentType: false,
+                processData: false,
+                method:"POST",
+               contentType:"multipart/form-data",
+            }).done(function(res){
+               console.log("load rs:", res);
+               cb(res);
             });
+            dialog.dialog("open");
 
         }
         to_do_save();
@@ -131,5 +142,8 @@
     $( "#tosave_btn" ).on("click", (e)=>{
         tosave_item();
         });
+    $("#gif_input").on("change",(e)=>{
+        console.log("gif file:",e);
+    });
 </script>
 </html>

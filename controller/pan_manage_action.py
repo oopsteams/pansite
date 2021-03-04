@@ -249,9 +249,19 @@ class ManageHandler(BaseHandler):
             worder = self.get_argument("worder", "")
             zc = self.get_argument("zc", "")
             zy = self.get_argument("zy", "")
+            gif_file = None
+            if self.request.files:
+                gif_file_metas = self.request.files["gif"]
+                if gif_file_metas:
+                    for meta in gif_file_metas:
+                        file_name = meta['filename']
+                        print("file_name:", file_name)
+                        gif_file = meta['body']
 
+            if gif_file:
+                print("gif_file:", gif_file)
             #  title, authors, info, idx, tag, description, txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy, txt_gif
-            mpan_service.newessay(title, authors, info, idx, tag, description, txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy)
+            mpan_service.newessay(title, authors, info, idx, tag, description, txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy, gif_file, self.context)
             self.to_write_json(rs)
         else:
             self.to_write_json({})

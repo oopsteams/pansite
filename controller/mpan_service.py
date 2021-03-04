@@ -13,7 +13,7 @@ from dao.models import DataItem, UserRootCfg, PanAccounts, CommunityDataItem
 from utils.constant import TOP_DIR_FILE_NAME, SHARE_ES_TOP_POS, PRODUCT_TAG, ES_TAG_MAP
 from utils import scale_size, split_filename
 from cfg import MASTER_ACCOUNT_ID
-
+import traceback
 import sys
 sys.setrecursionlimit(1000000)
 
@@ -382,33 +382,46 @@ class MPanService(BaseService):
                     result['errmsg'] = "索引更新失败!"
         return result
 
-    def newessay(self, title, authors, info, idx, tag, description, txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy):
-        from dao.study_dao import StudyDao
-        essay_dict = StudyDao.query_study_essay_by_title(title)
-        if essay_dict:
-            # new hz
+    def newessay(self, title, authors, info, idx, tag, description, txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy, gif_file, ctx):
 
-            essay_id = essay_dict['id']
-            hz_idx = StudyDao.query_study_essay_hz_count(essay_id)
-            txt_gif = "gif_{}_{}_{}.gif".format(tag, idx, hz_idx)
-            hz_params = dict(txt=txt, py=py, cap=cap, bs=bs, sds=sds, num=int(num), struct=struct, demo=demo,
-                             worder=worder, zc=zc, zy=zy, txt_gif=txt_gif, idx=hz_idx)
-            log.debug("hz_params:{}".format(hz_params))
-            shz = StudyDao.new_study_hanzi(hz_params)
-            StudyDao.new_essay_hanzi(essay_id, shz.id)
+        from dao.study_dao import StudyDao
+        txt_gif = None
+        try:
+            essay_dict = StudyDao.query_study_essay_by_title(title)
+            if essay_dict:
+                # new hz
+                essay_id = essay_dict['id']
+                hz_idx = StudyDao.query_study_essay_hz_count(essay_id)
+                txt_gif = "gif_{}_{}_{}.gif".format(essay_dict['tag'], essay_dict['idx'], hz_idx)
+                hz_params = dict(txt=txt, py=py, cap=cap, bs=bs, sds=sds, num=int(num), struct=struct, demo=demo,
+                                 worder=worder, zc=zc, zy=zy, txt_gif=txt_gif, idx=hz_idx)
+                log.debug("hz_params:{}".format(hz_params))
+                shz = StudyDao.new_study_hanzi(hz_params)
+                StudyDao.new_essay_hanzi(essay_id, shz.id)
+                pass
+            else:
+                hz_idx = 0
+                # "txt", "py", "cap", "bs", "sds", "num", "struct", "demo", "worder", "zc", "zy", "txt_gif", "idx"
+                txt_gif = "gif_{}_{}_{}.gif".format(tag, idx, hz_idx)
+                hz_params = dict(txt=txt, py=py, cap=cap, bs=bs, sds=sds, num=int(num), struct=struct, demo=demo, worder=worder, zc=zc, zy=zy, txt_gif=txt_gif, idx=hz_idx)
+                shz = StudyDao.new_study_hanzi(hz_params)
+                log.debug("new eesay hz_params:{}".format(hz_params))
+                # "title", "authors", "info", "hanzi", "idx", "pin", "tag", "description"
+                essay_params = dict(title=title, authors=authors, info=info, idx=idx, tag=tag, description=description, hanzi=shz.id)
+                log.debug("essay_params:{}".format(essay_params))
+                study_essay = StudyDao.new_study_essay(essay_params)
+                StudyDao.new_essay_hanzi(study_essay.id, shz.id)
+            if gif_file and txt_gif:
+                import os
+                base_dir = ctx["basepath"]
+                dest_dir = os.path.join(base_dir, "static/hz/")
+                dest_file = os.path.join(dest_dir, txt_gif)
+                with open(dest_file, 'wb') as up:
+                    up.write(gif_file)
+
+        except Exception:
+            traceback.print_exc()
             pass
-        else:
-            hz_idx = 0
-            # "txt", "py", "cap", "bs", "sds", "num", "struct", "demo", "worder", "zc", "zy", "txt_gif", "idx"
-            txt_gif = "gif_{}_{}_{}.gif".format(tag, idx, hz_idx)
-            hz_params = dict(txt=txt, py=py, cap=cap, bs=bs, sds=sds, num=int(num), struct=struct, demo=demo, worder=worder, zc=zc, zy=zy, txt_gif=txt_gif, idx=hz_idx)
-            shz = StudyDao.new_study_hanzi(hz_params)
-            log.debug("new eesay hz_params:{}".format(hz_params))
-            # "title", "authors", "info", "hanzi", "idx", "pin", "tag", "description"
-            essay_params = dict(title=title, authors=authors, info=info, idx=idx, tag=tag, description=description, hanzi=shz.id)
-            log.debug("essay_params:{}".format(essay_params))
-            study_essay = StudyDao.new_study_essay(essay_params)
-            StudyDao.new_essay_hanzi(study_essay.id, shz.id)
 
 
 mpan_service = MPanService()
