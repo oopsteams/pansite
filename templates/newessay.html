@@ -10,7 +10,7 @@
     <script src="/static/js/base.js"></script>
 </head>
 <body>
-    <form id="new_essay_form" onsubmit="return tosubmit()" method="post" enctype="multipart/form-data" action="#">
+    <form id="new_essay_form" onsubmit="return tosubmit();" method="post" enctype="multipart/form-data" action="#">
         <fieldset class="form_table">
             <legend>课程信息</legend>
             <dl>
@@ -66,7 +66,15 @@
                 <dt><label for="num">笔画</label></dt>
                 <dd><input type="text" name="num" id="num" value="" class="text ui-widget-content ui-corner-all"/></dd>
                 <dt><label for="struct">结构</label></dt>
-                <dd><input type="text" name="struct" id="struct" value="" class="text ui-widget-content ui-corner-all"/></dd>
+                <dd>
+                    <!--<input type="text" name="struct" id="struct" value="" class="text ui-widget-content ui-corner-all"/>-->
+                    <select name="struct" id="struct">
+                      <option value="上下">上下</option>
+                      <option value="左右">左右</option>
+                      <option value="半包围">半包围</option>
+                      <option value="全包围">全包围</option>
+                    </select>
+                </dd>
                 <dt><label for="demo">举例</label></dt>
                 <dd><input type="text" name="demo" id="demo" value="" class="text ui-widget-content ui-corner-all"/></dd>
                 <dt><label for="worder">笔顺</label></dt>
@@ -79,7 +87,8 @@
                 <dd><input type="file" name="gif" id="gif_input"/><img id="gif_view"/></dd>
             </dl>
         </fieldset>
-        <input type="button" tabindex="-1" id="tosave_btn" value="提交"/>
+        <!--<input type="button" tabindex="-1" id="tosave_btn" value="提交"/>-->
+        <input type="submit" tabindex="-1" value="提交"/>
         </form>
     <div id="dialog-message" title="正在处理等待同步">
         <div class="progress-label">处理中...</div>

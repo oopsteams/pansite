@@ -385,7 +385,7 @@ class MPanService(BaseService):
     def newessay(self, title, authors, info, idx, tag, description, txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy, gif_file, ctx):
 
         from dao.study_dao import StudyDao
-        txt_gif = None
+        # txt_gif = None
         try:
             essay_dict = StudyDao.query_study_essay_by_title(title)
             if essay_dict:
@@ -398,7 +398,6 @@ class MPanService(BaseService):
                 log.debug("hz_params:{}".format(hz_params))
                 shz = StudyDao.new_study_hanzi(hz_params)
                 StudyDao.new_essay_hanzi(essay_id, shz.id)
-                pass
             else:
                 hz_idx = 0
                 # "txt", "py", "cap", "bs", "sds", "num", "struct", "demo", "worder", "zc", "zy", "txt_gif", "idx"
