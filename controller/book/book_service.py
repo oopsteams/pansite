@@ -275,17 +275,66 @@ class BookService(BaseService):
         rs = {"status": 0}
         updated = []
         from dao.models import StudyBook
-        sb: StudyBook = StudyDao.check_out_study_book(book_shelf_code)
-        if sb:
-            sb.pin = 0
-            StudyDao.update_books_by_id({"pin": sb.pin}, sb.id)
-            sb_dict = StudyBook.to_dict(sb, ["id"])
-            es_up_params = es_dao_book().filter_update_params(sb_dict)
-            if es_up_params:
-                logger.info("will update book es item es_up_params:{}".format(es_up_params))
-                es_dao_book().update_fields(book_shelf_code, **es_up_params)
-            updated.append(sb_dict)
-            return sb_dict
+        idx = book_shelf_code.find("|")
+        if idx > 0:
+            code_list = book_shelf_code.split("|")
+            if code_list:
+                sb_list = StudyDao.check_out_study_books(code_list)
+                for sb in sb_list:
+                    sb.pin = 0
+                    StudyDao.update_books_by_id({"pin": sb.pin}, sb.id)
+                    sb_dict = StudyBook.to_dict(sb, ["id"])
+                    es_up_params = es_dao_book().filter_update_params(sb_dict)
+                    if es_up_params:
+                        logger.info("will update book es item es_up_params:{}".format(es_up_params))
+                        es_dao_book().update_fields(book_shelf_code, **es_up_params)
+                    updated.append(sb_dict)
+        else:
+            sb: StudyBook = StudyDao.check_out_study_book(book_shelf_code)
+            if sb:
+                sb.pin = 0
+                StudyDao.update_books_by_id({"pin": sb.pin}, sb.id)
+                sb_dict = StudyBook.to_dict(sb, ["id"])
+                es_up_params = es_dao_book().filter_update_params(sb_dict)
+                if es_up_params:
+                    logger.info("will update book es item es_up_params:{}".format(es_up_params))
+                    es_dao_book().update_fields(book_shelf_code, **es_up_params)
+                updated.append(sb_dict)
+                # return sb_dict
+        if updated:
+            rs['updated'] = updated
+        return rs
+
+    def put_on_book(self, book_shelf_code):
+        rs = {"status": 0}
+        updated = []
+        from dao.models import StudyBook
+        idx = book_shelf_code.find("|")
+        if idx > 0:
+            code_list = book_shelf_code.split("|")
+            if code_list:
+                sb_list = StudyDao.check_out_study_books(code_list)
+                for sb in sb_list:
+                    sb.pin = 1
+                    StudyDao.update_books_by_id({"pin": sb.pin}, sb.id)
+                    sb_dict = StudyBook.to_dict(sb, ["id"])
+                    es_up_params = es_dao_book().filter_update_params(sb_dict)
+                    if es_up_params:
+                        logger.info("will update book es item es_up_params:{}".format(es_up_params))
+                        es_dao_book().update_fields(book_shelf_code, **es_up_params)
+                    updated.append(sb_dict)
+        else:
+            sb: StudyBook = StudyDao.check_out_study_book(book_shelf_code)
+            if sb:
+                sb.pin = 1
+                StudyDao.update_books_by_id({"pin": sb.pin}, sb.id)
+                sb_dict = StudyBook.to_dict(sb, ["id"])
+                es_up_params = es_dao_book().filter_update_params(sb_dict)
+                if es_up_params:
+                    logger.info("will update book es item es_up_params:{}".format(es_up_params))
+                    es_dao_book().update_fields(book_shelf_code, **es_up_params)
+                updated.append(sb_dict)
+                # return sb_dict
         if updated:
             rs['updated'] = updated
         return rs
