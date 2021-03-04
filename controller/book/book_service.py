@@ -84,8 +84,8 @@ class BookService(BaseService):
         kw = None
 
         offset = int(page) * size
-        datas = StudyDao.query_study_essay_list(1, offset, size)
-        total = StudyDao.query_study_essay_count(1)
+        datas = StudyDao.query_study_essay_list(mtag, 1, offset, size)
+        total = StudyDao.query_study_essay_count(mtag, 1)
         has_next = offset + len(datas) < total
         rs = {"data": datas, "has_next": has_next, "total": total, "pagesize": size}
         return rs
