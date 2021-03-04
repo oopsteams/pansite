@@ -50,7 +50,7 @@ class StudyDao(object):
             ms = ms.where(StudyEssay.pin == pin, StudyEssay.tag == tag)
         else:
             ms = ms.where(StudyEssay.pin == pin)
-        ms = ms.order_by(StudyEssay.idx.desc()).offset(offset).limit(cnt)
+        ms = ms.order_by(StudyEssay.idx.asc()).offset(offset).limit(cnt)
         for sb in ms:
             sb_dict = StudyEssay.to_dict(sb, ['id', 'description'])
             sb_dict["id"] = obfuscate_id(sb.id)
@@ -81,7 +81,7 @@ class StudyDao(object):
         rs = []
         ms = EssayHanzi.select(EssayHanzi, StudyHanzi).join(StudyHanzi, on=(EssayHanzi.hz == StudyHanzi.id),
                                                             attr="hanzi").where(EssayHanzi.essay == essay_id).order_by(
-            StudyHanzi.idx.desc()).offset(offset).limit(cnt)
+            StudyHanzi.idx.asc()).offset(offset).limit(cnt)
         for eh in ms:
             sb_dict = StudyHanzi.to_dict(eh.hanzi, ["id"])
             rs.append(sb_dict)
