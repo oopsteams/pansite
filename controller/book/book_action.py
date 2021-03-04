@@ -40,7 +40,7 @@ class BookHandler(BaseHandler):
             size = params.get("size", "20")
             # print("kw:", kw)
             # print("source:", source)
-            rs = book_service.essay(page, int(size))
+            rs = book_service.essay(mtag, page, int(size))
         elif "clazz" == cmd:
             kw = params.get("kw", None)
             mtag = params.get("mtag", None)

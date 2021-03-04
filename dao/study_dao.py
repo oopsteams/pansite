@@ -33,9 +33,24 @@ class StudyDao(object):
 
     @classmethod
     @query_wrap_db
-    def query_study_essay_list(cls, pin, offset=0, cnt=50) -> list:
+    def query_study_essay_by_title(cls, title):
+        essay = StudyEssay.select().where(StudyEssay.title == title).first()
+        sb_dict = {}
+        if essay:
+            sb_dict = StudyEssay.to_dict(essay)
+        # sb_dict["id"] = obfuscate_id(essay.id)
+        return sb_dict
+
+    @classmethod
+    @query_wrap_db
+    def query_study_essay_list(cls, tag, pin, offset=0, cnt=50) -> list:
         rs = []
-        ms = StudyEssay.select(StudyEssay, StudyHanzi).join(StudyHanzi, on=(StudyEssay.hanzi == StudyHanzi.id), attr="hz").where(StudyEssay.pin == pin).order_by(StudyEssay.idx.desc()).offset(offset).limit(cnt)
+        ms: ModelSelect = StudyEssay.select(StudyEssay, StudyHanzi).join(StudyHanzi, on=(StudyEssay.hanzi == StudyHanzi.id), attr="hz")
+        if tag:
+            ms = ms.where(StudyEssay.pin == pin, StudyEssay.tag == tag)
+        else:
+            ms = ms.where(StudyEssay.pin == pin)
+        ms = ms.order_by(StudyEssay.idx.desc()).offset(offset).limit(cnt)
         for sb in ms:
             sb_dict = StudyEssay.to_dict(sb, ['id', 'description'])
             sb_dict["id"] = obfuscate_id(sb.id)
@@ -45,8 +60,12 @@ class StudyDao(object):
 
     @classmethod
     @query_wrap_db
-    def query_study_essay_count(cls, pin):
-        model_rs: ModelSelect = StudyEssay.select(fn.count(StudyEssay.id).alias('count')).where(StudyEssay.pin == pin)
+    def query_study_essay_count(cls, tag, pin):
+        model_rs: ModelSelect = StudyEssay.select(fn.count(StudyEssay.id).alias('count'))
+        if tag:
+            model_rs = model_rs.where(StudyEssay.pin == pin, StudyEssay.tag == tag)
+        else:
+            model_rs = model_rs.where(StudyEssay.pin == pin)
 
         if model_rs:
             model_dict = model_rs.dicts()
@@ -208,6 +227,29 @@ class StudyDao(object):
         with db:
             bs.save(force_insert=True)
             return bs
+
+    @classmethod
+    def new_study_essay(cls, essay_params):
+        _params = {p: essay_params[p] for p in essay_params if p in StudyEssay.field_names()}
+        sb: StudyEssay = StudyEssay(**_params)
+        with db:
+            sb.save(force_insert=True)
+            return sb
+
+    @classmethod
+    def new_study_hanzi(cls, hz_params):
+        _params = {p: hz_params[p] for p in hz_params if p in StudyHanzi.field_names()}
+        sb: StudyHanzi = StudyHanzi(**_params)
+        with db:
+            sb.save(force_insert=True)
+            return sb
+
+    @classmethod
+    def new_essay_hanzi(cls, essay_id, hz_id):
+        sb: EssayHanzi = EssayHanzi(essay=essay_id, hz=hz_id)
+        with db:
+            sb.save(force_insert=True)
+            return sb
 
     # Del
     @classmethod

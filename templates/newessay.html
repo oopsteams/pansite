@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>新建课程</title>
+    <link href="/static/js/jquery-ui/jquery-ui.css" rel="stylesheet">
+    <script src="/static/js/jquery-ui/external/jquery/jquery.js"></script>
+    <script src="/static/js/jquery-ui/jquery.cookie.min.js"></script>
+    <script src="/static/js/jquery-ui/jquery-ui.js"></script>
+    <script src="/static/js/base.js"></script>
+</head>
+<body>
+    <form id="new_essay_form" onsubmit="tosave_item()">
+        <fieldset class="form_table">
+            <legend>课程信息</legend>
+            <dl>
+                <dt><label for="title">题目</label></dt>
+                <dd><input type="text" name="title" id="title" value="" class="text ui-widget-content ui-corner-all"/></dd>
+                <dt><label for="authors">作者</label></dt>
+                <dd><input type="text" name="authors" id="authors" value="" class="text ui-widget-content ui-corner-all"/></dd>
+                <dt><label for="info">简介</label></dt>
+                <dd><input type="text" name="info" id="info" value="" class="text ui-widget-content ui-corner-all"/></dd>
+                <dt><label for="idx">课序</label></dt>
+                <dd><input type="text" name="idx" id="idx" value="" class="text ui-widget-content ui-corner-all"/></dd>
+                <dt><label for="tag">年级</label></dt>
+                <dd>
+                    <select name="tag" id="tag">
+                      <option name="一年级" value="1"></option>
+                      <option name="二年级" value="2"></option>
+                      <option name="三年级" value="3"></option>
+                      <option name="四年级" value="4"></option>
+                      <option name="五年级" value="5"></option>
+                      <option name="六年级" value="6"></option>
+                    </select>
+                </dd>
+                <dt><label for="description">内容</label></dt>
+                <dd>
+                  <textarea id="description" name="description" style="width:100%;height:100px;">
+
+                  </textarea>
+                </dd>
+            </dl>
+        </fieldset>
+        <fieldset class="form_table">
+            <legend>汉字信息</legend>
+            <dl>
+                <dt><label for="txt">字</label></dt>
+                <dd><input type="text" name="txt" id="txt" value="" class="text ui-widget-content ui-corner-all"/></dd>
+                <dt><label for="py">拼音</label></dt>
+                <dd><input type="text" name="py" id="py" value="" class="text ui-widget-content ui-corner-all"/></dd>
+                <dt><label for="cap">首字母</label></dt>
+                <dd><input type="text" name="cap" id="cap" value="" class="text ui-widget-content ui-corner-all"/></dd>
+                <dt><label for="bs">部首</label></dt>
+                <dd><input type="text" name="bs" id="bs" value="" class="text ui-widget-content ui-corner-all"/></dd>
+                <dt><label for="sds">造字</label></dt>
+                <dd>
+                    <select name="sds" id="sds">
+                      <option name="形声" value="形声"></option>
+                      <option name="象形" value="象形"></option>
+                      <option name="指事" value="指事"></option>
+                      <option name="会意" value="会意"></option>
+                      <option name="转注" value="转注"></option>
+                      <option name="假借" value="假借"></option>
+                    </select>
+                </dd>
+                <dt><label for="num">笔画</label></dt>
+                <dd><input type="text" name="num" id="num" value="" class="text ui-widget-content ui-corner-all"/></dd>
+                <dt><label for="struct">结构</label></dt>
+                <dd><input type="text" name="struct" id="struct" value="" class="text ui-widget-content ui-corner-all"/></dd>
+                <dt><label for="demo">举例</label></dt>
+                <dd><input type="text" name="demo" id="demo" value="" class="text ui-widget-content ui-corner-all"/></dd>
+                <dt><label for="worder">笔顺</label></dt>
+                <dd><input type="text" name="worder" id="worder" value="" class="text ui-widget-content ui-corner-all"/></dd>
+                <dt><label for="zc">组词</label></dt>
+                <dd><input type="text" name="zc" id="zc" value="" class="text ui-widget-content ui-corner-all"/></dd>
+                <dt><label for="zy">字义</label></dt>
+                <dd><input type="text" name="zy" id="zy" value="" class="text ui-widget-content ui-corner-all"/></dd>
+            </dl>
+        </fieldset>
+        <input type="submit" tabindex="-1" />
+        </form>
+    <div id="dialog-message" title="正在处理等待同步">
+        <div class="progress-label">处理中...</div>
+        <div id="progressbar"></div>
+    </div>
+</body>
+<script>
+    //title, authors, info, idx, tag, description,
+    // txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy, txt_gif, hz_idx
+    let dialog = $( "#dialog-message" ).dialog({
+            autoOpen: false,
+            closeOnEscape: false,
+            resizable: false,
+            modal:true,
+            buttons: [],
+            open: function() {},
+            beforeClose: function() {}
+
+          });
+    let tosave_item = function(){
+
+        let to_do_save = function(){
+            let data = $('#new_essay_form').serializeArray();
+            let jsonObj={};
+            $(data).each(function(){
+                jsonObj[this.name]=this.value;
+            });
+            console.log('rename_item:', jsonObj);
+            dialog.dialog("open");
+
+            call_service('/man/newessay?tk='+GetQueryString('tk'), jsonObj, function (res) {
+                let st = res['state'];
+                console.log('res result:', res);
+                if(st<0){
+                    let errmsg = '新建失败!';
+                    if(res.hasOwnProperty('errmsg')){
+                        errmsg = res['errmsg']
+                    }
+                    dialog.dialog("close");
+                    rename_form_dialog.dialog( "close" );
+                    alert(errmsg)
+                } else {
+
+                }
+
+            });
+
+        }
+        to_do_save();
+
+
+    };
+
+</script>
+</html>

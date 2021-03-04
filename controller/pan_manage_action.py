@@ -229,6 +229,29 @@ class ManageHandler(BaseHandler):
             rs["source"] = source
             rs["fs_id"] = fs_id
             self.to_write_json(rs)
+        elif path.endswith("/newessay"):
+            rs = {"state": 0}
+            title = self.get_argument("title", "")
+            authors = self.get_argument("authors", "")
+            info = self.get_argument("info", "")
+            idx = self.get_argument("idx", "0")
+            tag = self.get_argument("tag", "")
+            description = self.get_argument("description", "")
+            txt = self.get_argument("txt", "")
+            py = self.get_argument("py", "")
+            cap = self.get_argument("cap", "")
+            bs = self.get_argument("bs", "")
+            sds = self.get_argument("sds", "")
+            num = self.get_argument("num", "0")
+            struct = self.get_argument("struct", "")
+            demo = self.get_argument("demo", "")
+            worder = self.get_argument("worder", "")
+            zc = self.get_argument("zc", "")
+            zy = self.get_argument("zy", "")
+
+            #  title, authors, info, idx, tag, description, txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy, txt_gif
+            mpan_service.newessay(title, authors, info, idx, tag, description, txt, py, cap, bs, sds, num, struct, demo, worder, zc, zy)
+            self.to_write_json(rs)
         else:
             self.to_write_json({})
 

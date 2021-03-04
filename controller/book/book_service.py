@@ -80,8 +80,9 @@ class BookService(BaseService):
 
         return rs
 
-    def essay(self, page, size=20):
+    def essay(self, mtag, page, size=20):
         kw = None
+
         offset = int(page) * size
         datas = StudyDao.query_study_essay_list(1, offset, size)
         total = StudyDao.query_study_essay_count(1)
