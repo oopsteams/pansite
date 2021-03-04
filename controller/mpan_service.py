@@ -393,6 +393,7 @@ class MPanService(BaseService):
             txt_gif = "gif_{}_{}_{}.gif".format(tag, idx, hz_idx)
             hz_params = dict(txt=txt, py=py, cap=cap, bs=bs, sds=sds, num=int(num), struct=struct, demo=demo,
                              worder=worder, zc=zc, zy=zy, txt_gif=txt_gif, idx=hz_idx)
+            log.debug("hz_params:{}".format(hz_params))
             shz = StudyDao.new_study_hanzi(hz_params)
             StudyDao.new_essay_hanzi(essay_id, shz.id)
             pass
@@ -402,8 +403,10 @@ class MPanService(BaseService):
             txt_gif = "gif_{}_{}_{}.gif".format(tag, idx, hz_idx)
             hz_params = dict(txt=txt, py=py, cap=cap, bs=bs, sds=sds, num=int(num), struct=struct, demo=demo, worder=worder, zc=zc, zy=zy, txt_gif=txt_gif, idx=hz_idx)
             shz = StudyDao.new_study_hanzi(hz_params)
+            log.debug("new eesay hz_params:{}".format(hz_params))
             # "title", "authors", "info", "hanzi", "idx", "pin", "tag", "description"
             essay_params = dict(title=title, authors=authors, info=info, idx=idx, tag=tag, description=description, hanzi=shz.id)
+            log.debug("essay_params:{}".format(essay_params))
             study_essay = StudyDao.new_study_essay(essay_params)
             StudyDao.new_essay_hanzi(study_essay.id, shz.id)
 
