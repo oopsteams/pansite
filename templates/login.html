@@ -146,7 +146,7 @@
     function login(){
         let mobile_no = document.getElementById("username").value;
         let password = document.getElementById("password").value;
-        call_pansite_by_post("/s/login/", {"mobile_no": mobile_no, "password": password, "single":1}, function(isok, res){
+        call_pansite_by_post("s/login/", {"mobile_no": mobile_no, "password": password, "single":1}, function(isok, res){
         if(isok){
             update_tags();
             console.log('res token:', res['token']);
