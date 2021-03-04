@@ -184,6 +184,8 @@ dialog.dialog("open");
     });
     function update_html_code(e) {
         let code = $(e.target).val();
+        console.log('update_html_code e:', e);
+        console.log('code:',code);
         $("#update_html_code").html(code);
     }
 </script>
