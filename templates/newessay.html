@@ -120,23 +120,25 @@
                 }
 
             };
-
+dialog.dialog("open");
             $.ajax({
                 url:point,
                 data:form_data,
                 async: false,
                 cache: false,
-                // contentType: false,
+                contentType: false,
                 processData: false,
                 method:"POST",
-               contentType:"multipart/form-data",
+               // contentType:"multipart/form-data",
+                success:function (res) {
+                    console.log("success new essay rs:", res);
+                    cb(res);
+                }
             }).done(function(res){
                console.log("load rs:", res);
                cb(res);
             });
-            dialog.dialog("open");
-
-        }
+        };
         to_do_save();
     };
     $( "#tosave_btn" ).on("click", (e)=>{
