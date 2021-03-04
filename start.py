@@ -154,7 +154,7 @@ if __name__ == "__main__":
         # (r"/wx/push", WXAppPush),
         # (r"/(.*\.txt)", StaticFileHandler, dict(url=settings['source'])),
         # (r"/[^/]*\.(png|woff|ttf|jpg|jpeg|js)", StaticFileHandler, dict(path=settings['static_path'])),
-        (r"/s/.*\.html", MainHandler, dict(middleware=middle_list)),
+        (r"/.*\.html", MainHandler, dict(middleware=middle_list)),
 
     ], **settings)
     from cfg import service
