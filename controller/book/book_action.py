@@ -115,6 +115,11 @@ class BookHandler(BaseHandler):
             book_shelf_code = params.get("code", None)
             if self.token:
                 rs = book_service.put_off_book(book_shelf_code)
+
+        elif "putonbk" == cmd:
+            book_shelf_code = params.get("code", None)
+            if self.token:
+                rs = book_service.put_on_book(book_shelf_code)
         return rs
 
     def get(self):

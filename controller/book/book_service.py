@@ -287,7 +287,7 @@ class BookService(BaseService):
                     es_up_params = es_dao_book().filter_update_params(sb_dict)
                     if es_up_params:
                         logger.info("will update book es item es_up_params:{}".format(es_up_params))
-                        es_dao_book().update_fields(book_shelf_code, **es_up_params)
+                        es_dao_book().update_fields(sb.code, **es_up_params)
                     updated.append(sb_dict)
         else:
             sb: StudyBook = StudyDao.check_out_study_book(book_shelf_code)
@@ -298,7 +298,7 @@ class BookService(BaseService):
                 es_up_params = es_dao_book().filter_update_params(sb_dict)
                 if es_up_params:
                     logger.info("will update book es item es_up_params:{}".format(es_up_params))
-                    es_dao_book().update_fields(book_shelf_code, **es_up_params)
+                    es_dao_book().update_fields(sb.code, **es_up_params)
                 updated.append(sb_dict)
                 # return sb_dict
         if updated:
@@ -321,7 +321,7 @@ class BookService(BaseService):
                     es_up_params = es_dao_book().filter_update_params(sb_dict)
                     if es_up_params:
                         logger.info("will update book es item es_up_params:{}".format(es_up_params))
-                        es_dao_book().update_fields(book_shelf_code, **es_up_params)
+                        es_dao_book().update_fields(sb.code, **es_up_params)
                     updated.append(sb_dict)
         else:
             sb: StudyBook = StudyDao.check_out_study_book(book_shelf_code)
@@ -332,7 +332,7 @@ class BookService(BaseService):
                 es_up_params = es_dao_book().filter_update_params(sb_dict)
                 if es_up_params:
                     logger.info("will update book es item es_up_params:{}".format(es_up_params))
-                    es_dao_book().update_fields(book_shelf_code, **es_up_params)
+                    es_dao_book().update_fields(sb.code, **es_up_params)
                 updated.append(sb_dict)
                 # return sb_dict
         if updated:
