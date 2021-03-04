@@ -41,6 +41,8 @@ class MainHandler(BaseHandler):
             self.to_write_json(result)
         elif path.endswith("/register/"):
             self.render('register.html')
+        elif path.endswith("/essay/"):
+            self.render('newessay.html')
         elif path.endswith("/access_code/"):
             logger.info("login body:".format(self.request.body))
             token = self.get_body_argument("token")
