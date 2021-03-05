@@ -10,7 +10,7 @@
 </head>
 <body>
     <img src="#" id="qr"/>
-    <button type="button" id="test_btn" value="fetch_qrcode"/>
+    <input type="button" id="test_btn" value="fetch_qrcode">
 </body>
 <script>
     var qr_code_id = null;
@@ -32,12 +32,18 @@
                 }
             })
     }
+    $("#qr").hide();
     $( "#test_btn" ).on("click", (e)=>{
         fetch_qrcode((rs)=>{
             if(rs.id){
                 var qrcode_src = rs.qrcode;
                 qr_code_id = rs.id;
-                $( "#qr" )[0].src = qrcode_src;
+                var qr_img = $( "#qr" )[0]
+                qr_img.src = qrcode_src;
+                qr_img.onload = function(){
+                    $("#qr").show();
+                }
+
             }
         });
     });
