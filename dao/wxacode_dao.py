@@ -67,6 +67,14 @@ class WxaDao(object):
         return rs
 
     @classmethod
+    def recover_pin(cls, pin, o_pin, occupied_timeout=24*60*60):
+
+        with db:
+            rs = WxaGenCode.update(pin=pin).where(WxaGenCode.occupied_at < get_now_ts() - occupied_timeout,
+                                                  WxaGenCode.pin == o_pin).execute()
+        return rs
+
+    @classmethod
     def del_gen_code(cls, _id):
 
         with db:

@@ -30,7 +30,9 @@ class WxaService(BaseService):
     def checkout(self, fuzzy_id):
         wgc_id = decrypt_id(fuzzy_id)
         tk = caches.get_from_cache(fuzzy_id)
-        caches.clear_cache(fuzzy_id)
+        if tk:
+            WxaDao.update_pin(1, wgc_id, 3)
+            caches.clear_cache(fuzzy_id)
         return tk
 
     def fetch_unused_qrcode(self, ctx):
@@ -66,6 +68,7 @@ class WxaService(BaseService):
             rs = access_token_service.refresh_access_token()
             if not rs:
                 return _result
+            WxaDao.recover_pin(1, 2)
             access_token = rs['access_token']
             for i in range(0, need_gen_count):
                 try:
