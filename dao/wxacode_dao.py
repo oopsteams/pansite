@@ -27,6 +27,8 @@ class WxaDao(object):
     @classmethod
     @query_wrap_db
     def fetch_one_access_token(cls, appid) -> WxaAccessToken:
+        ms = WxaAccessToken.select().where(WxaAccessToken.appid == appid).limit(1)
+        print(ms)
         return WxaAccessToken.select().where(WxaAccessToken.appid == appid).limit(1)
 
     @classmethod
