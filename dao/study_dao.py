@@ -84,10 +84,11 @@ class StudyDao(object):
                                                             attr="eh").join(StudyEssay,
                                                                             on=(EssayHanzi.essay == StudyEssay.id),
                                                                             attr="e").where(StudyHanzi.txt == txt)
+        print("query_study_essay_by_hz ms:{}".format(ms))
         for o in ms:
             sh_dict = StudyHanzi.to_dict(o, ["id"])
             essay = StudyEssay.to_dict(o.e, ["id"])
-            essay["id"] = obfuscate_id(o.e.id)
+            essay["id"] = obfuscate_id(o.eh.e.id)
             essay["hz"] = sh_dict
             rs.append(essay)
         return rs
