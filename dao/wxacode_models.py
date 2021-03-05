@@ -31,7 +31,7 @@ class WxaAccessToken(BaseModel):
 
     @classmethod
     def field_names(cls):
-        return ["id", "appid", "expires_in", "access_token", "pin"]
+        return ["id", "appid", "expires_in", "expires_at", "access_token", "pin"]
 
     @classmethod
     def to_dict(cls, instance, excludes=[]):
