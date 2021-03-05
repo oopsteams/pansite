@@ -18,15 +18,15 @@ class AccessTokenService(BaseService):
         return cfg
 
     def refresh_access_token(self, params=None):
-        platform = "wx"
+        platform = "wxa"
         if params:
-            platform = params.get("p", "wx")
+            platform = params.get("p", "wxa")
         wat_dict = None
-        if "wx" == platform:
+        if "wxa" == platform:
             cfg = self.fetch_cfg(platform)
             _appid = cfg['appid']
             # lock_key = "lock:refresh:access:{}:token:{}".format(_appid, "wx")
-            key = "wx:access_token:{}".format(_appid)
+            key = "wxa:access_token:{}".format(_appid)
             wat_dict = caches.get_from_cache(key)
             if not wat_dict:
                 wat = WxaDao.fetch_one_access_token(_appid)

@@ -26,6 +26,7 @@ FIELDS = ['id', 'category', 'isdir', 'filename', 'dlink', 'fs_id', 'path', 'size
 PAN_ACC_CACHE = {}
 PAN_ACC_CACHE_TIMEOUT = 24 * 60 * 60
 PAN_ACC_CACHE_LAST_TIME = 0
+EXCLUDES_PATH = ["qrcode.html"]
 
 
 class BaseHandler(RequestHandler):
@@ -78,6 +79,9 @@ class BaseHandler(RequestHandler):
 
         if self.is_web:
             logger.info('set is_web is 1, path:{}'.format(self.request.path))
+            for skip_path in EXCLUDES_PATH:
+                if self.request.path.endswith(skip_path):
+                    return True
             self.set_cookie('pan_site_is_web', str(1))
             self.set_cookie('pan_site_ref', self.request.path)
         return False
