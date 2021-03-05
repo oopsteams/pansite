@@ -34,7 +34,7 @@ class AccessTokenService(BaseService):
                 print("fetch_one_access_token wat_dict:", wat_dict)
             if not wat_dict:
                 try:
-                    return None
+                    # return None
                     jsonrs = wxapi.get_access_token(cfg)
                     if "access_token" in jsonrs:
                         access_token = jsonrs["access_token"]
