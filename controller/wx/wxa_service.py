@@ -6,7 +6,7 @@ from controller.base_service import BaseService
 from controller.async_service import async_service
 from controller.wx.access_token_service import access_token_service
 from dao.wxacode_dao import WxaDao, WxaGenCode
-from utils import singleton, obfuscate_id, caches, constant, wxapi, get_now_ts, decrypt_id
+from utils import singleton, obfuscate_id, caches, constant, wxapi, get_now_ts, decrypt_id, log
 import time
 
 INIT_QR_CODE_COUNT = 20
@@ -60,16 +60,24 @@ class WxaService(BaseService):
                 try:
                     new_id = WxaDao.new_wxa_record()
                     fuzzy_id = obfuscate_id(new_id)
+                    log.debug("to gen code,fuzzy_id:{}".format(fuzzy_id))
                     bf = wxapi.gen_mini_qrcode(access_token, DEFAULT_WXA_PAGE_PATH, fuzzy_id)
+
                     if bf:
+
                         import os
                         base_dir = ctx["basepath"]
                         dest_dir = os.path.join(base_dir, "static/mqr/")
                         dest_file = os.path.join(dest_dir, "{}.png".format(fuzzy_id))
+                        log.debug("to gen code success,will write to file:{}".format(dest_file))
                         with open(dest_file, 'wb') as up:
                             up.write(bf)
-                    WxaDao.update_pin(1, new_id, 0)
+                        WxaDao.update_pin(1, new_id, 0)
+                    else:
+                        # del wgc
+                        pass
                 except Exception:
+                    log.error("gen code err.", exc_info=True)
                     pass
                 time.sleep(0.5)
 

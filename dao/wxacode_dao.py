@@ -61,6 +61,12 @@ class WxaDao(object):
         return rs
 
     @classmethod
+    def del_gen_code(cls, _id):
+
+        with db:
+            WxaGenCode.delete_by_id(_id)
+
+    @classmethod
     def update_access_token(cls, access_token, expires_in, expires_at, _id):
 
         with db:
