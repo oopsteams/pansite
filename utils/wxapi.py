@@ -4,7 +4,7 @@ Created by susy at 2020/4/26
 """
 import requests
 from cfg import WX_API, RPC
-from utils import constant, url_encode
+from utils import constant, url_encode, do_post_request
 import json
 
 
@@ -63,7 +63,8 @@ def gen_mini_qrcode(access_token, page_path, fuzzy_id, width=280):
     send_api = "{point}/wxa/getwxacodeunlimit?access_token={token}".format(point=point, token=access_token)
     print("send_api:{}".format(send_api))
     # res = requests.post(send_api, data=json.dumps(params), verify=False)
-    res = requests.post(send_api, json=params, headers=headers, verify=False)
+    # res = requests.post(send_api, json=params, headers=headers, verify=False)
+    res = do_post_request(send_api, data=json.dumps(params), headers=headers)
     try:
         rs = res.json()
         print("gen_mini_qrcode failed:{}".format(rs))

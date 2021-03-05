@@ -192,6 +192,25 @@ def singleton(cls, *args, **kw):
     return _singleton
 
 
+def do_post_request(url, data=None, **kwargs):
+    import requests
+    try:
+        session_kwargs = {}
+        if "timeout" in kwargs:
+            session_kwargs["timeout"] = kwargs["timeout"]
+
+        req = requests.Request("POST", url, data=data)
+        req_prepared = req.prepare()
+        print("req_prepared:{}".format(req_prepared))
+        s = requests.Session()
+        s.headers = kwargs.get("headers", {})
+
+        return s.send(req_prepared, **session_kwargs)
+            # return requests.post(url, data=data, **kwargs)
+    except requests.RequestException as e:
+        pass
+
+
 hashider = Hashids(min_length=HASH_ID_MIN_LENGTH, salt=HASH_ID_SALT)
 
 
