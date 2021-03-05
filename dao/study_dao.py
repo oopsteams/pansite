@@ -77,6 +77,23 @@ class StudyDao(object):
 
     @classmethod
     @query_wrap_db
+    def query_study_essay_by_hz(cls, txt):
+        rs = []
+
+        ms = StudyHanzi.select(StudyHanzi, EssayHanzi, StudyEssay).join(EssayHanzi, on=(EssayHanzi.hz == StudyHanzi.id),
+                                                            attr="eh").join(StudyEssay,
+                                                                            on=(EssayHanzi.essay == StudyEssay.id),
+                                                                            attr="e").where(StudyHanzi.txt == txt)
+        for o in ms:
+            sh_dict = StudyHanzi.to_dict(o, ["id"])
+            essay = StudyEssay.to_dict(o.e, ["id"])
+            essay["id"] = obfuscate_id(o.e.id)
+            essay["hz"] = sh_dict
+            rs.append(essay)
+        return rs
+
+    @classmethod
+    @query_wrap_db
     def query_study_essay_hz_list(cls, essay_id, offset=0, cnt=50):
         rs = []
         ms = EssayHanzi.select(EssayHanzi, StudyHanzi).join(StudyHanzi, on=(EssayHanzi.hz == StudyHanzi.id),

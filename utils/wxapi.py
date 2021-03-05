@@ -70,6 +70,7 @@ def gen_mini_qrcode(access_token, page_path, fuzzy_id, width=280):
         return res.content
     return None
 
+
 def wrap_qrcode_url(qrcode):
     return "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket={}".format(qrcode)
 

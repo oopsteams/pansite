@@ -31,6 +31,10 @@ class BookHandler(BaseHandler):
             # print("kw:", kw)
             # print("source:", source)
             rs = book_service.search(mtag, tag, kw, page, int(size))
+        elif "clazzse" == cmd:
+            kw = params.get("kw", None)
+            rs = book_service.search_hz(kw)
+
         elif "essay" == cmd:
             kw = params.get("kw", None)
             mtag = params.get("mtag", None)

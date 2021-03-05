@@ -90,6 +90,13 @@ class BookService(BaseService):
         rs = {"data": datas, "has_next": has_next, "total": total, "pagesize": size}
         return rs
 
+    def search_hz(self, kw):
+        datas = []
+        if kw:
+            datas = StudyDao.query_study_essay_by_hz(kw)
+        rs = {"data": datas, "has_next": False, "total": 1, "pagesize": 20}
+        return rs
+
     def essayclazz(self, fuzzy_id, page, size=20, total=0):
         kw = None
         essay_id = decrypt_id(fuzzy_id)

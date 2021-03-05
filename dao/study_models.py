@@ -142,7 +142,7 @@ class StudyEssay(BaseModel):
 
 class StudyHanzi(BaseModel):
     id = AutoField()
-    txt = CharField(max_length=2, null=False)
+    txt = CharField(max_length=2, null=False, unique=True)
     py = CharField(max_length=10, null=False)
     cap = CharField(max_length=1, null=False)
     bs = CharField(max_length=1, null=False)
