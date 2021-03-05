@@ -81,6 +81,7 @@ class BaseHandler(RequestHandler):
             logger.info('set is_web is 1, path:{}'.format(self.request.path))
             for skip_path in EXCLUDES_PATH:
                 if self.request.path.endswith(skip_path):
+                    logger.debug('skip auth path:{}'.format(self.request.path))
                     return True
             self.set_cookie('pan_site_is_web', str(1))
             self.set_cookie('pan_site_ref', self.request.path)
