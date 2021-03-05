@@ -33,17 +33,21 @@ class WxaService(BaseService):
 
     def fetch_unused_qrcode(self, ctx):
         rs = {}
-        wgc: WxaGenCode = WxaDao.fetch_one_wxa_code(1)
-        if wgc:
-            update_rs = WxaDao.update_pin(2, wgc.id, 1)
-            if update_rs:
-                fuzzy_id = obfuscate_id(wgc.id)
-                rs['qrcode'] = "/static/mqr/{}.{}".format(fuzzy_id, qrcode_suffix)
-                rs['id'] = fuzzy_id
-                return rs
-        else:
-            async_rs = self.async_gen_qrcode(ctx)
-            print("async_gen_qrcode state:", async_rs)
+        n = WxaDao.query_wxa_count(1)
+        if n > 0:
+            wgc: WxaGenCode = WxaDao.fetch_one_wxa_code(1)
+            if wgc:
+                update_rs = WxaDao.update_pin(2, wgc.id, 1)
+                if update_rs:
+                    fuzzy_id = obfuscate_id(wgc.id)
+                    rs['qrcode'] = "/static/mqr/{}.{}".format(fuzzy_id, qrcode_suffix)
+                    rs['id'] = fuzzy_id
+                    if n - 1 < INIT_QR_CODE_COUNT / 2:
+                        self.async_gen_qrcode(ctx)
+                    return rs
+            else:
+                async_rs = self.async_gen_qrcode(ctx)
+                # print("async_gen_qrcode state:", async_rs)
         return rs
 
     def async_gen_qrcode(self, ctx):
