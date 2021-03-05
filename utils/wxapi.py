@@ -57,7 +57,7 @@ def gen_mini_qrcode(access_token, page_path, fuzzy_id, width=280):
         sence="tag={}".format(fuzzy_id),
         width=width
     )
-    headers = {"Content-Type": "application/json"}
+    headers = {"Content-Type": ""}
     print("gen_mini_qrcode params:{}".format(params))
     point = WX_API["point"]
     send_api = "{point}/wxa/getwxacodeunlimit?access_token={token}".format(point=point, token=access_token)
