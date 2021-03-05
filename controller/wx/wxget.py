@@ -72,7 +72,7 @@ class WXAppGet(BaseHandler):
         elif "qrcodecheckin" == cmd:
             qrcode = params["code"]
             tk = params["tk"]
-            wxa_service.checkin(qrcode, tk)
+            rs['pin'] = wxa_service.checkin(qrcode, tk)
         elif u"openid" == cmd:
             code = params["code"]
             fuzzy_source = params.get("source", None)

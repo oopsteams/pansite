@@ -22,8 +22,10 @@ class WxaService(BaseService):
 
     def checkin(self, fuzzy_id, tk):
         wgc_id = decrypt_id(fuzzy_id)
-        WxaDao.update_pin(3, wgc_id, 2)
-        caches._put_to_cache(fuzzy_id, tk, 300)
+        update_rs = WxaDao.update_pin(3, wgc_id, 2)
+        if update_rs:
+            caches._put_to_cache(fuzzy_id, tk, 300)
+        return update_rs
 
     def checkout(self, fuzzy_id):
         wgc_id = decrypt_id(fuzzy_id)
