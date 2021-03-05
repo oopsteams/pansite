@@ -71,7 +71,7 @@ class WxaService(BaseService):
                 try:
                     new_id = WxaDao.new_wxa_record()
                     fuzzy_id = obfuscate_id(new_id)
-                    print("to gen code,fuzzy_id:{}".format(fuzzy_id))
+                    # print("to gen code,fuzzy_id:{}".format(fuzzy_id))
                     bf = wxapi.gen_mini_qrcode(access_token, DEFAULT_WXA_PAGE_PATH, fuzzy_id)
 
                     if bf:
@@ -80,7 +80,7 @@ class WxaService(BaseService):
                         base_dir = ctx["basepath"]
                         dest_dir = os.path.join(base_dir, "static/mqr/")
                         dest_file = os.path.join(dest_dir, "{}.{}".format(fuzzy_id, qrcode_suffix))
-                        print("to gen code success,will write to file:{}".format(dest_file))
+                        # print("to gen code success,will write to file:{}".format(dest_file))
                         with open(dest_file, 'wb') as up:
                             up.write(bf)
                         WxaDao.update_pin(1, new_id, 0)
