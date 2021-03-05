@@ -63,7 +63,6 @@ def gen_mini_qrcode(access_token, page_path, fuzzy_id, width=280):
     try:
         rs = res.json()
         print("gen_mini_qrcode failed:{}".format(rs))
-
     except Exception:
         return res.content
     return None
