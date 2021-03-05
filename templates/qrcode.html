@@ -19,11 +19,10 @@
         var params = {"cmd": 'qrcode'};
         $.ajax({
                 url:point,
-                data:params,
-                async: false,
-                cache: false,
+                data:JSON.stringify(params),
                 method:"POST",
                 contentType:"application/json;charset=utf-8",
+                dataType: "json",
                 success:function (res) {
                     console.log("success new essay rs:", res);
                     if(cb){
