@@ -61,7 +61,7 @@ def gen_mini_qrcode(access_token, page_path, fuzzy_id, width=280):
     point = WX_API["point"]
     send_api = "{point}/wxa/getwxacodeunlimit?access_token={token}".format(point=point, token=access_token)
     print("send_api:{}".format(send_api))
-    res = requests.post(send_api, json=params)
+    res = requests.post(send_api, data=json.dumps(params))
     try:
         rs = res.json()
         print("gen_mini_qrcode failed:{}".format(rs))
