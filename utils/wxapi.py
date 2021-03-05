@@ -54,7 +54,7 @@ def getkflist(access_token):
 def gen_mini_qrcode(access_token, page_path, fuzzy_id, width=280):
     params = dict(
         page=page_path,
-        sence="tag={}".format(fuzzy_id),
+        scene="tag={}".format(fuzzy_id),
         width=width
     )
     headers = {"Content-Type": ""}
