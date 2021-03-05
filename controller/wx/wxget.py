@@ -6,6 +6,7 @@ from controller.action import BaseHandler
 from controller.auth_service import auth_service
 from controller.book.book_service import book_service
 from controller.wx.wx_service import wx_service
+from controller.wx.wxa_service import wxa_service
 from controller.wx.goods_service import goods_service
 from controller.payment.payment_service import payment_service
 from controller.open_service import open_service
@@ -60,6 +61,20 @@ class WXAppGet(BaseHandler):
             print("rip:%s" % rip)
         elif "test" == cmd:
             payment_service.clear_cache(self.user_id, self.ref_id)
+        elif "qrcode" == cmd:
+            fuzzy_id = wxa_service.fetch_unused_qrcode(self.context)
+            if fuzzy_id:
+                rs['qrcode'] = "/static/mqr/{}.png".format(fuzzy_id)
+                rs['id'] = fuzzy_id
+        elif "checkqrcode" == cmd:
+            fuzzy_id = params["code"]
+            tk = wxa_service.checkout(fuzzy_id)
+            if tk:
+                rs['tk'] = tk
+        elif "qrcodecheckin" == cmd:
+            qrcode = params["code"]
+            tk = params["tk"]
+            wxa_service.checkin(qrcode, tk)
         elif u"openid" == cmd:
             code = params["code"]
             fuzzy_source = params.get("source", None)

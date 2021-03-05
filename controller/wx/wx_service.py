@@ -7,6 +7,7 @@ from controller.auth_service import auth_service
 from controller.payment.payment_service import payment_service
 from dao.wx_dao import WxDao
 from dao.models import AccountWxExt, Accounts, BASE_FIELDS, StudyProps, Kf, KfMsg
+from controller.wx.access_token_service import access_token_service
 import base64
 from Crypto.Cipher import AES
 from utils import singleton, obfuscate_id, caches, constant, wxapi, get_now_ts
@@ -26,6 +27,7 @@ def wx_acc_to_simple_dict(wx_acc: AccountWxExt):
                                                            "language", "country", "province", "city", "job",
                                                            "is_realname"])
     return None
+
 
 @singleton
 class WxService(BaseService):
@@ -291,25 +293,17 @@ class WxService(BaseService):
             for kf in kf_list:
                 rs.append(Kf.to_dict(kf, ))
 
-    def refresh_access_token(self):
-        jsonrs = wxapi.get_access_token()
-        if "access_token" in jsonrs:
-            access_token = jsonrs["access_token"]
-            expires_in = jsonrs["expires_in"]
-            ac = WxDao.update_access_token(access_token, expires_in + get_now_ts())
-            return dict(access_token=ac.val, expires_in=int(ac.type))
-        return None
-
-    @caches.cache_data("access_token", timeout_seconds=lambda s, rs: rs["to"])
+    # @caches.cache_data("access_token", timeout_seconds=lambda s, rs: rs["to"])
     def get_valid_access_token(self):
-        rs = WxDao.query_access_token()
-        if not rs or rs["expires_in"] <= get_now_ts():
-            new_rs = self.refresh_access_token()
-            if new_rs:
-                new_rs["to"] = new_rs["expires_in"] - get_now_ts() - 1
-            return new_rs
-        if rs:
-            rs["to"] = rs["expires_in"] - get_now_ts() - 1
+        rs = access_token_service.refresh_access_token()
+        # rs = WxDao.query_access_token()
+        # if not rs or rs["expires_at"] <= get_now_ts():
+        #     new_rs = self.refresh_access_token()
+        #     if new_rs:
+        #         new_rs["to"] = new_rs["expires_at"] - get_now_ts() - 1
+        #     return new_rs
+        # if rs:
+        #     rs["to"] = rs["expires_in"] - get_now_ts() - 1
         return rs
 
     def load_plan_datas(self, wx_id):

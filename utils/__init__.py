@@ -158,7 +158,7 @@ def get_payload_from_token(token):
         raise e
 
 
-def get_now_ts():
+def get_now_ts():  # seconds
     timestamp = arrow.utcnow().timestamp
     return timestamp
 
