@@ -35,7 +35,10 @@ class WxaDao(object):
     @classmethod
     @query_wrap_db
     def fetch_one_wxa_code(cls, pin) -> WxaGenCode:
-        return WxaGenCode.select().where(WxaGenCode.pin == pin).order_by(WxaGenCode.id.asc()).limit(1)
+        ms = WxaGenCode.select().where(WxaGenCode.pin == pin).order_by(WxaGenCode.id.asc()).limit(1)
+        if ms:
+            return ms[0]
+        return None
 
     @classmethod
     @query_wrap_db
