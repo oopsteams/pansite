@@ -26,7 +26,7 @@ class WxaAccessToken(BaseModel):
     appid = CharField(max_length=32, null=False)
     expires_in = IntegerField(null=False, default=0)
     expires_at = IntegerField(null=False, default=0)
-    access_token = CharField(max_length=128, null=False)
+    access_token = CharField(max_length=512, null=False)
     pin = SmallIntegerField(null=False, default=0)  # 0:init,1:gen_code,2:occupied,3:used
 
     @classmethod
