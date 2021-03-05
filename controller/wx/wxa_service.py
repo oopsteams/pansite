@@ -35,12 +35,12 @@ class WxaService(BaseService):
         rs = {}
         wgc: WxaGenCode = WxaDao.fetch_one_wxa_code(1)
         if wgc:
-            rs = WxaDao.update_pin(2, wgc.id, 1)
-            fuzzy_id = obfuscate_id(wgc.id)
-            print("fetch ok? rs:", rs)
-            rs['qrcode'] = "/static/mqr/{}.{}".format(fuzzy_id, qrcode_suffix)
-            rs['id'] = fuzzy_id
-            return rs
+            update_rs = WxaDao.update_pin(2, wgc.id, 1)
+            if update_rs:
+                fuzzy_id = obfuscate_id(wgc.id)
+                rs['qrcode'] = "/static/mqr/{}.{}".format(fuzzy_id, qrcode_suffix)
+                rs['id'] = fuzzy_id
+                return rs
         else:
             async_rs = self.async_gen_qrcode(ctx)
             print("async_gen_qrcode state:", async_rs)
