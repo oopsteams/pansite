@@ -192,6 +192,19 @@ def singleton(cls, *args, **kw):
     return _singleton
 
 
+def pretty_print_POST(req):
+    # import logging
+    # logger = logging.getLogger("consumer")
+    info = '{}\n{}\n{}\n\n{}'.format(
+        '-----------START-----------',
+        req.method + ' ' + req.url,
+        '\n'.join('{}: {}'.format(k, v) for k, v in req.headers.items()),
+        req.body,
+    )
+    # logger.debug(info)
+    print(info)
+
+
 def do_post_request(url, data=None, **kwargs):
     import requests
     try:
@@ -201,7 +214,7 @@ def do_post_request(url, data=None, **kwargs):
 
         req = requests.Request("POST", url, data=data)
         req_prepared = req.prepare()
-        print("req_prepared:{}".format(req_prepared))
+        pretty_print_POST(req_prepared)
         s = requests.Session()
         s.headers = kwargs.get("headers", {})
 
