@@ -62,10 +62,8 @@ class WXAppGet(BaseHandler):
         elif "test" == cmd:
             payment_service.clear_cache(self.user_id, self.ref_id)
         elif "qrcode" == cmd:
-            fuzzy_id = wxa_service.fetch_unused_qrcode(self.context)
-            if fuzzy_id:
-                rs['qrcode'] = "/static/mqr/{}.png".format(fuzzy_id)
-                rs['id'] = fuzzy_id
+            rs = wxa_service.fetch_unused_qrcode(self.context)
+            rs['status'] = 0
         elif "checkqrcode" == cmd:
             fuzzy_id = params["code"]
             tk = wxa_service.checkout(fuzzy_id)

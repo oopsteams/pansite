@@ -12,7 +12,7 @@ import traceback
 
 INIT_QR_CODE_COUNT = 4
 DEFAULT_WXA_PAGE_PATH = "pages/hello/hello"
-
+qrcode_suffix = 'jpeg'
 
 @singleton
 class WxaService(BaseService):
@@ -32,15 +32,19 @@ class WxaService(BaseService):
         return tk
 
     def fetch_unused_qrcode(self, ctx):
+        rs = {}
         wgc: WxaGenCode = WxaDao.fetch_one_wxa_code(1)
         if wgc:
             rs = WxaDao.update_pin(2, wgc.id, 1)
+            fuzzy_id = obfuscate_id(wgc.id)
             print("fetch ok? rs:", rs)
-            return obfuscate_id(wgc.id)
+            rs['qrcode'] = "/static/mqr/{}.{}".format(fuzzy_id, qrcode_suffix)
+            rs['id'] = fuzzy_id
+            return rs
         else:
             async_rs = self.async_gen_qrcode(ctx)
             print("async_gen_qrcode state:", async_rs)
-        return None
+        return rs
 
     def async_gen_qrcode(self, ctx):
 
@@ -69,7 +73,7 @@ class WxaService(BaseService):
                         import os
                         base_dir = ctx["basepath"]
                         dest_dir = os.path.join(base_dir, "static/mqr/")
-                        dest_file = os.path.join(dest_dir, "{}.png".format(fuzzy_id))
+                        dest_file = os.path.join(dest_dir, "{}.{}".format(fuzzy_id, qrcode_suffix))
                         print("to gen code success,will write to file:{}".format(dest_file))
                         with open(dest_file, 'wb') as up:
                             up.write(bf)

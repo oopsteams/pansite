@@ -11,9 +11,30 @@
 <body>
     <img src="#" id="qr"/>
     <input type="button" id="test_btn" value="fetch_qrcode">
+    <input type="button" id="test_checkout_btn" value="checkout_qrcode">
 </body>
 <script>
     var qr_code_id = null;
+    function checkout_qrcode(cb) {
+        var point = '/s/wx/get';
+        var params = {"cmd": 'checkqrcode', 'code': qr_code_id};
+        if(qr_code_id){
+            $.ajax({
+                url:point,
+                data:JSON.stringify(params),
+                method:"POST",
+                contentType:"application/json;charset=utf-8",
+                dataType: "json",
+                success:function (res) {
+                    console.log("success checkout rs:", res);
+                    if(cb){
+                     cb(res);
+                    }
+                }
+            })
+        }
+
+    }
     function fetch_qrcode(cb) {
         var point = '/s/wx/get';
         var params = {"cmd": 'qrcode'};
@@ -43,6 +64,13 @@
                     $("#qr").show();
                 }
 
+            }
+        });
+    });
+    $( "#test_checkout_btn" ).on("click", (e)=>{
+        checkout_qrcode((rs)=>{
+            if(rs.tk){
+                alert('tk:'+rs.tk)
             }
         });
     });
