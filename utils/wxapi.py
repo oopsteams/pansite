@@ -4,7 +4,7 @@ Created by susy at 2020/4/26
 """
 import requests
 from cfg import WX_API, RPC
-from utils import constant
+from utils import constant, url_encode
 import json
 
 
@@ -54,11 +54,13 @@ def getkflist(access_token):
 def gen_mini_qrcode(access_token, page_path, fuzzy_id, width=280):
     params = dict(
         page=page_path,
-        sence="tag=".format(fuzzy_id),
+        sence=url_encode("tag={}".format(fuzzy_id)),
         width=width
     )
+    print("gen_mini_qrcode params:{}".format(params))
     point = WX_API["point"]
     send_api = "{point}/wxa/getwxacodeunlimit?access_token={token}".format(point=point, token=access_token)
+    print("send_api:{}".format(send_api))
     res = requests.post(send_api, json=params)
     try:
         rs = res.json()

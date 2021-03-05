@@ -10,7 +10,7 @@ from utils import singleton, obfuscate_id, caches, constant, wxapi, get_now_ts, 
 import time
 import traceback
 
-INIT_QR_CODE_COUNT = 20
+INIT_QR_CODE_COUNT = 10
 DEFAULT_WXA_PAGE_PATH = "pages/hello/hello"
 
 
@@ -76,6 +76,7 @@ class WxaService(BaseService):
                         WxaDao.update_pin(1, new_id, 0)
                     else:
                         # del wgc
+                        return _result
                         pass
                 except Exception:
                     traceback.print_exc()
