@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>远程授权</title>
+    <link href="/static/js/jquery-ui/jquery-ui.css" rel="stylesheet">
+    <script src="/static/js/jquery-ui/external/jquery/jquery.js"></script>
+    <script src="/static/js/jquery-ui/jquery.cookie.min.js"></script>
+    <script src="/static/js/jquery-ui/jquery-ui.js"></script>
+</head>
+<body>
+    <img src="#" id="qr"/>
+    <button type="button" id="test_btn" value="fetch_qrcode"/>
+</body>
+<script>
+    var qr_code_id = null;
+    function fetch_qrcode(cb) {
+        var point = '/s/wx/get';
+        var params = {"cmd": 'qrcode'};
+        $.ajax({
+                url:point,
+                data:params,
+                async: false,
+                cache: false,
+                method:"POST",
+                contentType:"application/json;charset=utf-8",
+                success:function (res) {
+                    console.log("success new essay rs:", res);
+                    if(cb){
+                     cb(res);
+                    }
+                }
+            })
+    }
+    $( "#test_btn" ).on("click", (e)=>{
+        fetch_qrcode((rs)=>{
+            if(rs.id){
+                var qrcode_src = rs.qrcode;
+                qr_code_id = rs.id;
+                $( "#qr" )[0].src = qrcode_src;
+            }
+        });
+    });
+</script>
+</html>

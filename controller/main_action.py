@@ -96,6 +96,7 @@ class MainHandler(BaseHandler):
             pan_service.fresh_token(pan_id)
             self.to_write_json({"result": "ok"})
         else:
+            logger.debug("path:", path)
             if path and len(path) > 1 and path[0] == '/':
                 path = path[1:]
                 self.render(path, **{'ref': '', 'force': ''})
