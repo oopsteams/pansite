@@ -50,8 +50,10 @@ class WxaService(BaseService):
                         self.async_gen_qrcode(ctx)
                     return rs
             else:
-                async_rs = self.async_gen_qrcode(ctx)
+                self.async_gen_qrcode(ctx)
                 # print("async_gen_qrcode state:", async_rs)
+        else:
+            self.async_gen_qrcode(ctx)
         return rs
 
     def async_gen_qrcode(self, ctx):
