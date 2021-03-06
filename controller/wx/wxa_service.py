@@ -10,7 +10,7 @@ from utils import singleton, obfuscate_id, caches, constant, wxapi, get_now_ts, 
 import time
 import traceback
 
-INIT_QR_CODE_COUNT = 4
+INIT_QR_CODE_COUNT = 10
 DEFAULT_WXA_PAGE_PATH = "pages/hello/hello"
 qrcode_suffix = 'jpeg'
 
