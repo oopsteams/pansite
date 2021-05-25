@@ -5,7 +5,7 @@ Created by susy at 2019/12/18
 from controller.base_service import BaseService
 from controller.async_service import async_service
 from utils import singleton, log as logger, compare_dt_by_now, get_now_datetime_format, scale_size, split_filename, \
-    obfuscate_id, get_now_datetime, force_removedir, to_num
+    obfuscate_id, get_now_datetime, force_removedir, to_num, aliapi
 from dao.models import Accounts, DataItem, ShareLogs, ShareFr, ShareApp, AppCfg, AuthUser, BASE_FIELDS, StudyBook
 from utils.utils_es import SearchParams, build_query_item_es_body, build_es_book_json_body
 from dao.es_dao import es_dao_share, es_dao_local, es_dao_book
@@ -755,6 +755,10 @@ class OpenService(BaseService):
                 if es_up_params:
                     logger.info("will update book es item es_up_params:{}".format(es_up_params))
                     es_dao_book().update_fields(bk['code'], **es_up_params)
+
+    def ali_callback(self, ctx, guest: Accounts):
+        aliapi.ali_rpc_cb({})
+        pass
 
     def scan_epub(self, ctx, guest: Accounts):
         def final_do():
