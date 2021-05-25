@@ -105,8 +105,7 @@ class OpenHandler(BaseHandler):
             rs = open_service.scan_epub(self.context, self.guest)
             self.to_write_json(rs)
         elif path.endswith("/ali/callback"):
-            # scan
-            open_service.scan_epub(self.context, self.guest)
+            open_service.ali_callback(self.context, self.guest)
             self.to_write_json({})
         else:
             self.to_write_json({})
