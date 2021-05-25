@@ -756,8 +756,8 @@ class OpenService(BaseService):
                     logger.info("will update book es item es_up_params:{}".format(es_up_params))
                     es_dao_book().update_fields(bk['code'], **es_up_params)
 
-    def ali_callback(self, ctx, guest: Accounts):
-        aliapi.ali_rpc_cb({})
+    def ali_callback(self, params, ctx, guest: Accounts):
+        aliapi.ali_rpc_cb(params)
         pass
 
     def scan_epub(self, ctx, guest: Accounts):

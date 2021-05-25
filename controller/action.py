@@ -148,6 +148,53 @@ class BaseHandler(RequestHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(json.dumps(result, cls=CJsonEncoder))
 
+    def wrap_request_dict(self, raise_err=False, parse_body=True):
+        get_params = self.request.arguments
+        params = {}
+        try:
+            if get_params:
+                for k in get_params:
+                    d = get_params[k]
+                    if isinstance(d, list):
+                        if len(d) == 1:
+                            params[k] = d[0].decode()
+                        else:
+                            params[k] = d
+                    else:
+                        params[k] = d
+            post_params = self.request.body_arguments
+            if post_params:
+                for k in post_params:
+                    d = post_params[k]
+                    if isinstance(d, list):
+                        if len(d) == 1:
+                            params[k] = d[0].decode()
+                        else:
+                            params[k] = d
+                    else:
+                        params[k] = d
+            if parse_body:
+                bd = self.request.body
+                if bd:
+                    params = json.loads(bd)
+
+        except Exception as e:
+            if raise_err:
+                raise e
+        request = self.request
+        if hasattr(request, "user_id"):
+            params["user_id"] = request.user_id
+        if hasattr(request, "is_anonymous"):
+            params["is_anonymous"] = request.is_anonymous
+        if hasattr(request, "chat_id"):
+            params["chat_id"] = request.chat_id
+        if hasattr(request, "mobile"):
+            params["mobile"] = request.mobile
+        if hasattr(request, "ip"):
+            params["ip"] = request.ip
+        logger.debug("request params:{}".format(params))
+        return params
+
 
 class PanHandler(BaseHandler):
 
