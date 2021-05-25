@@ -8,7 +8,7 @@ from cfg import ALI_REDIRECT
 
 
 def ali_rpc_cb(params):
-    uri = ALI_REDIRECT["host"][0]
+    uri = ALI_REDIRECT["hosts"][0]
 
     res = requests.get("{}".format(uri), params=params, verify=False)
     if res.status_code == 200:
