@@ -101,6 +101,7 @@ if __name__ == "__main__":
     application = Application([
         # (r"/source/list", PanHandler, {'basepath': base_dir}),
         (r"/api/ali/callback", OpenHandler, dict(middleware=middle_list, context=context)),
+        (r"/api/ali/put", OpenHandler, dict(middleware=middle_list, context=context)),
         (r"/source/[^/]+", PanHandler, dict(middleware=middle_list, context=context)),
         (r"/product/[^/]+", ProductHandler, dict(middleware=middle_list, context=context)),
         (r"/man/[^/]+", ManageHandler, dict(middleware=middle_list, context=context)),

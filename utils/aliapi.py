@@ -17,3 +17,14 @@ def ali_rpc_cb(params):
         return {
             'state': -1, 'err': constant.SHARED_NOT_EXISTS_ERR
         }
+
+
+def ali_rpc_post_cb(params):
+    uri = ALI_REDIRECT["post_point"]
+    res = requests.post("{}".format(uri), json=params, verify=False)
+    if res.status_code == 200:
+        return res.json()
+    else:
+        return {
+            'state': -1, 'err': constant.SHARED_NOT_EXISTS_ERR
+        }

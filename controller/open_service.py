@@ -758,7 +758,9 @@ class OpenService(BaseService):
 
     def ali_callback(self, params, ctx, guest: Accounts):
         aliapi.ali_rpc_cb(params)
-        pass
+
+    def ali_post(self, params):
+        aliapi.ali_rpc_cb(params)
 
     def scan_epub(self, ctx, guest: Accounts):
         def final_do():

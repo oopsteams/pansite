@@ -75,7 +75,8 @@ RPC = dict(
     hosts=["http://api.oopsteam.site"]
 )
 ALI_REDIRECT = dict(
-    hosts=["http://39.99.146.114/api/ali/callback"]
+    hosts=["http://39.99.146.114/api/ali/callback"],
+    post_point="http://39.99.146.114/api/ali/post"
 )
 ES = {
     "hosts": [{"host": "111.229.193.232", "port": 9200}],
