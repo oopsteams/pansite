@@ -760,7 +760,7 @@ class OpenService(BaseService):
         aliapi.ali_rpc_cb(params)
 
     def ali_post(self, params):
-        aliapi.ali_rpc_cb(params)
+        aliapi.ali_rpc_post_cb(params)
 
     def scan_epub(self, ctx, guest: Accounts):
         def final_do():
