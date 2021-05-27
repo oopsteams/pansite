@@ -110,7 +110,7 @@ class OpenHandler(BaseHandler):
             self.to_write_json({})
         elif path.endswith("/ali/put"):
             params = self.wrap_request_dict()
-            open_service.ali_post(params, self.context, self.guest)
+            open_service.ali_post(params)
             self.to_write_json({})
         else:
             self.to_write_json({})
