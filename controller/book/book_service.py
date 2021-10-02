@@ -324,6 +324,8 @@ class BookService(BaseService):
                 for sb in sb_list:
                     sb.pin = 1
                     StudyDao.update_books_by_id({"pin": sb.pin}, sb.id)
+                    if not sb.pack_id:
+                        sb.pack_id = 0
                     sb_dict = StudyBook.to_dict(sb, ["id"])
                     es_up_params = es_dao_book().filter_update_params(sb_dict)
                     if es_up_params:
@@ -334,6 +336,8 @@ class BookService(BaseService):
             sb: StudyBook = StudyDao.check_out_study_book(book_shelf_code)
             if sb:
                 sb.pin = 1
+                if not sb.pack_id:
+                    sb.pack_id = 0
                 StudyDao.update_books_by_id({"pin": sb.pin}, sb.id)
                 sb_dict = StudyBook.to_dict(sb, ["id"])
                 es_up_params = es_dao_book().filter_update_params(sb_dict)
