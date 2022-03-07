@@ -61,6 +61,7 @@ class BookService(BaseService):
                 item.pop("@is_removed")
                 item.pop("ref_id")
                 datas.append(item)
+        print('__to_sarch es_result:', es_result)
         has_next = offset + size < total
         rs = {"data": datas, "has_next": has_next, "total": total, "pagesize": size}
         return rs
