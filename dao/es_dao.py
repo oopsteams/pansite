@@ -311,15 +311,21 @@ class EsDao(object):
             return result
         return None
 
-    def es_search_exec(self, es_body, fields=None):
+    def es_search_exec(self, es_body, fields=None, exact_total=False):
         # logger.debug("utils.is_not_production()=%s" % utils.is_not_production())
         # logger.debug("es_search_exec=%s" % ("%s" % es_body).replace("'", "\""))
         result = {}
         try:
             if fields:
-                result = self.es.search(index=self.index_name, body=es_body, params=fields)
+                if exact_total:
+                    result = self.es.search(index=self.index_name, **es_body, fields=fields, track_total_hits=True)
+                else:
+                    result = self.es.search(index=self.index_name, **es_body, fields=fields)
             else:
-                result = self.es.search(index=self.index_name, body=es_body)
+                if exact_total:
+                    result = self.es.search(index=self.index_name, **es_body, track_total_hits=True)
+                else:
+                    result = self.es.search(index=self.index_name, **es_body)
         except Exception as e:
             logger.warn("es_search_exec:%s,%s" % (es_body, e), exc_info=True)
         return result

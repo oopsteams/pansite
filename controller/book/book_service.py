@@ -47,7 +47,7 @@ class BookService(BaseService):
         if es_result:
             # logger.info("book es_result:{}".format(es_result))
             hits_rs = es_result["hits"]
-            total = hits_rs["total"]
+            total = hits_rs["total"]["value"]
             for _s in hits_rs["hits"]:
                 highlight = {}
                 if "highlight" in _s:
