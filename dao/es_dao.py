@@ -102,16 +102,20 @@ class EsConnections(object):
         props = _props
 
         _cfg = ES["share"]
+        # _index_body = {"settings": _settings,
+        #                "mappings": {
+        #                    "dataitem": {"properties": props}
+        #                }}
         _index_body = {"settings": _settings,
                        "mappings": {
-                           "dataitem": {"properties": props}
+                           "properties": props
                        }}
         self.es_index(_cfg["index_name"], _cfg["doctype"], _index_body, props)
         _cfg = ES["local"]
 
         _index_body = {"settings": _settings,
                        "mappings": {
-                           "dataitem": {"properties": props}
+                           "properties": props
                        }}
         self.es_index(_cfg["index_name"], _cfg["doctype"], _index_body, props)
         # _cfg = ES["test"]
@@ -123,11 +127,15 @@ class EsConnections(object):
 
         _cfg = ES["book"]
 
+        # _index_body = {"settings": _settings,
+        #                "mappings": {
+        #                    _cfg["doctype"]: {
+        #                        "properties": _book
+        #                    }
+        #                }}
         _index_body = {"settings": _settings,
                        "mappings": {
-                           _cfg["doctype"]: {
-                               "properties": _book
-                           }
+                           "properties": _book
                        }}
         self.es_index(_cfg["index_name"], _cfg["doctype"], _index_body, _book)
 
