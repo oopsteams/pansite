@@ -5,7 +5,7 @@ cffi==1.13.1
 chardet==3.0.4
 charset-normalizer==2.0.12
 cryptography==2.8
-dataclasses==0.8
+# dataclasses==0.8
 elastic-transport==8.0.1
 elasticsearch==8.0.1
 hashids==1.2.0
