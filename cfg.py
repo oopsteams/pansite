@@ -79,7 +79,7 @@ ALI_REDIRECT = dict(
     post_point="http://39.99.146.114/api/ali/post"
 )
 ES = {
-    "hosts": [{"host": "111.229.193.232", "port": 9200}],
+    "hosts": [{"host": "127.0.0.1", "port": 9200}],
 
     "share": {
         "index_name": "share_2",
