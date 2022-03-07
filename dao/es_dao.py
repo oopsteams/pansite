@@ -136,7 +136,7 @@ class EsConnections(object):
         if not self.index_doc_cache.get(key):
             if not self.get_es().indices.exists(index=index_name):
                 try:
-                    self.get_es().indices.create(index=index_name, body=index_body)
+                    self.get_es().indices.create(index=index_name, **index_body)
                 except Exception as e:
                     logger.error("put mapping err!", exc_info=True)
             self.index_doc_cache[key] = EsDao(self.get_es(), index_name, doc_type, props)
@@ -194,7 +194,8 @@ class EsDao(object):
 
         # logger.debug("ES:index=%s" % doc)
         # print("index_name:%s,%s" % (self.index_name, self.doc_type))
-        return self.es.index(index=self.index_name, id=doc_id, doc_type=self.doc_type, body=doc)
+        # return self.es.index(index=self.index_name, id=doc_id, doc_type=self.doc_type, body=doc)
+        return self.es.index(index=self.index_name, id=doc_id, document=doc)
         # return self.es.index(index=self.index_name, id=doc_id, body=doc)
 
     def update_field(self, doc_id, field, value):
